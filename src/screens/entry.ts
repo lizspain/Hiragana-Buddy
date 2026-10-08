@@ -1,0 +1,287 @@
+// Word entry (for the grown-up): English word/name or romaji → editable kana tiles.
+
+import type { Nav, Screen } from "../app";
+import { isTeachable, loadDictionary, romajiOf, speakText } from "../data";
+import { lookupEnglish } from "../engine/convert";
+import { expandLongVowel, limitMorae, MAX_MORAE, moraCount, toGlyphs } from "../engine/kana";
+import { say, unlockAudio } from "../ui/audio";
+import { h, ICON, iconButton, kanaSvg, modal } from "../ui/dom";
+import { getSettings } from "../store";
+import { kanaChart } from "./chart";
+
+type Mode = "english" | "romaji";
+
+let lastMode: Mode = "english";
+
+export function entryScreen(nav: Nav): Screen {
+  let mode: Mode = lastMode;
+  let tiles: string[] = [];
+  let source: "english" | "romaji" | "japanese" = mode;
+  let selected = -1;
+  let japanese: string | undefined;
+  let soundSpelling = "";
+  let seq = 0;
+
+  const input = h("input", {
+    class: "word-input",
+    type: "text",
+    autocomplete: "off",
+    autocapitalize: "off",
+    spellcheck: false,
+    enterkeyhint: "done",
+    "aria-label": "Word or name",
+    "data-testid": "word-input",
+  });
+  const hint = h("p", { class: "hint", "aria-live": "polite" });
+  const choices = h("div", { class: "choices" });
+  const row = h("div", { class: "tile-row", "data-testid": "tiles" });
+  const tools = h("div", { class: "tile-tools" });
+  const count = h("p", { class: "mora-count" });
+  const start = h(
+    "button",
+    {
+      class: "start-btn",
+      "data-testid": "start",
+      "aria-label": "Start",
+      onclick: () => {
+        if (!tiles.length) return;
+        unlockAudio();
+        nav.write({ kind: "word", kana: [...tiles], input: input.value.trim() || tiles.join(""), mode: source });
+      },
+    },
+    h("span", { html: ICON.play }),
+    "Start",
+  );
+  const modeBtns = (["english", "romaji"] as Mode[]).map((m) =>
+    h(
+      "button",
+      {
+        class: "seg",
+        "data-mode": m,
+        onclick: () => {
+          mode = lastMode = m;
+          renderMode();
+          void convert();
+          input.focus();
+        },
+      },
+      m === "english" ? "English" : "Sounds (romaji)",
+    ),
+  );
+
+  function renderMode() {
+    modeBtns.forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+    input.placeholder = mode === "english" ? "Emma, dinosaur…" : "e-ma, kyouryuu…";
+  }
+
+  async function convert() {
+    const my = ++seq;
+    const text = input.value;
+    japanese = undefined;
+    hint.textContent = "";
+    if (!text.trim()) return setTiles([]);
+    if (mode === "english") {
+      const dict = await loadDictionary();
+      if (my !== seq) return;
+      const r = lookupEnglish(text, dict);
+      if (r.hiragana === null) {
+        hint.replaceChildren(
+          `I don't know "${r.missing.join(" ")}" yet. Type how it sounds instead, like `,
+          h("b", null, "e-mi-ri"),
+          ". ",
+          h(
+            "button",
+            {
+              class: "link-btn",
+              onclick: () => {
+                mode = lastMode = "romaji";
+                renderMode();
+                void convert();
+                input.focus();
+              },
+            },
+            "Switch to sounds",
+          ),
+        );
+        return setTiles([]);
+      }
+      soundSpelling = r.hiragana;
+      japanese = r.japanese;
+      source = "english";
+      setTiles(glyphsOf(r.hiragana));
+    } else {
+      const { toHiragana } = await import("wanakana");
+      if (my !== seq) return;
+      source = "romaji";
+      setTiles(glyphsOf(toHiragana(text.replace(/\s+/g, ""))));
+    }
+  }
+
+  function glyphsOf(s: string): string[] {
+    let g = toGlyphs(s, isTeachable);
+    if (getSettings().expandLongVowel) g = expandLongVowel(g, romajiOf);
+    return g;
+  }
+
+  function setTiles(next: string[]) {
+    const all = next;
+    tiles = limitMorae(all);
+    if (moraCount(all) > MAX_MORAE) hint.textContent = "That's a long one! Let's pick part of it. You can change the tiles below.";
+    selected = -1;
+    render();
+  }
+
+  function render() {
+    choices.replaceChildren();
+    if (japanese) {
+      const sound = glyphsOf(soundSpelling);
+      const jp = glyphsOf(japanese);
+      const same = (a: string[]) => a.join("") === tiles.join("");
+      choices.append(
+        h("span", { class: "choices-label" }, "Write:"),
+        h("button", { class: `chip${same(sound) ? " on" : ""}`, onclick: () => ((source = "english"), setTilesKeep(sound)) }, "Sounds like ", h("b", { lang: "ja" }, soundSpelling)),
+        h("button", { class: `chip${same(jp) ? " on" : ""}`, onclick: () => ((source = "japanese"), setTilesKeep(jp)) }, "Japanese word ", h("b", { lang: "ja" }, japanese)),
+      );
+    }
+
+    row.replaceChildren(
+      ...tiles.map((k, i) => {
+        const t = h("button", { class: `tile${i === selected ? " selected" : ""}`, "aria-label": k, "data-kana": k }, kanaSvg(k));
+        dragTile(t, i);
+        return t;
+      }),
+      h("button", { class: "tile add", "aria-label": "Add a letter", html: ICON.plus, onclick: () => openChart(-1) }),
+    );
+
+    tools.replaceChildren();
+    if (selected >= 0) {
+      tools.append(
+        h("button", { class: "pill-btn", onclick: () => openChart(selected) }, h("span", { html: ICON.swap }), "Change"),
+        h(
+          "button",
+          {
+            class: "pill-btn soft",
+            onclick: () => {
+              tiles.splice(selected, 1);
+              selected = -1;
+              render();
+            },
+          },
+          h("span", { html: ICON.trash }),
+          "Remove",
+        ),
+      );
+    }
+    if (tiles.length) {
+      tools.append(h("button", { class: "pill-btn soft", onclick: () => say(tiles.join("")) }, h("span", { html: ICON.speaker }), "Hear it"));
+    }
+
+    const m = moraCount(tiles);
+    count.textContent = tiles.length ? `${m} / ${MAX_MORAE} sounds` : "";
+    start.disabled = !tiles.length || m > MAX_MORAE;
+  }
+
+  function setTilesKeep(next: string[]) {
+    tiles = limitMorae(next);
+    selected = -1;
+    render();
+  }
+
+  function openChart(at: number) {
+    const m = modal(
+      h(
+        "div",
+        { class: "chart-modal" },
+        h("div", { class: "modal-head" }, iconButton(ICON.back, "Close", () => m.close())),
+        kanaChart((k) => {
+          if (at < 0) {
+            if (moraCount([...tiles, k]) > MAX_MORAE) return m.close();
+            tiles.push(k);
+          } else tiles[at] = k;
+          selected = -1;
+          m.close();
+          render();
+        }),
+      ),
+    );
+  }
+
+  /** Tap: hear + select. Drag: reorder. */
+  function dragTile(t: HTMLElement, i: number) {
+    let sx = 0, sy = 0, id = -1, dragging = false;
+    let rects: DOMRect[] = [];
+    t.addEventListener("pointerdown", (e) => {
+      id = e.pointerId;
+      sx = e.clientX;
+      sy = e.clientY;
+      dragging = false;
+      t.setPointerCapture(id);
+    });
+    t.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== id) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!dragging && Math.hypot(dx, dy) > 10) {
+        dragging = true;
+        rects = [...row.querySelectorAll<HTMLElement>(".tile:not(.add)")].map((x) => x.getBoundingClientRect());
+        t.classList.add("dragging");
+      }
+      if (dragging) t.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+    });
+    const end = (e: PointerEvent, cancelled: boolean) => {
+      if (e.pointerId !== id) return;
+      id = -1;
+      if (!dragging) {
+        if (cancelled) return;
+        unlockAudio();
+        say(speakText(tiles[i]));
+        selected = selected === i ? -1 : i;
+        return render();
+      }
+      let best = i, bestD = Infinity;
+      rects.forEach((r, j) => {
+        const d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
+        if (d < bestD) (bestD = d), (best = j);
+      });
+      const [k] = tiles.splice(i, 1);
+      tiles.splice(best, 0, k);
+      selected = -1;
+      render();
+    };
+    t.addEventListener("pointerup", (e) => end(e, false));
+    t.addEventListener("pointercancel", (e) => end(e, true));
+  }
+
+  input.addEventListener("input", () => void convert());
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") input.blur();
+  });
+
+  const el = h(
+    "div",
+    { class: "screen entry" },
+    h("header", { class: "topbar" }, iconButton(ICON.back, "Back", () => nav.home(), "home"), h("h2", null, "Type a word or name")),
+    h(
+      "main",
+      { class: "entry-body" },
+      h("p", { class: "for-grownups" }, "For grown-ups: type it in, check the letters, then hand over."),
+      h("div", { class: "segmented", role: "group", "aria-label": "Spelling" }, modeBtns),
+      input,
+      hint,
+      choices,
+      row,
+      tools,
+      count,
+      start,
+    ),
+  );
+
+  renderMode();
+  render();
+  void loadDictionary();
+  return {
+    el,
+    mounted() {
+      if (matchMedia("(pointer: fine)").matches) input.focus();
+    },
+  };
+}

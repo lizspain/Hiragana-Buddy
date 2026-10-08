@@ -27,3 +27,19 @@ python3 scripts/render_preview.py data/kana-strokes.json reference/kana-preview.
 
 Edit names: change `NAMES` / `WORDS` in `scripts/build_name_dictionary.py`, then
 `python3 scripts/build_name_dictionary.py data/en-names-words.json`.
+
+## Development
+
+```
+npm install
+npm run dev          # http://localhost:5173
+npm test             # matcher suites (reference + TS port) and Vitest unit tests
+npx playwright install chromium   # once
+npm run test:e2e     # mouse/touch flows on phone and tablet viewports
+npm run build        # static site in dist/
+npm run icons        # regenerate public/ icons from the あ stroke data
+```
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which tests, builds and
+publishes to GitHub Pages. In the repo settings, set Pages → Source to
+"GitHub Actions" once.
