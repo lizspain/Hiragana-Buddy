@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+# e2k weights are large; fetch them in the build step instead of committing
+*.npz

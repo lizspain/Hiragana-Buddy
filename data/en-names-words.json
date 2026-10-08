@@ -1,0 +1,1595 @@
+{
+ "meta": {
+  "status": "Seed list - review with a Japanese speaker before launch.",
+  "conventions": "v->b row, th->s/z row, ー kept; katakana converted to hiragana by code-point shift.",
+  "lookup": "lower-case the input, trim, collapse spaces; try names, then words, then the C2K model fallback."
+ },
+ "names": {
+  "olivia": {
+   "display": "Olivia",
+   "katakana": "オリビア",
+   "hiragana": "おりびあ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "emma": {
+   "display": "Emma",
+   "katakana": "エマ",
+   "hiragana": "えま",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "charlotte": {
+   "display": "Charlotte",
+   "katakana": "シャーロット",
+   "hiragana": "しゃーろっと",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "amelia": {
+   "display": "Amelia",
+   "katakana": "アメリア",
+   "hiragana": "あめりあ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "ava": {
+   "display": "Ava",
+   "katakana": "エイバ",
+   "hiragana": "えいば",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "sophia": {
+   "display": "Sophia",
+   "katakana": "ソフィア",
+   "hiragana": "そふぃあ",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "sofia": {
+   "display": "Sofia",
+   "katakana": "ソフィア",
+   "hiragana": "そふぃあ",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "isabella": {
+   "display": "Isabella",
+   "katakana": "イザベラ",
+   "hiragana": "いざべら",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "mia": {
+   "display": "Mia",
+   "katakana": "ミア",
+   "hiragana": "みあ",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "evelyn": {
+   "display": "Evelyn",
+   "katakana": "エブリン",
+   "hiragana": "えぶりん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "harper": {
+   "display": "Harper",
+   "katakana": "ハーパー",
+   "hiragana": "はーぱー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "luna": {
+   "display": "Luna",
+   "katakana": "ルナ",
+   "hiragana": "るな",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "camila": {
+   "display": "Camila",
+   "katakana": "カミラ",
+   "hiragana": "かみら",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "elizabeth": {
+   "display": "Elizabeth",
+   "katakana": "エリザベス",
+   "hiragana": "えりざべす",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "eleanor": {
+   "display": "Eleanor",
+   "katakana": "エレノア",
+   "hiragana": "えれのあ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "ella": {
+   "display": "Ella",
+   "katakana": "エラ",
+   "hiragana": "えら",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "abigail": {
+   "display": "Abigail",
+   "katakana": "アビゲイル",
+   "hiragana": "あびげいる",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "avery": {
+   "display": "Avery",
+   "katakana": "エイブリー",
+   "hiragana": "えいぶりー",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "scarlett": {
+   "display": "Scarlett",
+   "katakana": "スカーレット",
+   "hiragana": "すかーれっと",
+   "mora": 6,
+   "glyphs": 6
+  },
+  "emily": {
+   "display": "Emily",
+   "katakana": "エミリー",
+   "hiragana": "えみりー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "aria": {
+   "display": "Aria",
+   "katakana": "アリア",
+   "hiragana": "ありあ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "penelope": {
+   "display": "Penelope",
+   "katakana": "ペネロピ",
+   "hiragana": "ぺねろぴ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "chloe": {
+   "display": "Chloe",
+   "katakana": "クロエ",
+   "hiragana": "くろえ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "layla": {
+   "display": "Layla",
+   "katakana": "レイラ",
+   "hiragana": "れいら",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "mila": {
+   "display": "Mila",
+   "katakana": "ミラ",
+   "hiragana": "みら",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "nora": {
+   "display": "Nora",
+   "katakana": "ノラ",
+   "hiragana": "のら",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "hazel": {
+   "display": "Hazel",
+   "katakana": "ヘイゼル",
+   "hiragana": "へいぜる",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "madison": {
+   "display": "Madison",
+   "katakana": "マディソン",
+   "hiragana": "までぃそん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "ellie": {
+   "display": "Ellie",
+   "katakana": "エリー",
+   "hiragana": "えりー",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "lily": {
+   "display": "Lily",
+   "katakana": "リリー",
+   "hiragana": "りりー",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "nova": {
+   "display": "Nova",
+   "katakana": "ノバ",
+   "hiragana": "のば",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "isla": {
+   "display": "Isla",
+   "katakana": "アイラ",
+   "hiragana": "あいら",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "grace": {
+   "display": "Grace",
+   "katakana": "グレース",
+   "hiragana": "ぐれーす",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "violet": {
+   "display": "Violet",
+   "katakana": "バイオレット",
+   "hiragana": "ばいおれっと",
+   "mora": 6,
+   "glyphs": 6
+  },
+  "aurora": {
+   "display": "Aurora",
+   "katakana": "オーロラ",
+   "hiragana": "おーろら",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "riley": {
+   "display": "Riley",
+   "katakana": "ライリー",
+   "hiragana": "らいりー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "zoey": {
+   "display": "Zoey",
+   "katakana": "ゾーイ",
+   "hiragana": "ぞーい",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "zoe": {
+   "display": "Zoe",
+   "katakana": "ゾーイ",
+   "hiragana": "ぞーい",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "willow": {
+   "display": "Willow",
+   "katakana": "ウィロー",
+   "hiragana": "うぃろー",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "emilia": {
+   "display": "Emilia",
+   "katakana": "エミリア",
+   "hiragana": "えみりあ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "stella": {
+   "display": "Stella",
+   "katakana": "ステラ",
+   "hiragana": "すてら",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "victoria": {
+   "display": "Victoria",
+   "katakana": "ビクトリア",
+   "hiragana": "びくとりあ",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "hannah": {
+   "display": "Hannah",
+   "katakana": "ハンナ",
+   "hiragana": "はんな",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "addison": {
+   "display": "Addison",
+   "katakana": "アディソン",
+   "hiragana": "あでぃそん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "leah": {
+   "display": "Leah",
+   "katakana": "リア",
+   "hiragana": "りあ",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "lucy": {
+   "display": "Lucy",
+   "katakana": "ルーシー",
+   "hiragana": "るーしー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "eliana": {
+   "display": "Eliana",
+   "katakana": "エリアナ",
+   "hiragana": "えりあな",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "ivy": {
+   "display": "Ivy",
+   "katakana": "アイビー",
+   "hiragana": "あいびー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "lillian": {
+   "display": "Lillian",
+   "katakana": "リリアン",
+   "hiragana": "りりあん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "elena": {
+   "display": "Elena",
+   "katakana": "エレナ",
+   "hiragana": "えれな",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "naomi": {
+   "display": "Naomi",
+   "katakana": "ナオミ",
+   "hiragana": "なおみ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "maya": {
+   "display": "Maya",
+   "katakana": "マヤ",
+   "hiragana": "まや",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "natalie": {
+   "display": "Natalie",
+   "katakana": "ナタリー",
+   "hiragana": "なたりー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "claire": {
+   "display": "Claire",
+   "katakana": "クレア",
+   "hiragana": "くれあ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "audrey": {
+   "display": "Audrey",
+   "katakana": "オードリー",
+   "hiragana": "おーどりー",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "ruby": {
+   "display": "Ruby",
+   "katakana": "ルビー",
+   "hiragana": "るびー",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "sarah": {
+   "display": "Sarah",
+   "katakana": "サラ",
+   "hiragana": "さら",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "anna": {
+   "display": "Anna",
+   "katakana": "アナ",
+   "hiragana": "あな",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "alice": {
+   "display": "Alice",
+   "katakana": "アリス",
+   "hiragana": "ありす",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "sadie": {
+   "display": "Sadie",
+   "katakana": "セイディ",
+   "hiragana": "せいでぃ",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "josephine": {
+   "display": "Josephine",
+   "katakana": "ジョセフィン",
+   "hiragana": "じょせふぃん",
+   "mora": 4,
+   "glyphs": 6
+  },
+  "charlie": {
+   "display": "Charlie",
+   "katakana": "チャーリー",
+   "hiragana": "ちゃーりー",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "sophie": {
+   "display": "Sophie",
+   "katakana": "ソフィー",
+   "hiragana": "そふぃー",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "liz": {
+   "display": "Liz",
+   "katakana": "リズ",
+   "hiragana": "りず",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "lizzie": {
+   "display": "Lizzie",
+   "katakana": "リジー",
+   "hiragana": "りじー",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "maria": {
+   "display": "Maria",
+   "katakana": "マリア",
+   "hiragana": "まりあ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "julia": {
+   "display": "Julia",
+   "katakana": "ジュリア",
+   "hiragana": "じゅりあ",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "rose": {
+   "display": "Rose",
+   "katakana": "ローズ",
+   "hiragana": "ろーず",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "daisy": {
+   "display": "Daisy",
+   "katakana": "デイジー",
+   "hiragana": "でいじー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "molly": {
+   "display": "Molly",
+   "katakana": "モリー",
+   "hiragana": "もりー",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "emery": {
+   "display": "Emery",
+   "katakana": "エメリー",
+   "hiragana": "えめりー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "kate": {
+   "display": "Kate",
+   "katakana": "ケイト",
+   "hiragana": "けいと",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "amy": {
+   "display": "Amy",
+   "katakana": "エイミー",
+   "hiragana": "えいみー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "jasmine": {
+   "display": "Jasmine",
+   "katakana": "ジャスミン",
+   "hiragana": "じゃすみん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "liam": {
+   "display": "Liam",
+   "katakana": "リアム",
+   "hiragana": "りあむ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "noah": {
+   "display": "Noah",
+   "katakana": "ノア",
+   "hiragana": "のあ",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "oliver": {
+   "display": "Oliver",
+   "katakana": "オリバー",
+   "hiragana": "おりばー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "elijah": {
+   "display": "Elijah",
+   "katakana": "イライジャ",
+   "hiragana": "いらいじゃ",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "james": {
+   "display": "James",
+   "katakana": "ジェームズ",
+   "hiragana": "じぇーむず",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "william": {
+   "display": "William",
+   "katakana": "ウィリアム",
+   "hiragana": "うぃりあむ",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "benjamin": {
+   "display": "Benjamin",
+   "katakana": "ベンジャミン",
+   "hiragana": "べんじゃみん",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "lucas": {
+   "display": "Lucas",
+   "katakana": "ルーカス",
+   "hiragana": "るーかす",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "henry": {
+   "display": "Henry",
+   "katakana": "ヘンリー",
+   "hiragana": "へんりー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "theodore": {
+   "display": "Theodore",
+   "katakana": "セオドア",
+   "hiragana": "せおどあ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "theo": {
+   "display": "Theo",
+   "katakana": "セオ",
+   "hiragana": "せお",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "jack": {
+   "display": "Jack",
+   "katakana": "ジャック",
+   "hiragana": "じゃっく",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "levi": {
+   "display": "Levi",
+   "katakana": "リーバイ",
+   "hiragana": "りーばい",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "alexander": {
+   "display": "Alexander",
+   "katakana": "アレクサンダー",
+   "hiragana": "あれくさんだー",
+   "mora": 7,
+   "glyphs": 7
+  },
+  "alex": {
+   "display": "Alex",
+   "katakana": "アレックス",
+   "hiragana": "あれっくす",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "jackson": {
+   "display": "Jackson",
+   "katakana": "ジャクソン",
+   "hiragana": "じゃくそん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "mateo": {
+   "display": "Mateo",
+   "katakana": "マテオ",
+   "hiragana": "まてお",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "daniel": {
+   "display": "Daniel",
+   "katakana": "ダニエル",
+   "hiragana": "だにえる",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "michael": {
+   "display": "Michael",
+   "katakana": "マイケル",
+   "hiragana": "まいける",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "mason": {
+   "display": "Mason",
+   "katakana": "メイソン",
+   "hiragana": "めいそん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "sebastian": {
+   "display": "Sebastian",
+   "katakana": "セバスチャン",
+   "hiragana": "せばすちゃん",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "ethan": {
+   "display": "Ethan",
+   "katakana": "イーサン",
+   "hiragana": "いーさん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "logan": {
+   "display": "Logan",
+   "katakana": "ローガン",
+   "hiragana": "ろーがん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "owen": {
+   "display": "Owen",
+   "katakana": "オーウェン",
+   "hiragana": "おーうぇん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "samuel": {
+   "display": "Samuel",
+   "katakana": "サミュエル",
+   "hiragana": "さみゅえる",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "sam": {
+   "display": "Sam",
+   "katakana": "サム",
+   "hiragana": "さむ",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "jacob": {
+   "display": "Jacob",
+   "katakana": "ジェイコブ",
+   "hiragana": "じぇいこぶ",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "asher": {
+   "display": "Asher",
+   "katakana": "アッシャー",
+   "hiragana": "あっしゃー",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "aiden": {
+   "display": "Aiden",
+   "katakana": "エイデン",
+   "hiragana": "えいでん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "john": {
+   "display": "John",
+   "katakana": "ジョン",
+   "hiragana": "じょん",
+   "mora": 2,
+   "glyphs": 3
+  },
+  "joseph": {
+   "display": "Joseph",
+   "katakana": "ジョセフ",
+   "hiragana": "じょせふ",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "wyatt": {
+   "display": "Wyatt",
+   "katakana": "ワイアット",
+   "hiragana": "わいあっと",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "david": {
+   "display": "David",
+   "katakana": "デビッド",
+   "hiragana": "でびっど",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "leo": {
+   "display": "Leo",
+   "katakana": "レオ",
+   "hiragana": "れお",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "luke": {
+   "display": "Luke",
+   "katakana": "ルーク",
+   "hiragana": "るーく",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "julian": {
+   "display": "Julian",
+   "katakana": "ジュリアン",
+   "hiragana": "じゅりあん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "hudson": {
+   "display": "Hudson",
+   "katakana": "ハドソン",
+   "hiragana": "はどそん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "grayson": {
+   "display": "Grayson",
+   "katakana": "グレイソン",
+   "hiragana": "ぐれいそん",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "matthew": {
+   "display": "Matthew",
+   "katakana": "マシュー",
+   "hiragana": "ましゅー",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "ezra": {
+   "display": "Ezra",
+   "katakana": "エズラ",
+   "hiragana": "えずら",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "gabriel": {
+   "display": "Gabriel",
+   "katakana": "ガブリエル",
+   "hiragana": "がぶりえる",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "carter": {
+   "display": "Carter",
+   "katakana": "カーター",
+   "hiragana": "かーたー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "isaac": {
+   "display": "Isaac",
+   "katakana": "アイザック",
+   "hiragana": "あいざっく",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "jayden": {
+   "display": "Jayden",
+   "katakana": "ジェイデン",
+   "hiragana": "じぇいでん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "luca": {
+   "display": "Luca",
+   "katakana": "ルカ",
+   "hiragana": "るか",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "anthony": {
+   "display": "Anthony",
+   "katakana": "アンソニー",
+   "hiragana": "あんそにー",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "dylan": {
+   "display": "Dylan",
+   "katakana": "ディラン",
+   "hiragana": "でぃらん",
+   "mora": 3,
+   "glyphs": 4
+  },
+  "lincoln": {
+   "display": "Lincoln",
+   "katakana": "リンカーン",
+   "hiragana": "りんかーん",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "thomas": {
+   "display": "Thomas",
+   "katakana": "トーマス",
+   "hiragana": "とーます",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "tom": {
+   "display": "Tom",
+   "katakana": "トム",
+   "hiragana": "とむ",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "elias": {
+   "display": "Elias",
+   "katakana": "エライアス",
+   "hiragana": "えらいあす",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "charles": {
+   "display": "Charles",
+   "katakana": "チャールズ",
+   "hiragana": "ちゃーるず",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "caleb": {
+   "display": "Caleb",
+   "katakana": "ケイレブ",
+   "hiragana": "けいれぶ",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "christopher": {
+   "display": "Christopher",
+   "katakana": "クリストファー",
+   "hiragana": "くりすとふぁー",
+   "mora": 6,
+   "glyphs": 7
+  },
+  "miles": {
+   "display": "Miles",
+   "katakana": "マイルズ",
+   "hiragana": "まいるず",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "andrew": {
+   "display": "Andrew",
+   "katakana": "アンドリュー",
+   "hiragana": "あんどりゅー",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "joshua": {
+   "display": "Joshua",
+   "katakana": "ジョシュア",
+   "hiragana": "じょしゅあ",
+   "mora": 3,
+   "glyphs": 5
+  },
+  "nathan": {
+   "display": "Nathan",
+   "katakana": "ネイサン",
+   "hiragana": "ねいさん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "nolan": {
+   "display": "Nolan",
+   "katakana": "ノーラン",
+   "hiragana": "のーらん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "adrian": {
+   "display": "Adrian",
+   "katakana": "エイドリアン",
+   "hiragana": "えいどりあん",
+   "mora": 6,
+   "glyphs": 6
+  },
+  "cameron": {
+   "display": "Cameron",
+   "katakana": "キャメロン",
+   "hiragana": "きゃめろん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "santiago": {
+   "display": "Santiago",
+   "katakana": "サンティアゴ",
+   "hiragana": "さんてぃあご",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "eli": {
+   "display": "Eli",
+   "katakana": "イーライ",
+   "hiragana": "いーらい",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "aaron": {
+   "display": "Aaron",
+   "katakana": "アーロン",
+   "hiragana": "あーろん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "ryan": {
+   "display": "Ryan",
+   "katakana": "ライアン",
+   "hiragana": "らいあん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "cooper": {
+   "display": "Cooper",
+   "katakana": "クーパー",
+   "hiragana": "くーぱー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "easton": {
+   "display": "Easton",
+   "katakana": "イーストン",
+   "hiragana": "いーすとん",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "kai": {
+   "display": "Kai",
+   "katakana": "カイ",
+   "hiragana": "かい",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "christian": {
+   "display": "Christian",
+   "katakana": "クリスチャン",
+   "hiragana": "くりすちゃん",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "landon": {
+   "display": "Landon",
+   "katakana": "ランドン",
+   "hiragana": "らんどん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "roman": {
+   "display": "Roman",
+   "katakana": "ローマン",
+   "hiragana": "ろーまん",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "axel": {
+   "display": "Axel",
+   "katakana": "アクセル",
+   "hiragana": "あくせる",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "brooks": {
+   "display": "Brooks",
+   "katakana": "ブルックス",
+   "hiragana": "ぶるっくす",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "jonathan": {
+   "display": "Jonathan",
+   "katakana": "ジョナサン",
+   "hiragana": "じょなさん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "robert": {
+   "display": "Robert",
+   "katakana": "ロバート",
+   "hiragana": "ろばーと",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "ian": {
+   "display": "Ian",
+   "katakana": "イアン",
+   "hiragana": "いあん",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "everett": {
+   "display": "Everett",
+   "katakana": "エベレット",
+   "hiragana": "えべれっと",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "wesley": {
+   "display": "Wesley",
+   "katakana": "ウェスリー",
+   "hiragana": "うぇすりー",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "hunter": {
+   "display": "Hunter",
+   "katakana": "ハンター",
+   "hiragana": "はんたー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "leonardo": {
+   "display": "Leonardo",
+   "katakana": "レオナルド",
+   "hiragana": "れおなるど",
+   "mora": 5,
+   "glyphs": 5
+  },
+  "jordan": {
+   "display": "Jordan",
+   "katakana": "ジョーダン",
+   "hiragana": "じょーだん",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "jose": {
+   "display": "Jose",
+   "katakana": "ホセ",
+   "hiragana": "ほせ",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "bennett": {
+   "display": "Bennett",
+   "katakana": "ベネット",
+   "hiragana": "べねっと",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "ben": {
+   "display": "Ben",
+   "katakana": "ベン",
+   "hiragana": "べん",
+   "mora": 2,
+   "glyphs": 2
+  },
+  "silas": {
+   "display": "Silas",
+   "katakana": "サイラス",
+   "hiragana": "さいらす",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "nicholas": {
+   "display": "Nicholas",
+   "katakana": "ニコラス",
+   "hiragana": "にこらす",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "parker": {
+   "display": "Parker",
+   "katakana": "パーカー",
+   "hiragana": "ぱーかー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "austin": {
+   "display": "Austin",
+   "katakana": "オースティン",
+   "hiragana": "おーすてぃん",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "connor": {
+   "display": "Connor",
+   "katakana": "コナー",
+   "hiragana": "こなー",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "dominic": {
+   "display": "Dominic",
+   "katakana": "ドミニク",
+   "hiragana": "どみにく",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "xavier": {
+   "display": "Xavier",
+   "katakana": "ザビエル",
+   "hiragana": "ざびえる",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "max": {
+   "display": "Max",
+   "katakana": "マックス",
+   "hiragana": "まっくす",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "finn": {
+   "display": "Finn",
+   "katakana": "フィン",
+   "hiragana": "ふぃん",
+   "mora": 2,
+   "glyphs": 3
+  },
+  "jasper": {
+   "display": "Jasper",
+   "katakana": "ジャスパー",
+   "hiragana": "じゃすぱー",
+   "mora": 4,
+   "glyphs": 5
+  },
+  "felix": {
+   "display": "Felix",
+   "katakana": "フェリックス",
+   "hiragana": "ふぇりっくす",
+   "mora": 5,
+   "glyphs": 6
+  },
+  "oscar": {
+   "display": "Oscar",
+   "katakana": "オスカー",
+   "hiragana": "おすかー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "arthur": {
+   "display": "Arthur",
+   "katakana": "アーサー",
+   "hiragana": "あーさー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "peter": {
+   "display": "Peter",
+   "katakana": "ピーター",
+   "hiragana": "ぴーたー",
+   "mora": 4,
+   "glyphs": 4
+  },
+  "paul": {
+   "display": "Paul",
+   "katakana": "ポール",
+   "hiragana": "ぽーる",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "mark": {
+   "display": "Mark",
+   "katakana": "マーク",
+   "hiragana": "まーく",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "adam": {
+   "display": "Adam",
+   "katakana": "アダム",
+   "hiragana": "あだむ",
+   "mora": 3,
+   "glyphs": 3
+  },
+  "evan": {
+   "display": "Evan",
+   "katakana": "エバン",
+   "hiragana": "えばん",
+   "mora": 3,
+   "glyphs": 3
+  }
+ },
+ "words": {
+  "dog": {
+   "display": "dog",
+   "katakana": "ドッグ",
+   "hiragana": "どっぐ",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "いぬ"
+  },
+  "cat": {
+   "display": "cat",
+   "katakana": "キャット",
+   "hiragana": "きゃっと",
+   "mora": 3,
+   "glyphs": 4,
+   "japanese": "ねこ"
+  },
+  "rabbit": {
+   "display": "rabbit",
+   "katakana": "ラビット",
+   "hiragana": "らびっと",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "うさぎ"
+  },
+  "bear": {
+   "display": "bear",
+   "katakana": "ベア",
+   "hiragana": "べあ",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "くま"
+  },
+  "fish": {
+   "display": "fish",
+   "katakana": "フィッシュ",
+   "hiragana": "ふぃっしゅ",
+   "mora": 3,
+   "glyphs": 5,
+   "japanese": "さかな"
+  },
+  "bird": {
+   "display": "bird",
+   "katakana": "バード",
+   "hiragana": "ばーど",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "とり"
+  },
+  "flower": {
+   "display": "flower",
+   "katakana": "フラワー",
+   "hiragana": "ふらわー",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "はな"
+  },
+  "tree": {
+   "display": "tree",
+   "katakana": "ツリー",
+   "hiragana": "つりー",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "き"
+  },
+  "sun": {
+   "display": "sun",
+   "katakana": "サン",
+   "hiragana": "さん",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "たいよう"
+  },
+  "moon": {
+   "display": "moon",
+   "katakana": "ムーン",
+   "hiragana": "むーん",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "つき"
+  },
+  "star": {
+   "display": "star",
+   "katakana": "スター",
+   "hiragana": "すたー",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "ほし"
+  },
+  "rain": {
+   "display": "rain",
+   "katakana": "レイン",
+   "hiragana": "れいん",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "あめ"
+  },
+  "rainbow": {
+   "display": "rainbow",
+   "katakana": "レインボー",
+   "hiragana": "れいんぼー",
+   "mora": 5,
+   "glyphs": 5,
+   "japanese": "にじ"
+  },
+  "apple": {
+   "display": "apple",
+   "katakana": "アップル",
+   "hiragana": "あっぷる",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "りんご"
+  },
+  "banana": {
+   "display": "banana",
+   "katakana": "バナナ",
+   "hiragana": "ばなな",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "ばなな"
+  },
+  "strawberry": {
+   "display": "strawberry",
+   "katakana": "ストロベリー",
+   "hiragana": "すとろべりー",
+   "mora": 6,
+   "glyphs": 6,
+   "japanese": "いちご"
+  },
+  "water": {
+   "display": "water",
+   "katakana": "ウォーター",
+   "hiragana": "うぉーたー",
+   "mora": 4,
+   "glyphs": 5,
+   "japanese": "みず"
+  },
+  "mom": {
+   "display": "mom",
+   "katakana": "マム",
+   "hiragana": "まむ",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "おかあさん"
+  },
+  "dad": {
+   "display": "dad",
+   "katakana": "ダッド",
+   "hiragana": "だっど",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "おとうさん"
+  },
+  "friend": {
+   "display": "friend",
+   "katakana": "フレンド",
+   "hiragana": "ふれんど",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "ともだち"
+  },
+  "school": {
+   "display": "school",
+   "katakana": "スクール",
+   "hiragana": "すくーる",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "がっこう"
+  },
+  "car": {
+   "display": "car",
+   "katakana": "カー",
+   "hiragana": "かー",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "くるま"
+  },
+  "train": {
+   "display": "train",
+   "katakana": "トレイン",
+   "hiragana": "とれいん",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "でんしゃ"
+  },
+  "red": {
+   "display": "red",
+   "katakana": "レッド",
+   "hiragana": "れっど",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "あか"
+  },
+  "blue": {
+   "display": "blue",
+   "katakana": "ブルー",
+   "hiragana": "ぶるー",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "あお"
+  },
+  "yellow": {
+   "display": "yellow",
+   "katakana": "イエロー",
+   "hiragana": "いえろー",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "きいろ"
+  },
+  "green": {
+   "display": "green",
+   "katakana": "グリーン",
+   "hiragana": "ぐりーん",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "みどり"
+  },
+  "white": {
+   "display": "white",
+   "katakana": "ホワイト",
+   "hiragana": "ほわいと",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "しろ"
+  },
+  "black": {
+   "display": "black",
+   "katakana": "ブラック",
+   "hiragana": "ぶらっく",
+   "mora": 4,
+   "glyphs": 4,
+   "japanese": "くろ"
+  },
+  "pink": {
+   "display": "pink",
+   "katakana": "ピンク",
+   "hiragana": "ぴんく",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "ぴんく"
+  },
+  "one": {
+   "display": "one",
+   "katakana": "ワン",
+   "hiragana": "わん",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "いち"
+  },
+  "two": {
+   "display": "two",
+   "katakana": "ツー",
+   "hiragana": "つー",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "に"
+  },
+  "three": {
+   "display": "three",
+   "katakana": "スリー",
+   "hiragana": "すりー",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "さん"
+  },
+  "dinosaur": {
+   "display": "dinosaur",
+   "katakana": "ダイナソー",
+   "hiragana": "だいなそー",
+   "mora": 5,
+   "glyphs": 5,
+   "japanese": "きょうりゅう"
+  },
+  "cake": {
+   "display": "cake",
+   "katakana": "ケーキ",
+   "hiragana": "けーき",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "けーき"
+  },
+  "heart": {
+   "display": "heart",
+   "katakana": "ハート",
+   "hiragana": "はーと",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "はーと"
+  },
+  "thank you": {
+   "display": "thank you",
+   "katakana": "サンキュー",
+   "hiragana": "さんきゅー",
+   "mora": 4,
+   "glyphs": 5,
+   "japanese": "ありがとう"
+  },
+  "hello": {
+   "display": "hello",
+   "katakana": "ハロー",
+   "hiragana": "はろー",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "こんにちは"
+  },
+  "good morning": {
+   "display": "good morning",
+   "katakana": "グッドモーニング",
+   "hiragana": "ぐっどもーにんぐ",
+   "mora": 8,
+   "glyphs": 8,
+   "japanese": "おはよう"
+  },
+  "good night": {
+   "display": "good night",
+   "katakana": "グッドナイト",
+   "hiragana": "ぐっどないと",
+   "mora": 6,
+   "glyphs": 6,
+   "japanese": "おやすみ"
+  },
+  "love": {
+   "display": "love",
+   "katakana": "ラブ",
+   "hiragana": "らぶ",
+   "mora": 2,
+   "glyphs": 2,
+   "japanese": "だいすき"
+  },
+  "family": {
+   "display": "family",
+   "katakana": "ファミリー",
+   "hiragana": "ふぁみりー",
+   "mora": 4,
+   "glyphs": 5,
+   "japanese": "かぞく"
+  },
+  "baby": {
+   "display": "baby",
+   "katakana": "ベビー",
+   "hiragana": "べびー",
+   "mora": 3,
+   "glyphs": 3,
+   "japanese": "あかちゃん"
+  },
+  "ice cream": {
+   "display": "ice cream",
+   "katakana": "アイスクリーム",
+   "hiragana": "あいすくりーむ",
+   "mora": 7,
+   "glyphs": 7,
+   "japanese": "あいすくりーむ"
+  }
+ }
+}

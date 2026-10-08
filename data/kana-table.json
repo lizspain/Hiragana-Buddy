@@ -1,0 +1,794 @@
+{
+ "meta": {
+  "romanisation": "Modified Hepburn for display; input accepts Hepburn and Kunrei via wanakana",
+  "notes": [
+   "Small kana sit in the lower-left quarter of the cell in horizontal writing; KanjiVG already draws them small and low.",
+   "ゐ ゑ ゔ ゕ ゖ exist in kana-strokes.json but are left out of the practice chart.",
+   "Long-vowel mark ー (U+30FC) is kept by default in loanword/name spellings (e.g. じぇーむず), as kindergarten materials do; a parent setting expands it to a vowel kana instead (じぇえむず). In horizontal writing it is one left-to-right stroke."
+  ]
+ },
+ "charts": {
+  "basic": [
+   [
+    "あ",
+    "い",
+    "う",
+    "え",
+    "お"
+   ],
+   [
+    "か",
+    "き",
+    "く",
+    "け",
+    "こ"
+   ],
+   [
+    "さ",
+    "し",
+    "す",
+    "せ",
+    "そ"
+   ],
+   [
+    "た",
+    "ち",
+    "つ",
+    "て",
+    "と"
+   ],
+   [
+    "な",
+    "に",
+    "ぬ",
+    "ね",
+    "の"
+   ],
+   [
+    "は",
+    "ひ",
+    "ふ",
+    "へ",
+    "ほ"
+   ],
+   [
+    "ま",
+    "み",
+    "む",
+    "め",
+    "も"
+   ],
+   [
+    "や",
+    null,
+    "ゆ",
+    null,
+    "よ"
+   ],
+   [
+    "ら",
+    "り",
+    "る",
+    "れ",
+    "ろ"
+   ],
+   [
+    "わ",
+    null,
+    null,
+    null,
+    "を"
+   ],
+   [
+    "ん",
+    null,
+    null,
+    null,
+    null
+   ]
+  ],
+  "voiced": [
+   [
+    "が",
+    "ぎ",
+    "ぐ",
+    "げ",
+    "ご"
+   ],
+   [
+    "ざ",
+    "じ",
+    "ず",
+    "ぜ",
+    "ぞ"
+   ],
+   [
+    "だ",
+    "ぢ",
+    "づ",
+    "で",
+    "ど"
+   ],
+   [
+    "ば",
+    "び",
+    "ぶ",
+    "べ",
+    "ぼ"
+   ],
+   [
+    "ぱ",
+    "ぴ",
+    "ぷ",
+    "ぺ",
+    "ぽ"
+   ]
+  ],
+  "small": [
+   [
+    "ゃ",
+    "ゅ",
+    "ょ",
+    "っ",
+    null
+   ],
+   [
+    "ぁ",
+    "ぃ",
+    "ぅ",
+    "ぇ",
+    "ぉ"
+   ]
+  ]
+ },
+ "kana": {
+  "あ": {
+   "romaji": "a",
+   "group": "basic",
+   "row": 0,
+   "col": 0,
+   "small": false,
+   "speak": "あ"
+  },
+  "い": {
+   "romaji": "i",
+   "group": "basic",
+   "row": 0,
+   "col": 1,
+   "small": false,
+   "speak": "い"
+  },
+  "う": {
+   "romaji": "u",
+   "group": "basic",
+   "row": 0,
+   "col": 2,
+   "small": false,
+   "speak": "う"
+  },
+  "え": {
+   "romaji": "e",
+   "group": "basic",
+   "row": 0,
+   "col": 3,
+   "small": false,
+   "speak": "え"
+  },
+  "お": {
+   "romaji": "o",
+   "group": "basic",
+   "row": 0,
+   "col": 4,
+   "small": false,
+   "speak": "お"
+  },
+  "か": {
+   "romaji": "ka",
+   "group": "basic",
+   "row": 1,
+   "col": 0,
+   "small": false,
+   "speak": "か"
+  },
+  "き": {
+   "romaji": "ki",
+   "group": "basic",
+   "row": 1,
+   "col": 1,
+   "small": false,
+   "speak": "き"
+  },
+  "く": {
+   "romaji": "ku",
+   "group": "basic",
+   "row": 1,
+   "col": 2,
+   "small": false,
+   "speak": "く"
+  },
+  "け": {
+   "romaji": "ke",
+   "group": "basic",
+   "row": 1,
+   "col": 3,
+   "small": false,
+   "speak": "け"
+  },
+  "こ": {
+   "romaji": "ko",
+   "group": "basic",
+   "row": 1,
+   "col": 4,
+   "small": false,
+   "speak": "こ"
+  },
+  "さ": {
+   "romaji": "sa",
+   "group": "basic",
+   "row": 2,
+   "col": 0,
+   "small": false,
+   "speak": "さ"
+  },
+  "し": {
+   "romaji": "shi",
+   "group": "basic",
+   "row": 2,
+   "col": 1,
+   "small": false,
+   "speak": "し"
+  },
+  "す": {
+   "romaji": "su",
+   "group": "basic",
+   "row": 2,
+   "col": 2,
+   "small": false,
+   "speak": "す"
+  },
+  "せ": {
+   "romaji": "se",
+   "group": "basic",
+   "row": 2,
+   "col": 3,
+   "small": false,
+   "speak": "せ"
+  },
+  "そ": {
+   "romaji": "so",
+   "group": "basic",
+   "row": 2,
+   "col": 4,
+   "small": false,
+   "speak": "そ"
+  },
+  "た": {
+   "romaji": "ta",
+   "group": "basic",
+   "row": 3,
+   "col": 0,
+   "small": false,
+   "speak": "た"
+  },
+  "ち": {
+   "romaji": "chi",
+   "group": "basic",
+   "row": 3,
+   "col": 1,
+   "small": false,
+   "speak": "ち"
+  },
+  "つ": {
+   "romaji": "tsu",
+   "group": "basic",
+   "row": 3,
+   "col": 2,
+   "small": false,
+   "speak": "つ"
+  },
+  "て": {
+   "romaji": "te",
+   "group": "basic",
+   "row": 3,
+   "col": 3,
+   "small": false,
+   "speak": "て"
+  },
+  "と": {
+   "romaji": "to",
+   "group": "basic",
+   "row": 3,
+   "col": 4,
+   "small": false,
+   "speak": "と"
+  },
+  "な": {
+   "romaji": "na",
+   "group": "basic",
+   "row": 4,
+   "col": 0,
+   "small": false,
+   "speak": "な"
+  },
+  "に": {
+   "romaji": "ni",
+   "group": "basic",
+   "row": 4,
+   "col": 1,
+   "small": false,
+   "speak": "に"
+  },
+  "ぬ": {
+   "romaji": "nu",
+   "group": "basic",
+   "row": 4,
+   "col": 2,
+   "small": false,
+   "speak": "ぬ"
+  },
+  "ね": {
+   "romaji": "ne",
+   "group": "basic",
+   "row": 4,
+   "col": 3,
+   "small": false,
+   "speak": "ね"
+  },
+  "の": {
+   "romaji": "no",
+   "group": "basic",
+   "row": 4,
+   "col": 4,
+   "small": false,
+   "speak": "の"
+  },
+  "は": {
+   "romaji": "ha",
+   "group": "basic",
+   "row": 5,
+   "col": 0,
+   "small": false,
+   "speak": "は"
+  },
+  "ひ": {
+   "romaji": "hi",
+   "group": "basic",
+   "row": 5,
+   "col": 1,
+   "small": false,
+   "speak": "ひ"
+  },
+  "ふ": {
+   "romaji": "fu",
+   "group": "basic",
+   "row": 5,
+   "col": 2,
+   "small": false,
+   "speak": "ふ"
+  },
+  "へ": {
+   "romaji": "he",
+   "group": "basic",
+   "row": 5,
+   "col": 3,
+   "small": false,
+   "speak": "へ"
+  },
+  "ほ": {
+   "romaji": "ho",
+   "group": "basic",
+   "row": 5,
+   "col": 4,
+   "small": false,
+   "speak": "ほ"
+  },
+  "ま": {
+   "romaji": "ma",
+   "group": "basic",
+   "row": 6,
+   "col": 0,
+   "small": false,
+   "speak": "ま"
+  },
+  "み": {
+   "romaji": "mi",
+   "group": "basic",
+   "row": 6,
+   "col": 1,
+   "small": false,
+   "speak": "み"
+  },
+  "む": {
+   "romaji": "mu",
+   "group": "basic",
+   "row": 6,
+   "col": 2,
+   "small": false,
+   "speak": "む"
+  },
+  "め": {
+   "romaji": "me",
+   "group": "basic",
+   "row": 6,
+   "col": 3,
+   "small": false,
+   "speak": "め"
+  },
+  "も": {
+   "romaji": "mo",
+   "group": "basic",
+   "row": 6,
+   "col": 4,
+   "small": false,
+   "speak": "も"
+  },
+  "や": {
+   "romaji": "ya",
+   "group": "basic",
+   "row": 7,
+   "col": 0,
+   "small": false,
+   "speak": "や"
+  },
+  "ゆ": {
+   "romaji": "yu",
+   "group": "basic",
+   "row": 7,
+   "col": 2,
+   "small": false,
+   "speak": "ゆ"
+  },
+  "よ": {
+   "romaji": "yo",
+   "group": "basic",
+   "row": 7,
+   "col": 4,
+   "small": false,
+   "speak": "よ"
+  },
+  "ら": {
+   "romaji": "ra",
+   "group": "basic",
+   "row": 8,
+   "col": 0,
+   "small": false,
+   "speak": "ら"
+  },
+  "り": {
+   "romaji": "ri",
+   "group": "basic",
+   "row": 8,
+   "col": 1,
+   "small": false,
+   "speak": "り"
+  },
+  "る": {
+   "romaji": "ru",
+   "group": "basic",
+   "row": 8,
+   "col": 2,
+   "small": false,
+   "speak": "る"
+  },
+  "れ": {
+   "romaji": "re",
+   "group": "basic",
+   "row": 8,
+   "col": 3,
+   "small": false,
+   "speak": "れ"
+  },
+  "ろ": {
+   "romaji": "ro",
+   "group": "basic",
+   "row": 8,
+   "col": 4,
+   "small": false,
+   "speak": "ろ"
+  },
+  "わ": {
+   "romaji": "wa",
+   "group": "basic",
+   "row": 9,
+   "col": 0,
+   "small": false,
+   "speak": "わ"
+  },
+  "を": {
+   "romaji": "wo",
+   "group": "basic",
+   "row": 9,
+   "col": 4,
+   "small": false,
+   "speak": "を"
+  },
+  "ん": {
+   "romaji": "n",
+   "group": "basic",
+   "row": 10,
+   "col": 0,
+   "small": false,
+   "speak": "ん"
+  },
+  "が": {
+   "romaji": "ga",
+   "group": "voiced",
+   "row": 0,
+   "col": 0,
+   "small": false,
+   "speak": "が"
+  },
+  "ぎ": {
+   "romaji": "gi",
+   "group": "voiced",
+   "row": 0,
+   "col": 1,
+   "small": false,
+   "speak": "ぎ"
+  },
+  "ぐ": {
+   "romaji": "gu",
+   "group": "voiced",
+   "row": 0,
+   "col": 2,
+   "small": false,
+   "speak": "ぐ"
+  },
+  "げ": {
+   "romaji": "ge",
+   "group": "voiced",
+   "row": 0,
+   "col": 3,
+   "small": false,
+   "speak": "げ"
+  },
+  "ご": {
+   "romaji": "go",
+   "group": "voiced",
+   "row": 0,
+   "col": 4,
+   "small": false,
+   "speak": "ご"
+  },
+  "ざ": {
+   "romaji": "za",
+   "group": "voiced",
+   "row": 1,
+   "col": 0,
+   "small": false,
+   "speak": "ざ"
+  },
+  "じ": {
+   "romaji": "ji",
+   "group": "voiced",
+   "row": 1,
+   "col": 1,
+   "small": false,
+   "speak": "じ"
+  },
+  "ず": {
+   "romaji": "zu",
+   "group": "voiced",
+   "row": 1,
+   "col": 2,
+   "small": false,
+   "speak": "ず"
+  },
+  "ぜ": {
+   "romaji": "ze",
+   "group": "voiced",
+   "row": 1,
+   "col": 3,
+   "small": false,
+   "speak": "ぜ"
+  },
+  "ぞ": {
+   "romaji": "zo",
+   "group": "voiced",
+   "row": 1,
+   "col": 4,
+   "small": false,
+   "speak": "ぞ"
+  },
+  "だ": {
+   "romaji": "da",
+   "group": "voiced",
+   "row": 2,
+   "col": 0,
+   "small": false,
+   "speak": "だ"
+  },
+  "ぢ": {
+   "romaji": "ji",
+   "group": "voiced",
+   "row": 2,
+   "col": 1,
+   "small": false,
+   "speak": "ぢ"
+  },
+  "づ": {
+   "romaji": "zu",
+   "group": "voiced",
+   "row": 2,
+   "col": 2,
+   "small": false,
+   "speak": "づ"
+  },
+  "で": {
+   "romaji": "de",
+   "group": "voiced",
+   "row": 2,
+   "col": 3,
+   "small": false,
+   "speak": "で"
+  },
+  "ど": {
+   "romaji": "do",
+   "group": "voiced",
+   "row": 2,
+   "col": 4,
+   "small": false,
+   "speak": "ど"
+  },
+  "ば": {
+   "romaji": "ba",
+   "group": "voiced",
+   "row": 3,
+   "col": 0,
+   "small": false,
+   "speak": "ば"
+  },
+  "び": {
+   "romaji": "bi",
+   "group": "voiced",
+   "row": 3,
+   "col": 1,
+   "small": false,
+   "speak": "び"
+  },
+  "ぶ": {
+   "romaji": "bu",
+   "group": "voiced",
+   "row": 3,
+   "col": 2,
+   "small": false,
+   "speak": "ぶ"
+  },
+  "べ": {
+   "romaji": "be",
+   "group": "voiced",
+   "row": 3,
+   "col": 3,
+   "small": false,
+   "speak": "べ"
+  },
+  "ぼ": {
+   "romaji": "bo",
+   "group": "voiced",
+   "row": 3,
+   "col": 4,
+   "small": false,
+   "speak": "ぼ"
+  },
+  "ぱ": {
+   "romaji": "pa",
+   "group": "voiced",
+   "row": 4,
+   "col": 0,
+   "small": false,
+   "speak": "ぱ"
+  },
+  "ぴ": {
+   "romaji": "pi",
+   "group": "voiced",
+   "row": 4,
+   "col": 1,
+   "small": false,
+   "speak": "ぴ"
+  },
+  "ぷ": {
+   "romaji": "pu",
+   "group": "voiced",
+   "row": 4,
+   "col": 2,
+   "small": false,
+   "speak": "ぷ"
+  },
+  "ぺ": {
+   "romaji": "pe",
+   "group": "voiced",
+   "row": 4,
+   "col": 3,
+   "small": false,
+   "speak": "ぺ"
+  },
+  "ぽ": {
+   "romaji": "po",
+   "group": "voiced",
+   "row": 4,
+   "col": 4,
+   "small": false,
+   "speak": "ぽ"
+  },
+  "ゃ": {
+   "romaji": "ya",
+   "group": "small",
+   "row": 0,
+   "col": 0,
+   "small": true,
+   "speak": "ちいさい や"
+  },
+  "ゅ": {
+   "romaji": "yu",
+   "group": "small",
+   "row": 0,
+   "col": 1,
+   "small": true,
+   "speak": "ちいさい ゆ"
+  },
+  "ょ": {
+   "romaji": "yo",
+   "group": "small",
+   "row": 0,
+   "col": 2,
+   "small": true,
+   "speak": "ちいさい よ"
+  },
+  "っ": {
+   "romaji": "(pause)",
+   "group": "small",
+   "row": 0,
+   "col": 3,
+   "small": true,
+   "speak": "ちいさい つ"
+  },
+  "ぁ": {
+   "romaji": "a",
+   "group": "small",
+   "row": 1,
+   "col": 0,
+   "small": true,
+   "speak": "ちいさい あ"
+  },
+  "ぃ": {
+   "romaji": "i",
+   "group": "small",
+   "row": 1,
+   "col": 1,
+   "small": true,
+   "speak": "ちいさい い"
+  },
+  "ぅ": {
+   "romaji": "u",
+   "group": "small",
+   "row": 1,
+   "col": 2,
+   "small": true,
+   "speak": "ちいさい う"
+  },
+  "ぇ": {
+   "romaji": "e",
+   "group": "small",
+   "row": 1,
+   "col": 3,
+   "small": true,
+   "speak": "ちいさい え"
+  },
+  "ぉ": {
+   "romaji": "o",
+   "group": "small",
+   "row": 1,
+   "col": 4,
+   "small": true,
+   "speak": "ちいさい お"
+  },
+  "ー": {
+   "romaji": "(long vowel)",
+   "group": "mark",
+   "row": 0,
+   "col": 0,
+   "small": false,
+   "speak": "のばす ぼう"
+  }
+ }
+}
