@@ -4,6 +4,7 @@
 //   effects (top):    demo animation, sparkles, fades, pulses. Animated only while busy.
 
 import type { GlyphData, Phase, Pt, StrokeData } from "../engine/matcher";
+import { createBurst, star } from "./burst";
 import type { CellRect } from "./pen";
 
 export interface GuideScene {
@@ -67,6 +68,12 @@ export class Board {
   private dpr = 1;
 
   inkColor = "#f28c28";
+
+  /** Change the ink; strokes already on the letter take the new colour too. */
+  setInkColor(color: string): void {
+    this.inkColor = color;
+    this.redrawInk();
+  }
   private scene: GuideScene | null = null;
   private accepted: Pt[][] = []; // cell units
   private liveX: number[] = [];
@@ -134,6 +141,7 @@ export class Board {
     }
     this.liveX = [];
     this.liveY = [];
+    for (const p of this.particles) p.life = 0; // their pixel positions belong to the old size
     this.drawGuide();
     this.redrawInk();
     this.onResize?.();
@@ -577,51 +585,14 @@ export class Board {
     });
   }
 
-  /**
-   * Letter finished: rainbow stars stream out from the centre on spiral arms
-   * while the whole swirl turns slowly; 1.5 s, then gone.
-   */
+  /** Letter finished: a 1.5 s rainbow star swirl around the cell. */
   celebrate(ms = 1500): void {
-    const N = 96;
-    const golden = Math.PI * (3 - Math.sqrt(5));
-    const still = reducedMotion();
-    const stars = Array.from({ length: N }, (_, i) => ({
-      born: (i / N) * 0.65 * ms, // emitted over the first two thirds
-      angle: i * golden,
-      reach: 0.28 + Math.random() * 0.24, // how far out it travels (cell units)
-      size: 0.022 + Math.random() * 0.024,
-      hue: (i * 137.5) % 360, // golden-angle steps: the full rainbow is out at any moment
-      spin: (Math.random() - 0.5) * 6,
-    }));
+    const burst = createBurst(ms);
     const t0 = performance.now();
     this.addEffect({
       draw: (ctx, now) => {
-        const t = now - t0;
-        if (t > ms) return false;
         const { x, y, size } = this.cell;
-        const cx = x + size / 2;
-        const cy = y + size / 2;
-        const turn = still ? 0 : (t / 1000) * 1.1; // slow rotation of the whole swirl, rad
-        const fadeOut = Math.min(1, (ms - t) / 350);
-        for (const s of stars) {
-          const age = still ? ms : t - s.born;
-          if (age < 0) continue;
-          const f = Math.min(1, age / (ms * 0.6));
-          const out = 1 - Math.pow(1 - f, 3); // ease out
-          const r = size * (0.04 + s.reach * out);
-          const a = s.angle + turn + out * 1.2; // curve outward like a spiral arm
-          const px = cx + Math.cos(a) * r;
-          const py = cy + Math.sin(a) * r;
-          const twinkle = 0.75 + 0.25 * Math.sin(age / 70 + s.hue);
-          ctx.save();
-          ctx.globalAlpha = Math.min(1, age / 120) * fadeOut;
-          ctx.translate(px, py);
-          ctx.rotate(still ? 0 : (age / 1000) * s.spin);
-          ctx.fillStyle = `hsl(${(s.hue + t * 0.12) % 360} 92% 62%)`;
-          star(ctx, 0, 0, size * s.size * twinkle);
-          ctx.restore();
-        }
-        return true;
+        return burst.draw(ctx, x + size / 2, y + size / 2, size, now - t0);
       },
     });
   }
@@ -672,15 +643,4 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
-}
-
-function star(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  ctx.beginPath();
-  for (let n = 0; n < 8; n++) {
-    const rr = n % 2 ? r * 0.38 : r;
-    const a = (n * Math.PI) / 4 - Math.PI / 2;
-    ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-  }
-  ctx.closePath();
-  ctx.fill();
 }

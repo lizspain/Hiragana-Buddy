@@ -10,6 +10,7 @@ import { CharacterSession, type Outcome } from "../engine/session";
 import { boop, chime, fanfare, line, pop, praise, preloadWord, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
 import { Board } from "../ui/board";
 import { h, html, ICON, iconButton, kanaSvg } from "../ui/dom";
+import { inkPalette } from "../ui/palette";
 import { PenInput } from "../ui/pen";
 import { getSettings, isMastered, recordSession, saveSettings, type KanaResult } from "../store";
 
@@ -35,6 +36,14 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home"), pips, h("div", { class: "right" }, replayBtn, soundBtn)),
     strip,
     h("main", { class: "stage-wrap" }, stage),
+    h(
+      "aside",
+      { class: "palette-area" },
+      inkPalette(settings.inkColor, (c) => {
+        board.setInkColor(c);
+        void saveSettings({ inkColor: c });
+      }),
+    ),
   );
 
   const board = new Board(stage);

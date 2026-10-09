@@ -4,32 +4,8 @@ import { sayWord, unlockAudio } from "../ui/audio";
 import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
 import { bestStars, getItems, getSettings, saveSettings } from "../store";
 
-export const INK_COLORS = ["#f28c28", "#e85d9b", "#3e8ede", "#33a167", "#8a5cd6"];
-
 export function homeScreen(nav: Nav): Screen {
-  const settings = getSettings();
   const items = getItems();
-
-  const swatches = h(
-    "div",
-    { class: "swatches", role: "radiogroup", "aria-label": "Ink colour" },
-    INK_COLORS.map((c) =>
-      h("button", {
-        class: `swatch${c === settings.inkColor ? " on" : ""}`,
-        style: `--c:${c}`,
-        role: "radio",
-        "aria-checked": String(c === settings.inkColor),
-        "aria-label": "Ink colour",
-        onclick: (e: MouseEvent) => {
-          void saveSettings({ inkColor: c });
-          swatches.querySelectorAll(".swatch").forEach((s) => {
-            s.classList.toggle("on", s === e.currentTarget);
-            s.setAttribute("aria-checked", String(s === e.currentTarget));
-          });
-        },
-      }),
-    ),
-  );
 
   const shelf = items.length
     ? h(
@@ -113,7 +89,6 @@ export function homeScreen(nav: Nav): Screen {
         h("span", { class: "big-label" }, "One letter"),
       ),
     ),
-    swatches,
     shelf,
   );
 

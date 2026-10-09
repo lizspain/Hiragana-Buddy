@@ -729,9 +729,9 @@ body[data-screen="write"] {
   height: 100dvh;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "top" "strip" "stage";
+  grid-template-areas: "top" "strip" "stage" "palette";
   gap: 10px;
   touch-action: none;
   -webkit-user-select: none;
@@ -831,6 +831,13 @@ body[data-screen="write"] {
   grid-area: strip;
 }
 
+.palette-area {
+  grid-area: palette;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .stage-wrap {
   grid-area: stage;
   min-height: 0;
@@ -858,9 +865,13 @@ body[data-screen="write"] {
 
 @media (orientation: landscape) and (min-width: 700px) {
   .write {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas: "top top" "strip stage";
+    grid-template-areas: "top top top" "strip stage palette";
+  }
+
+  .write .palette-area .swatches {
+    flex-direction: column;
   }
 
   .write .strip {
@@ -937,6 +948,26 @@ body[data-screen="write"] {
   display: block;
   width: clamp(72px, 22vw, 150px);
   height: clamp(72px, 22vw, 150px);
+}
+
+.done-corners {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+.done-corners.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.page-burst {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 40;
+  pointer-events: none;
 }
 
 .done-actions {

@@ -56,6 +56,10 @@ test("draw あ correctly with a mouse in all three phases → 3 stars", async ({
   const word = page.getByTestId("my-word");
   await expect(word).toBeVisible({ timeout: 10_000 });
   await expect(word).toHaveAttribute("data-stars", "3");
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/done-burst-${test.info().project.name}.png` });
+  await expect(page.locator(".done-corners")).toHaveClass(/show/);
+  await page.waitForTimeout(1500);
   await page.screenshot({ path: `test-results/done-${test.info().project.name}.png` });
 
   // Saved to history: the home shelf shows it, with a Play it button.
@@ -273,7 +277,9 @@ test("voice lines take turns with a pause between them", async ({ page }) => {
       log.push({ at: when ?? this.context.currentTime, dur: this.buffer?.duration ?? 0 });
       return start.call(this, when, ...rest);
     };
-    const audio = await import("/src/ui/audio.ts");
+    // Served by the Vite dev server; a variable keeps TypeScript from resolving it here.
+    const path = "/src/ui/audio.ts";
+    const audio = (await import(path)) as typeof import("../src/ui/audio");
     audio.unlockAudio();
     audio.sayKana("あ", false);
     audio.sayKana("い", false);
@@ -285,6 +291,45 @@ test("voice lines take turns with a pause between them", async ({ page }) => {
   // あ → い → ねこ: each starts after the previous line ends, plus a pause.
   expect(starts[1].at).toBeGreaterThanOrEqual(starts[0].at + starts[0].dur + 0.2);
   expect(starts[2].at).toBeGreaterThanOrEqual(starts[1].at + starts[1].dur + 0.2);
+});
+
+test("ink colour is picked on the drawing screen and recolours the letter", async ({ page }) => {
+  await expect(async () => {
+    await page.goto("/");
+    await expect(page.getByTestId("palette")).toHaveCount(0); // not on the home page any more
+  }).toPass();
+  await openLetter(page, "い");
+  await waitReady(page, 1, 0);
+  const pts = data["い"].strokes[0].points;
+  await drawMouse(page, pts);
+  await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
+
+  // Colour of the ink layer at the middle of the accepted stroke.
+  const inkAt = (p: Pt) =>
+    page.evaluate(([u, v]) => {
+      const s = document.querySelector<HTMLElement>("[data-testid=stage]")!;
+      const [x, y, size] = s.dataset.cell!.split(",").map(Number);
+      const c = s.querySelector<HTMLCanvasElement>(".layer-ink")!;
+      const k = c.width / s.clientWidth;
+      const d = c.getContext("2d")!.getImageData(Math.round((x + u * size) * k), Math.round((y + v * size) * k), 1, 1).data;
+      return [d[0], d[1], d[2]];
+    }, p);
+  expect(await inkAt(pts[16])).toEqual([0xf2, 0x8c, 0x28]); // default orange
+
+  await page.getByTestId("palette").locator('[data-color="#e85d9b"]').click();
+  await expect(page.getByTestId("palette").locator('[data-color="#e85d9b"]')).toHaveAttribute("aria-checked", "true");
+  expect(await inkAt(pts[16])).toEqual([0xe8, 0x5d, 0x9b]); // pink, same stroke
+  await page.screenshot({ path: `test-results/palette-portrait-${test.info().project.name}.png` });
+
+  const vp = page.viewportSize()!;
+  await page.setViewportSize({ width: vp.height, height: vp.width });
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `test-results/palette-landscape-${test.info().project.name}.png` });
+
+  // The choice is remembered.
+  await page.reload();
+  await openLetter(page, "う");
+  await expect(page.getByTestId("palette").locator('[data-color="#e85d9b"]')).toHaveAttribute("aria-checked", "true");
 });
 
 test("no requests leave the site", async ({ page }) => {
