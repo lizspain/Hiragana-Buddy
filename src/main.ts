@@ -2,7 +2,7 @@ import "./styles.css";
 import { initRouter, nav } from "./app";
 import { loadStrokes } from "./data";
 import { loadStore, getSettings } from "./store";
-import { setSoundEnabled } from "./ui/audio";
+import { loadVoice, setSoundEnabled } from "./ui/audio";
 
 // No pinch / double-tap zoom anywhere (iOS ignores user-scalable=no).
 document.addEventListener("gesturestart", (e) => e.preventDefault());
@@ -10,7 +10,7 @@ document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: fals
 
 async function boot() {
   const root = document.getElementById("app")!;
-  await Promise.all([loadStrokes(), loadStore()]);
+  await Promise.all([loadStrokes(), loadStore(), loadVoice()]);
   setSoundEnabled(getSettings().sound);
   initRouter(root);
   document.getElementById("boot")?.remove();

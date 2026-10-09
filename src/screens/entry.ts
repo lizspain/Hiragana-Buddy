@@ -1,10 +1,10 @@
 // Word entry (for the grown-up): English word/name or romaji → editable kana tiles.
 
 import type { Nav, Screen } from "../app";
-import { isTeachable, loadDictionary, romajiOf, speakText } from "../data";
+import { isTeachable, loadDictionary, romajiOf } from "../data";
 import { lookupEnglish } from "../engine/convert";
 import { expandLongVowel, limitMorae, MAX_MORAE, moraCount, toGlyphs } from "../engine/kana";
-import { say, unlockAudio } from "../ui/audio";
+import { sayKana, sayWord, unlockAudio } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg, modal } from "../ui/dom";
 import { getSettings } from "../store";
 import { kanaChart } from "./chart";
@@ -173,7 +173,7 @@ export function entryScreen(nav: Nav): Screen {
       );
     }
     if (tiles.length) {
-      tools.append(h("button", { class: "pill-btn soft", onclick: () => say(tiles.join("")) }, h("span", { html: ICON.speaker }), "Hear it"));
+      tools.append(h("button", { class: "pill-btn soft", onclick: () => (unlockAudio(), sayWord(tiles)) }, h("span", { html: ICON.speaker }), "Hear it"));
     }
 
     const m = moraCount(tiles);
@@ -233,7 +233,7 @@ export function entryScreen(nav: Nav): Screen {
       if (!dragging) {
         if (cancelled) return;
         unlockAudio();
-        say(speakText(tiles[i]));
+        sayKana(tiles[i]);
         selected = selected === i ? -1 : i;
         return render();
       }

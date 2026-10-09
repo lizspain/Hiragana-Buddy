@@ -134,6 +134,95 @@ test("a romaji word goes through the tile editor into practice", async ({ page }
   await page.screenshot({ path: `test-results/write-${test.info().project.name}.png` });
 });
 
+for (const phase of [2, 3]) {
+  test(`phase ${phase}: three misses on a stroke switch it to follow-me, then it can be traced`, async ({ page }) => {
+    await openLetter(page, "い");
+    const strokes = data["い"].strokes;
+    for (let p = 1; p < phase; p++) {
+      for (let k = 0; k < strokes.length; k++) {
+        await waitReady(page, p, k);
+        await drawMouse(page, strokes[k].points);
+      }
+    }
+    await waitReady(page, phase, 0);
+    const scribble: Pt[] = [[0.85, 0.85], [0.9, 0.9], [0.86, 0.95], [0.92, 0.88]];
+    for (let i = 0; i < 3; i++) {
+      await expect(stage(page)).toHaveAttribute("data-follow", "false");
+      await drawMouse(page, scribble);
+      await expect(stage(page)).toHaveAttribute("data-outcome", "retry");
+    }
+    await expect(stage(page)).toHaveAttribute("data-follow", "true");
+    await page.waitForTimeout(700); // demo is playing
+    await page.screenshot({ path: `test-results/follow-p${phase}-${test.info().project.name}.png` });
+    await drawMouse(page, strokes[0].points);
+    await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
+    await expect(stage(page)).toHaveAttribute("data-follow", "false");
+    await expect(stage(page)).toHaveAttribute("data-stroke", "1");
+  });
+}
+
+test("speaker buttons play recorded clips when they exist", async ({ page }) => {
+  // One-second 440 Hz WAV standing in for a recording.
+  const rate = 8000;
+  const wav = Buffer.alloc(44 + rate * 2);
+  wav.write("RIFF", 0);
+  wav.writeUInt32LE(36 + rate * 2, 4);
+  wav.write("WAVEfmt ", 8);
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(rate, 24);
+  wav.writeUInt32LE(rate * 2, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write("data", 36);
+  wav.writeUInt32LE(rate * 2, 40);
+  for (let i = 0; i < rate; i++) wav.writeInt16LE(Math.round(8000 * Math.sin((2 * Math.PI * 440 * i) / rate)), 44 + i * 2);
+
+  await page.route("**/audio/manifest.json", (r) =>
+    r.fulfill({ contentType: "application/json", body: JSON.stringify({ ja: { ね: "t.wav", こ: "t.wav" }, en: {} }) }),
+  );
+  await page.route("**/audio/t.wav", (r) => r.fulfill({ contentType: "audio/wav", body: wav }));
+  await page.addInitScript(() => {
+    const w = window as unknown as { clipStarts: number };
+    w.clipStarts = 0;
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
+      w.clipStarts++;
+      return start.apply(this, args);
+    };
+  });
+  await page.goto("/");
+  await page.getByTestId("go-word").click();
+  await page.getByRole("button", { name: "Sounds (romaji)" }).click();
+  await page.getByTestId("word-input").fill("neko");
+  await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
+  await page.getByRole("button", { name: "Hear it" }).click();
+  // Sounded out from mora clips: ね + こ.
+  await expect.poll(() => page.evaluate(() => (window as unknown as { clipStarts: number }).clipStarts)).toBe(2);
+});
+
+test("the shipped Japanese clips play for a kana and for a dictionary word", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { clipStarts: number };
+    w.clipStarts = 0;
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
+      w.clipStarts++;
+      return start.apply(this, args);
+    };
+  });
+  const starts = () => page.evaluate(() => (window as unknown as { clipStarts: number }).clipStarts);
+  await page.goto("/");
+  await page.getByTestId("go-word").click();
+  await page.getByTestId("word-input").fill("Emma");
+  await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
+  await page.getByTestId("tiles").locator(".tile").first().click(); // え
+  await expect.poll(starts).toBe(1);
+  await page.getByRole("button", { name: "Hear it" }).click(); // えま has its own clip
+  await expect.poll(starts).toBe(2);
+});
+
 test("no requests leave the site", async ({ page }) => {
   const foreign: string[] = [];
   page.on("request", (r) => {

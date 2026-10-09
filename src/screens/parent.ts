@@ -2,7 +2,7 @@
 // letters to revisit, backup/restore, credits.
 
 import type { Nav, Screen } from "../app";
-import { setSoundEnabled } from "../ui/audio";
+import { clipCount, hasJapaneseVoice, setSoundEnabled, voiceCredit } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg } from "../ui/dom";
 import { deleteItem, exportBackup, getItems, getSettings, importBackup, saveSettings, type Item, type Settings } from "../store";
 import { drawingCanvas } from "./done";
@@ -39,6 +39,7 @@ export function parentScreen(nav: Nav): Screen {
         toggle("sound", "Sound and voice", "Chimes and spoken prompts. Turn off for classrooms."),
         toggle("skipPhase1WhenMastered", "Skip “watch” for known letters", "After a 3-star letter, start it at the tracing step."),
         toggle("expandLongVowel", "Spell ー as a vowel", "じぇーむず becomes じぇえむず for new words."),
+        voiceStatus(),
       ),
       h("section", { class: "card" }, h("h3", null, "Practice history"), items.length ? historyList(items) : h("p", null, "Nothing practised yet.")),
       ...weakest(items),
@@ -61,9 +62,20 @@ export function parentScreen(nav: Nav): Screen {
         h("p", null, "Hiragana Buddy. Free, no ads, no accounts. Nothing is sent anywhere."),
         h("p", null, "Stroke order data: KanjiVG, © Ulrich Apel, CC BY-SA 3.0."),
         h("p", null, "Romaji conversion: WanaKana (MIT)."),
+        voiceCredit() ? h("p", null, voiceCredit()!) : null,
         h("p", null, "Name spellings are a seed list; check them with a Japanese speaker."),
       ),
     );
+  }
+
+  function voiceStatus() {
+    const clips = clipCount();
+    const msg = clips
+      ? `Voice: ${clips} recorded clips.`
+      : hasJapaneseVoice()
+        ? "Voice: this device's built-in speech."
+        : "This device has no Japanese voice, so letter sounds are silent. Add the Japanese language pack (with speech) in system settings, or use a phone or tablet.";
+    return h("p", { class: "voice-status" }, msg);
   }
 
   function historyList(items: Item[]) {

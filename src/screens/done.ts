@@ -1,9 +1,8 @@
 // "My word": the child's phase-3 drawings side by side, stars, the word spoken.
 
 import type { Nav, Screen, WordResult } from "../app";
-import { speakText } from "../data";
 import type { Pt } from "../engine/matcher";
-import { fanfare, praise, say } from "../ui/audio";
+import { fanfare, praise, sayKana, sayWord, unlockAudio } from "../ui/audio";
 import { traceSmooth } from "../ui/board";
 import { h, ICON, iconButton, mascot, stars } from "../ui/dom";
 import { getSettings } from "../store";
@@ -55,13 +54,13 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
         "div",
         { class: "my-word", "data-testid": "my-word", "data-stars": String(r.stars) },
         r.drawings.map((d, i) =>
-          h("button", { class: "my-letter-wrap", style: `--i:${i}`, "aria-label": word[i], onclick: () => say(speakText(word[i])) }, drawingCanvas(d, color)),
+          h("button", { class: "my-letter-wrap", style: `--i:${i}`, "aria-label": word[i], onclick: () => sayKana(word[i]) }, drawingCanvas(d, color)),
         ),
       ),
       h(
         "div",
         { class: "done-actions" },
-        iconButton(ICON.speaker, "Hear my word", () => say(word.join("")), "big-round"),
+        iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round"),
         iconButton(ICON.replay, "Again", () => nav.write(r.plan), "big-round"),
         iconButton(ICON.home, "Home", () => nav.home(), "big-round"),
       ),
@@ -72,7 +71,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
     el,
     mounted() {
       fanfare();
-      timers.push(window.setTimeout(() => say(word.length === 1 ? speakText(word[0]) : word.join("")), 600));
+      timers.push(window.setTimeout(() => sayWord(word), 600));
       timers.push(window.setTimeout(() => praise(), 2000));
     },
     destroy() {

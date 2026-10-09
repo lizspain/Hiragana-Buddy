@@ -1,6 +1,5 @@
 import type { Nav, Screen } from "../app";
-import { speakText } from "../data";
-import { say, unlockAudio } from "../ui/audio";
+import { sayWord, unlockAudio } from "../ui/audio";
 import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
 import { bestStars, getItems, getSettings, saveSettings } from "../store";
 
@@ -43,7 +42,7 @@ export function homeScreen(nav: Nav): Screen {
               "aria-label": it.input || it.kana.join(""),
               onclick: () => {
                 unlockAudio();
-                say(it.kind === "kana" ? speakText(it.kana[0]) : it.kana.join(""));
+                sayWord(it.kana);
                 nav.write({ kind: it.kind, kana: it.kana, input: it.input, mode: it.mode });
               },
             },

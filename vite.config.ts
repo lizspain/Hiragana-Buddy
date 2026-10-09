@@ -30,8 +30,17 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Voice clips are not precached: each one downloads the first time it
+        // is needed (a few KB) and is then kept for offline use.
         globPatterns: ["**/*.{js,css,html,svg,png,json,webmanifest}"],
         navigateFallback: "index.html",
+        runtimeCaching: [
+          {
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/audio\/.+\.mp3$/.test(url.pathname),
+            handler: "CacheFirst",
+            options: { cacheName: "voice-clips", expiration: { maxEntries: 600 } },
+          },
+        ],
       },
     }),
   ],

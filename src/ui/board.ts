@@ -11,7 +11,9 @@ export interface GuideScene {
   phase: Phase;
   /** Next expected stroke. */
   k: number;
-  /** "Let's do it together": light up stroke k's ghost even in phase 3. */
+  /** Follow me (phases 2–3 after three misses): show stroke k as in phase 1. */
+  follow: boolean;
+  /** "Let's do it together": light up stroke k's ghost. */
   together: boolean;
 }
 
@@ -201,10 +203,10 @@ export class Board {
     const sc = this.scene;
     if (!sc) return;
     const strokes = sc.glyph.strokes;
+    const look: Phase = sc.follow ? 1 : sc.phase;
     const show: number[] = [];
-    if (sc.phase === 1) show.push(sc.k);
-    else if (sc.phase === 2) strokes.forEach((_, n) => show.push(n));
-    else if (sc.together) show.push(sc.k);
+    if (look === 1 || sc.together) show.push(sc.k);
+    else if (look === 2) strokes.forEach((_, n) => show.push(n));
 
     for (const n of show) {
       if (n >= strokes.length) continue;
@@ -227,7 +229,7 @@ export class Board {
     }
 
     // start dots: phase 2 numbers every stroke still to come; others show the next one only
-    const dots = sc.phase === 2 ? strokes.map((_, n) => n).filter((n) => n >= sc.k) : show.filter((n) => n === sc.k);
+    const dots = look === 2 ? strokes.map((_, n) => n).filter((n) => n >= sc.k) : show.filter((n) => n === sc.k);
     for (const n of [...dots].reverse()) this.drawStartDot(ctx, strokes[n], n, n === sc.k);
     if (show.includes(sc.k) && sc.k < strokes.length) this.drawArrow(ctx, strokes[sc.k], C.dot, 1);
   }

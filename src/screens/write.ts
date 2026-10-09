@@ -3,11 +3,11 @@
 // sound and home are on screen.
 
 import type { Nav, PracticePlan, Screen } from "../app";
-import { glyph, speakText } from "../data";
+import { glyph } from "../data";
 import type { Phase, Pt } from "../engine/matcher";
 import { starsFor } from "../engine/matcher";
 import { CharacterSession, type Outcome } from "../engine/session";
-import { boop, chime, fanfare, pop, praise, say, sayEn, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
+import { boop, chime, fanfare, line, pop, praise, preloadWord, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
 import { Board } from "../ui/board";
 import { h, html, ICON, iconButton, kanaSvg } from "../ui/dom";
 import { PenInput } from "../ui/pen";
@@ -103,7 +103,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
           {
             class: `strip-tile${i === idx ? " current" : ""}${i < idx ? " done" : ""}`,
             "aria-label": `${k}`,
-            onclick: () => say(speakText(k)),
+            onclick: () => sayKana(k),
           },
           kanaSvg(k),
           i < idx ? html(`<span class="sticker">${ICON.star}</span>`) : null,
@@ -123,10 +123,11 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
   }
 
   function refreshGuide() {
-    board.setScene({ glyph: glyph(kana()), phase: phase(), k: session.k, together: session.together });
+    board.setScene({ glyph: glyph(kana()), phase: phase(), k: session.k, follow: session.followMe, together: session.together });
     stage.dataset.kana = kana();
     stage.dataset.phase = String(phase());
     stage.dataset.stroke = String(session.k);
+    stage.dataset.follow = String(session.followMe);
     stage.dataset.together = String(session.together);
   }
 
@@ -142,7 +143,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     phases = settings.skipPhase1WhenMastered && isMastered(k) ? [2, 3] : [1, 2, 3];
     pi = 0;
     renderStrip();
-    say(speakText(k));
+    sayKana(k);
     startPhase();
   }
 
@@ -155,10 +156,10 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     setBusy(false);
     const p = phase();
     if (p === 1) {
-      sayEn("Watch me!", false);
+      line("watch", false);
       demoSoon(500);
-    } else if (p === 2) sayEn("Now you trace it!", false);
-    else sayEn("Now write it by yourself!", false);
+    } else if (p === 2) line("trace", false);
+    else line("write", false);
   }
 
   function demoSoon(ms: number) {
@@ -181,7 +182,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
       board.acceptLive(points);
       board.sparkle(points);
       chime(o.stroke);
-      if (o.together) sayEn("We did it together!");
+      if (o.together) line("togetherDone");
       if (o.phaseDone) return phaseDone();
       refreshGuide();
       if (phase() === 1) demoSoon(450);
@@ -189,24 +190,27 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     }
 
     board.fadeLive();
-    refreshGuide(); // lights the ghost when "together" starts
+    refreshGuide(); // switches to the follow-me / together look when it starts
     const s = strokes[o.stroke];
+    const firstTime = session.misses === 3 || session.misses === 6;
     if (o.kind === "order") {
       pop();
-      sayEn(`Ooh, that's stroke ${o.drawn + 1}! Let's do stroke ${o.stroke + 1} first.`);
+      sayOrderSlip(o.drawn + 1, o.stroke + 1);
       board.highlight(s, o.stroke);
+      if (o.help === "follow" || o.help === "together") demoSoon(2600);
       return;
     }
     boop();
-    if (o.level === 1) {
-      sayEn(pick(["Let's watch again!", "Almost! Watch me.", "Let's try that one again!"]));
+    if (o.help === "replay") {
+      line(pick(["again1", "again2", "again3"] as const));
       demoSoon(500);
-    } else if (o.level === 2) {
-      sayEn("Start at the green dot!");
+    } else if (o.help === "pulse") {
+      line("dot");
       board.pulseStart(s, o.stroke);
     } else {
-      sayEn("Let's do it together!");
-      demoSoon(400);
+      // Follow me: this stroke goes back to "watch and trace" until it's done.
+      line(firstTime ? o.help : pick(["again1", "again2"] as const));
+      demoSoon(450);
     }
   }
 
@@ -222,11 +226,11 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
       results.push({ kana: k, score: sc.score, retries: session.retried });
       drawings.push(session.drawing());
       fanfare();
-      say(speakText(k), "ja-JP", false);
+      sayKana(k, false);
       later(700, () => praise());
     } else {
       pop();
-      say(speakText(k), "ja-JP", false);
+      sayKana(k, false);
     }
     later(p === 3 ? 1900 : 1200, () => {
       stage.classList.remove("cheer");
@@ -255,6 +259,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     el,
     mounted() {
       board.resize();
+      preloadWord(plan.kana);
       startKana();
     },
     destroy() {

@@ -1,6 +1,6 @@
 import type { Nav, Screen } from "../app";
-import { charts, speakText } from "../data";
-import { say, unlockAudio } from "../ui/audio";
+import { charts } from "../data";
+import { sayKana, unlockAudio } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg } from "../ui/dom";
 
 type Page = "basic" | "voiced" | "small";
@@ -44,7 +44,7 @@ export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: bo
                 "data-kana": k,
                 onclick: () => {
                   unlockAudio();
-                  say(speakText(k));
+                  sayKana(k);
                   onPick(k);
                 },
               },

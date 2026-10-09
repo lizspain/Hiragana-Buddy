@@ -11,3 +11,5 @@ Thumbs.db
 # e2k weights are large; fetch them in the build step instead of committing
 *.npz
 *.local
+.voicegen/
+voice-samples/

@@ -22,3 +22,8 @@ Wiktionary and JMdict/EDICT data (CC BY-SA)."
 
 ## Libraries the app will use
 WanaKana (MIT) — https://github.com/WaniKani/WanaKana
+
+## public/audio — Japanese voice clips
+Rendered with Kokoro-82M (https://huggingface.co/hexgrad/Kokoro-82M), voice
+jf_alpha, Apache-2.0, via kokoro-onnx (MIT) and misaki (Apache-2.0). See
+scripts/voice/README.md. Credit line: "Japanese voice: Kokoro-82M (jf_alpha), Apache-2.0."
