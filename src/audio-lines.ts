@@ -12,7 +12,7 @@ const en = (text: string): Line => ({ text, lang: "en" });
 const ja = (text: string): Line => ({ text, lang: "ja" });
 
 export const LINES = {
-  watch: en("Watch me!"),
+  watch: en("Follow me!"), // phase 1 opener
   trace: en("Now you trace it!"),
   write: en("Now write it by yourself!"),
   again1: en("Let's watch again!"),

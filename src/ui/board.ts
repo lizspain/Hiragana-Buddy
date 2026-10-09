@@ -577,6 +577,55 @@ export class Board {
     });
   }
 
+  /**
+   * Letter finished: rainbow stars stream out from the centre on spiral arms
+   * while the whole swirl turns slowly; 1.5 s, then gone.
+   */
+  celebrate(ms = 1500): void {
+    const N = 96;
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    const still = reducedMotion();
+    const stars = Array.from({ length: N }, (_, i) => ({
+      born: (i / N) * 0.65 * ms, // emitted over the first two thirds
+      angle: i * golden,
+      reach: 0.28 + Math.random() * 0.24, // how far out it travels (cell units)
+      size: 0.022 + Math.random() * 0.024,
+      hue: (i * 137.5) % 360, // golden-angle steps: the full rainbow is out at any moment
+      spin: (Math.random() - 0.5) * 6,
+    }));
+    const t0 = performance.now();
+    this.addEffect({
+      draw: (ctx, now) => {
+        const t = now - t0;
+        if (t > ms) return false;
+        const { x, y, size } = this.cell;
+        const cx = x + size / 2;
+        const cy = y + size / 2;
+        const turn = still ? 0 : (t / 1000) * 1.1; // slow rotation of the whole swirl, rad
+        const fadeOut = Math.min(1, (ms - t) / 350);
+        for (const s of stars) {
+          const age = still ? ms : t - s.born;
+          if (age < 0) continue;
+          const f = Math.min(1, age / (ms * 0.6));
+          const out = 1 - Math.pow(1 - f, 3); // ease out
+          const r = size * (0.04 + s.reach * out);
+          const a = s.angle + turn + out * 1.2; // curve outward like a spiral arm
+          const px = cx + Math.cos(a) * r;
+          const py = cy + Math.sin(a) * r;
+          const twinkle = 0.75 + 0.25 * Math.sin(age / 70 + s.hue);
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, age / 120) * fadeOut;
+          ctx.translate(px, py);
+          ctx.rotate(still ? 0 : (age / 1000) * s.spin);
+          ctx.fillStyle = `hsl(${(s.hue + t * 0.12) % 360} 92% 62%)`;
+          star(ctx, 0, 0, size * s.size * twinkle);
+          ctx.restore();
+        }
+        return true;
+      },
+    });
+  }
+
   clearEffects(): void {
     this.stopDemo();
     this.effects = [];

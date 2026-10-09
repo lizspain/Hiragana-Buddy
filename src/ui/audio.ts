@@ -79,51 +79,101 @@ function buffer(file: string): Promise<AudioBuffer | null> {
   return p;
 }
 
-let playing: AudioBufferSourceNode[] = [];
-/** AudioContext time when the current queue of clips ends. */
-let queueEnd = 0;
+// ---------- turn-taking ----------
+//
+// Every voice line (clip or speech) goes through one queue: each waits for the
+// one before it to finish, then a short pause. `interrupt` (taps, corrections)
+// clears the queue and cuts in at once.
+
+const GAP_MS = 280;
+
+interface Job {
+  run(): Promise<void>;
+  cancel(): void;
+}
+
+const queue: Job[] = [];
+let current: Job | null = null;
 let generation = 0;
+
+function enqueue(job: Job, interrupt: boolean) {
+  if (!enabled) return;
+  if (interrupt) stopVoice();
+  queue.push(job);
+  void pump();
+}
+
+async function pump() {
+  if (current) return;
+  const job = queue.shift();
+  if (!job) return;
+  current = job;
+  const my = generation;
+  try {
+    await job.run();
+  } catch {
+    /* a failed line must not block the rest */
+  }
+  if (my !== generation) return; // stopped meanwhile; stopVoice reset the queue
+  await new Promise((r) => setTimeout(r, GAP_MS));
+  if (my !== generation) return;
+  current = null;
+  void pump();
+}
 
 function stopVoice() {
   generation++;
-  for (const s of playing) {
-    try {
-      s.stop();
-    } catch {
-      /* already stopped */
-    }
-  }
-  playing = [];
-  queueEnd = 0;
+  queue.length = 0;
+  current?.cancel();
+  current = null;
   synth?.cancel();
 }
 
-/** Play clips back to back (null = a short pause). Returns false if any clip is missing. */
-async function playClips(files: (string | null)[], interrupt: boolean): Promise<boolean> {
-  const c = audio();
-  if (!c || files.some((f) => f !== null && !f)) return false;
-  if (interrupt) stopVoice();
-  const my = generation;
-  const bufs = await Promise.all(files.map((f) => (f ? buffer(f) : Promise.resolve(null))));
-  if (bufs.some((b, i) => files[i] && !b)) return false;
-  if (my !== generation || !enabled) return true; // interrupted while loading
-  if (c.state === "suspended") void c.resume();
-  let t = Math.max(c.currentTime + 0.02, queueEnd);
-  for (const b of bufs) {
-    if (!b) {
-      t += 0.12; // っ
-      continue;
-    }
-    const src = c.createBufferSource();
-    src.buffer = b;
-    src.connect(c.destination);
-    src.start(t);
-    src.onended = () => (playing = playing.filter((s) => s !== src));
-    playing.push(src);
-    t += b.duration - 0.03; // clips have a little silence at the ends
-  }
-  queueEnd = t;
-  return true;
+/** Clips back to back (null = the short pause of っ); falls back to `fallback` if any is missing. */
+function clipJob(files: (string | null)[], fallback?: Job): Job {
+  let sources: AudioBufferSourceNode[] = [];
+  let done: () => void = () => {};
+  let cancelled = false;
+  return {
+    async run() {
+      const c = audio();
+      const bufs = c && !files.some((f) => f === "") ? await Promise.all(files.map((f) => (f ? buffer(f) : Promise.resolve(null)))) : null;
+      if (cancelled) return;
+      if (!c || !bufs || bufs.some((b, i) => files[i] && !b)) return fallback?.run();
+      if (c.state === "suspended") await c.resume().catch(() => undefined);
+      let t = c.currentTime + 0.02;
+      for (const b of bufs) {
+        if (!b) {
+          t += 0.12;
+          continue;
+        }
+        const src = c.createBufferSource();
+        src.buffer = b;
+        src.connect(c.destination);
+        src.start(t);
+        sources.push(src);
+        t += b.duration - 0.03; // clips carry a little silence at each end
+      }
+      const ms = (t - c.currentTime) * 1000;
+      await new Promise<void>((resolve) => {
+        done = resolve;
+        setTimeout(resolve, ms + 30);
+      });
+    },
+    cancel() {
+      cancelled = true;
+      fallback?.cancel();
+      for (const s of sources) {
+        try {
+          s.stop();
+        } catch {
+          /* not started */
+        }
+      }
+      sources = [];
+      done();
+    },
+  };
 }
 
 // ---------- speech fallback ----------
@@ -157,32 +207,45 @@ function pickVoice(lang: "ja" | "en"): SpeechSynthesisVoice | undefined {
 
 export const hasJapaneseVoice = () => !!pickVoice("ja");
 
-function speak(text: string, lang: "ja" | "en", interrupt: boolean): void {
-  if (!synth) return;
-  const v = pickVoice(lang);
-  // Without a Japanese voice the engine reads kana as silence; don't pretend.
-  if (lang === "ja" && !v) return;
-  if (interrupt) stopVoice();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang === "ja" ? "ja-JP" : "en-US";
-  if (v) u.voice = v;
-  u.rate = lang === "ja" ? 0.85 : 1;
-  u.pitch = 1.2;
-  // Chrome can garbage-collect an utterance mid-sentence; keep a reference.
-  keep.add(u);
-  u.onend = u.onerror = () => keep.delete(u);
-  synth.resume();
-  synth.speak(u);
+function speechJob(text: string, lang: "ja" | "en"): Job {
+  let done: () => void = () => {};
+  return {
+    run() {
+      const v = pickVoice(lang);
+      // Without a Japanese voice the engine reads kana as silence; don't pretend.
+      if (!synth || (lang === "ja" && !v)) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        done = resolve;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang === "ja" ? "ja-JP" : "en-US";
+        if (v) u.voice = v;
+        u.rate = lang === "ja" ? 0.85 : 1;
+        u.pitch = 1.2;
+        // Chrome can garbage-collect an utterance mid-sentence; keep a reference.
+        keep.add(u);
+        u.onend = u.onerror = () => {
+          keep.delete(u);
+          resolve();
+        };
+        synth.resume();
+        synth.speak(u);
+        // Some engines never fire onend; don't let the queue stall.
+        setTimeout(resolve, 1500 + text.length * 120);
+      });
+    },
+    cancel() {
+      done();
+    },
+  };
 }
 const keep = new Set<SpeechSynthesisUtterance>();
 
 // ---------- what the app calls ----------
 
 export function sayLine(line: Line, interrupt = true): void {
-  if (!enabled) return;
   const f = clipFor(line);
-  if (f) void playClips([f], interrupt).then((ok) => ok || speak(line.text, line.lang, interrupt));
-  else speak(line.text, line.lang, interrupt);
+  const speech = speechJob(line.text, line.lang);
+  enqueue(f ? clipJob([f], speech) : speech, interrupt);
 }
 
 export const line = (id: LineId, interrupt = true) => sayLine(LINES[id], interrupt);
@@ -195,12 +258,11 @@ export function sayKana(k: string, interrupt = true): void {
 
 /** A whole word: its own clip, else sounded out from mora clips, else speech. */
 export function sayWord(kana: string[], interrupt = true): void {
-  if (!enabled || !kana.length) return;
+  if (!kana.length) return;
   if (kana.length === 1) return sayKana(kana[0], interrupt);
+  const speech = speechJob(kana.join(""), "ja");
   const whole = manifest.ja[kana.join("")];
-  if (whole) return void playClips([whole], interrupt);
-  const files = moraFiles(kana);
-  void playClips(files, interrupt).then((ok) => ok || speak(kana.join(""), "ja", interrupt));
+  enqueue(clipJob(whole ? [whole] : moraFiles(kana), speech), interrupt);
 }
 
 /** Clip per mora: きゃ as one, っ as a pause, ー as the previous vowel. */

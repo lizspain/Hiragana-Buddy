@@ -1,4 +1,5 @@
 import type { Nav, Screen } from "../app";
+import { romajiOf } from "../data";
 import { sayWord, unlockAudio } from "../ui/audio";
 import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
 import { bestStars, getItems, getSettings, saveSettings } from "../store";
@@ -34,22 +35,41 @@ export function homeScreen(nav: Nav): Screen {
     ? h(
         "section",
         { class: "shelf", "aria-label": "Words you practised" },
-        items.slice(0, 30).map((it) =>
-          h(
-            "button",
-            {
-              class: "shelf-card",
-              "aria-label": it.input || it.kana.join(""),
-              onclick: () => {
-                unlockAudio();
-                sayWord(it.kana);
-                nav.write({ kind: it.kind, kana: it.kana, input: it.input, mode: it.mode });
+        items.slice(0, 30).map((it) => {
+          // Words show what the grown-up typed (English or romaji); letters show their sound (shi).
+          const label =
+            it.kind === "word" ? (it.input && it.input !== it.kana.join("") ? it.input : "") : romajiOf(it.kana[0]) ?? "";
+          return h(
+            "div",
+            { class: "shelf-card", "data-testid": "shelf-card" },
+            h(
+              "button",
+              {
+                class: "shelf-main",
+                "aria-label": `Practise ${label || it.kana.join("")}`,
+                onclick: () => {
+                  unlockAudio();
+                  nav.write({ kind: it.kind, kana: it.kana, input: it.input, mode: it.mode });
+                },
               },
-            },
-            h("div", { class: "shelf-kana" }, it.kana.map((k) => kanaSvg(k))),
-            stars(bestStars(it), "stars small"),
-          ),
-        ),
+              h("div", { class: "shelf-kana" }, it.kana.map((k) => kanaSvg(k))),
+              label ? h("span", { class: "shelf-label" }, label) : null,
+              stars(bestStars(it), "stars small"),
+            ),
+            h(
+              "button",
+              {
+                class: "shelf-play",
+                "aria-label": "Play it",
+                onclick: () => {
+                  unlockAudio();
+                  sayWord(it.kana);
+                },
+              },
+              h("span", { class: "shelf-play-icon", html: ICON.speaker }),
+            ),
+          );
+        }),
       )
     : null;
 

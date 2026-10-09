@@ -143,7 +143,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     phases = settings.skipPhase1WhenMastered && isMastered(k) ? [2, 3] : [1, 2, 3];
     pi = 0;
     renderStrip();
-    sayKana(k);
+    sayKana(k, false); // waits for the last letter's praise to finish
     startPhase();
   }
 
@@ -226,8 +226,9 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
       results.push({ kana: k, score: sc.score, retries: session.retried });
       drawings.push(session.drawing());
       fanfare();
+      board.celebrate();
       sayKana(k, false);
-      later(700, () => praise());
+      praise(); // queued: plays after the kana, never on top of it
     } else {
       pop();
       sayKana(k, false);

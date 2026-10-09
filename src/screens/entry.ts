@@ -2,21 +2,16 @@
 
 import type { Nav, Screen } from "../app";
 import { isTeachable, loadDictionary, romajiOf } from "../data";
-import { lookupEnglish } from "../engine/convert";
+import { convertInput } from "../engine/convert";
 import { expandLongVowel, limitMorae, MAX_MORAE, moraCount, toGlyphs } from "../engine/kana";
 import { sayKana, sayWord, unlockAudio } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg, modal } from "../ui/dom";
 import { getSettings } from "../store";
 import { kanaChart } from "./chart";
 
-type Mode = "english" | "romaji";
-
-let lastMode: Mode = "english";
-
 export function entryScreen(nav: Nav): Screen {
-  let mode: Mode = lastMode;
   let tiles: string[] = [];
-  let source: "english" | "romaji" | "japanese" = mode;
+  let source: "english" | "romaji" | "japanese" = "english";
   let selected = -1;
   let japanese: string | undefined;
   let soundSpelling = "";
@@ -25,6 +20,7 @@ export function entryScreen(nav: Nav): Screen {
   const input = h("input", {
     class: "word-input",
     type: "text",
+    placeholder: "Emma, dinosaur, neko…",
     autocomplete: "off",
     autocapitalize: "off",
     spellcheck: false,
@@ -32,7 +28,7 @@ export function entryScreen(nav: Nav): Screen {
     "aria-label": "Word or name",
     "data-testid": "word-input",
   });
-  const hint = h("p", { class: "hint", "aria-live": "polite" });
+  const hint = h("p", { class: "hint", "aria-live": "polite", "data-testid": "hint" });
   const choices = h("div", { class: "choices" });
   const row = h("div", { class: "tile-row", "data-testid": "tiles" });
   const tools = h("div", { class: "tile-tools" });
@@ -52,68 +48,29 @@ export function entryScreen(nav: Nav): Screen {
     h("span", { html: ICON.play }),
     "Start",
   );
-  const modeBtns = (["english", "romaji"] as Mode[]).map((m) =>
-    h(
-      "button",
-      {
-        class: "seg",
-        "data-mode": m,
-        onclick: () => {
-          mode = lastMode = m;
-          renderMode();
-          void convert();
-          input.focus();
-        },
-      },
-      m === "english" ? "English" : "Sounds (romaji)",
-    ),
-  );
 
-  function renderMode() {
-    modeBtns.forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
-    input.placeholder = mode === "english" ? "Emma, dinosaur…" : "e-ma, kyouryuu…";
-  }
-
+  /** English dictionary first; anything it doesn't know is spelled by sound. */
   async function convert() {
     const my = ++seq;
     const text = input.value;
     japanese = undefined;
     hint.textContent = "";
     if (!text.trim()) return setTiles([]);
-    if (mode === "english") {
-      const dict = await loadDictionary();
-      if (my !== seq) return;
-      const r = lookupEnglish(text, dict);
-      if (r.hiragana === null) {
-        hint.replaceChildren(
-          `I don't know "${r.missing.join(" ")}" yet. Type how it sounds instead, like `,
-          h("b", null, "e-mi-ri"),
-          ". ",
-          h(
-            "button",
-            {
-              class: "link-btn",
-              onclick: () => {
-                mode = lastMode = "romaji";
-                renderMode();
-                void convert();
-                input.focus();
-              },
-            },
-            "Switch to sounds",
-          ),
-        );
-        return setTiles([]);
-      }
-      soundSpelling = r.hiragana;
-      japanese = r.japanese;
-      source = "english";
-      setTiles(glyphsOf(r.hiragana));
-    } else {
-      const { toHiragana } = await import("wanakana");
-      if (my !== seq) return;
-      source = "romaji";
-      setTiles(glyphsOf(toHiragana(text.replace(/\s+/g, ""))));
+    const [dict, { toHiragana }] = await Promise.all([loadDictionary(), import("wanakana")]);
+    if (my !== seq) return;
+    const r = convertInput(text, dict, toHiragana);
+    soundSpelling = r.hiragana;
+    japanese = r.japanese;
+    source = r.source;
+    setTiles(glyphsOf(r.hiragana));
+    if (r.bySound.length && tiles.length) {
+      hint.prepend(
+        r.leftovers
+          ? "Spelled by sound. Some letters didn't fit, so check the tiles, or type it how it sounds, like e-mi-ri. "
+          : "Spelled by sound. Check the tiles below. ",
+      );
+    } else if (r.bySound.length) {
+      hint.textContent = "Type it how it sounds, like e-mi-ri or ne-ko.";
     }
   }
 
@@ -263,8 +220,7 @@ export function entryScreen(nav: Nav): Screen {
     h(
       "main",
       { class: "entry-body" },
-      h("p", { class: "for-grownups" }, "For grown-ups: type it in, check the letters, then hand over."),
-      h("div", { class: "segmented", role: "group", "aria-label": "Spelling" }, modeBtns),
+      h("p", { class: "for-grownups" }, "For grown-ups: type a name or word in English, or how it sounds (ne-ko). Check the letters, then hand over."),
       input,
       hint,
       choices,
@@ -275,9 +231,9 @@ export function entryScreen(nav: Nav): Screen {
     ),
   );
 
-  renderMode();
   render();
   void loadDictionary();
+  void import("wanakana");
   return {
     el,
     mounted() {
