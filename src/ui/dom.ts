@@ -130,6 +130,7 @@ export const ICON = {
   soundOff: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M33 19l10 10M43 19 33 29"/>`),
   speaker: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M32 17a10 10 0 0 1 0 14"/>`),
   gear: svg(`<circle cx="24" cy="24" r="6"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.6 10.6l4.2 4.2M33.2 33.2l4.2 4.2M10.6 37.4l4.2-4.2M33.2 14.8l4.2-4.2"/>`),
+  mic: svg(`<rect x="17" y="5" width="14" height="24" rx="7" fill="currentColor"/><path d="M10 22a14 14 0 0 0 28 0M24 36v7M17 43h14"/>`),
   play: svg(`<path d="M16 10v28l22-14z" fill="currentColor"/>`),
   plus: svg(`<path d="M24 10v28M10 24h28"/>`),
   trash: svg(`<path d="M9 13h30M19 13V8h10v5M13 13l2 27h18l2-27"/>`),

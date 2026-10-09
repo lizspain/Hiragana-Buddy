@@ -3,10 +3,12 @@
 import type { Nav, Screen } from "../app";
 import { isTeachable, loadDictionary, romajiOf } from "../data";
 import { convertInput } from "../engine/convert";
+import { pickHeard } from "../engine/heard";
 import { expandLongVowel, limitMorae, MAX_MORAE, moraCount, toGlyphs } from "../engine/kana";
 import { sayKana, sayWord, unlockAudio } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg, modal } from "../ui/dom";
 import { getSettings } from "../store";
+import { installLanguages, Listening, readiness, type ListenLang } from "../ui/listen";
 import { kanaChart } from "./chart";
 
 export function entryScreen(nav: Nav): Screen {
@@ -208,6 +210,102 @@ export function entryScreen(nav: Nav): Screen {
     t.addEventListener("pointercancel", (e) => end(e, true));
   }
 
+  // ---------- voice input (on-device only) ----------
+  // Hold to talk, or tap to start and tap again to stop.
+  const HOLD_MS = 400;
+  const mic = h("button", { class: "mic-btn", "aria-label": "Say it", title: "Say it", "data-testid": "mic", html: ICON.mic });
+  mic.hidden = true;
+  let langs: { ready: ListenLang[]; installable: ListenLang[] } = { ready: [], installable: [] };
+  let micState: "idle" | "preparing" | "starting" | "listening" | "working" = "idle";
+  let listening: Listening | null = null;
+  let downAt = 0;
+  let swallowUp = false;
+  let leaving = false;
+
+  void readiness().then((r) => {
+    langs = r;
+    mic.hidden = !r.ready.length && !r.installable.length;
+  });
+
+  function setMic(s: typeof micState, msg?: string) {
+    micState = s;
+    mic.dataset.state = s;
+    mic.classList.toggle("listening", s === "listening");
+    mic.setAttribute("aria-pressed", String(s === "listening"));
+    if (msg !== undefined) hint.textContent = msg;
+  }
+
+  async function startListening() {
+    unlockAudio();
+    if (langs.installable.length) {
+      setMic("preparing", "Getting voice input ready. Your browser downloads its speech pack once…");
+      const got = await installLanguages(langs.installable);
+      langs = { ready: [...langs.ready, ...got], installable: [] };
+      if (leaving) return;
+    }
+    if (!langs.ready.length) {
+      mic.hidden = true;
+      return setMic("idle", "Voice input isn't available on this device. Please type the word instead.");
+    }
+    setMic("starting");
+    try {
+      listening = await Listening.start(langs.ready);
+    } catch (e) {
+      const denied = e instanceof DOMException && /NotAllowed|Security/.test(e.name);
+      return setMic("idle", denied ? "To use voice input, allow the microphone for this app." : "Voice input couldn't start. Please type the word instead.");
+    }
+    if (leaving) return listening.cancel();
+    listening.onAutoStop = () => void stopListening();
+    setMic("listening", "Listening… say the word, then let go (or tap again).");
+  }
+
+  async function stopListening() {
+    if (micState !== "listening" || !listening) return;
+    const l = listening;
+    listening = null;
+    setMic("working", "One moment…");
+    const [heard, dict, { toRomaji }] = await Promise.all([l.stop(), loadDictionary(), import("wanakana")]);
+    if (leaving) return;
+    const known = (s: string) => s.split(" ").every((p) => !!(dict.names[p] ?? dict.words[p]));
+    const picked = pickHeard(heard, known, toRomaji);
+    setMic("idle");
+    if (!picked) {
+      hint.textContent = "I didn't catch that. Try again, or type the word.";
+      return;
+    }
+    input.value = picked.text;
+    await convert();
+    hint.prepend(`Heard “${picked.heard}”. `);
+  }
+
+  mic.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (micState === "listening") {
+      swallowUp = true; // second tap stops
+      void stopListening();
+      return;
+    }
+    if (micState !== "idle") return;
+    downAt = performance.now();
+    swallowUp = false;
+    void startListening();
+  });
+  mic.addEventListener("pointerup", () => {
+    if (swallowUp) return void (swallowUp = false);
+    // Held down while listening → let go to stop. A quick tap keeps listening.
+    if (micState === "listening" && performance.now() - downAt >= HOLD_MS) void stopListening();
+  });
+  mic.addEventListener("click", (e) => {
+    // Keyboard (Enter/Space) toggles.
+    if (e.detail !== 0) return;
+    if (micState === "listening") void stopListening();
+    else if (micState === "idle") {
+      downAt = 0;
+      void startListening();
+    }
+  });
+  mic.addEventListener("contextmenu", (e) => e.preventDefault());
+
   input.addEventListener("input", () => void convert());
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") input.blur();
@@ -221,7 +319,7 @@ export function entryScreen(nav: Nav): Screen {
       "main",
       { class: "entry-body" },
       h("p", { class: "for-grownups" }, "For grown-ups: type a name or word in English, or how it sounds (ne-ko). Check the letters, then hand over."),
-      input,
+      h("div", { class: "input-row" }, input, mic),
       hint,
       choices,
       row,
@@ -238,6 +336,10 @@ export function entryScreen(nav: Nav): Screen {
     el,
     mounted() {
       if (matchMedia("(pointer: fine)").matches) input.focus();
+    },
+    destroy() {
+      leaving = true;
+      listening?.cancel();
     },
   };
 }

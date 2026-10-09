@@ -18,7 +18,7 @@ export interface GuideScene {
   together: boolean;
 }
 
-const C = {
+export const GUIDE_COLORS = {
   paper: "#fffdf8",
   paperEdge: "#efd9bd",
   cross: "#d9b98f",
@@ -185,12 +185,12 @@ export class Board {
     ctx.shadowColor = "rgba(160, 110, 60, 0.18)";
     ctx.shadowBlur = 18;
     ctx.shadowOffsetY = 6;
-    ctx.fillStyle = C.paper;
+    ctx.fillStyle = GUIDE_COLORS.paper;
     roundRect(ctx, x, y, size, size, size * 0.06);
     ctx.fill();
     ctx.restore();
     ctx.lineWidth = 3;
-    ctx.strokeStyle = C.paperEdge;
+    ctx.strokeStyle = GUIDE_COLORS.paperEdge;
     roundRect(ctx, x, y, size, size, size * 0.06);
     ctx.stroke();
 
@@ -198,7 +198,7 @@ export class Board {
     ctx.save();
     ctx.setLineDash([size * 0.025, size * 0.022]);
     ctx.lineWidth = Math.max(1.5, size * 0.005);
-    ctx.strokeStyle = C.cross;
+    ctx.strokeStyle = GUIDE_COLORS.cross;
     ctx.globalAlpha = this.scene?.phase === 3 ? 0.95 : 0.6;
     ctx.beginPath();
     ctx.moveTo(x + size / 2, y + size * 0.04);
@@ -225,13 +225,13 @@ export class Board {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.lineWidth = 9;
-        ctx.strokeStyle = lit ? C.together : done ? C.ghostDone : C.ghost;
+        ctx.strokeStyle = lit ? GUIDE_COLORS.together : done ? GUIDE_COLORS.ghostDone : GUIDE_COLORS.ghost;
       });
       if (!done) {
         this.strokePath(ctx, s, () => {
           ctx.lineWidth = 0.9;
           ctx.setLineDash([2.2, 2.2]);
-          ctx.strokeStyle = C.ghostLine;
+          ctx.strokeStyle = GUIDE_COLORS.ghostLine;
         });
       }
     }
@@ -239,7 +239,7 @@ export class Board {
     // start dots: phase 2 numbers every stroke still to come; others show the next one only
     const dots = look === 2 ? strokes.map((_, n) => n).filter((n) => n >= sc.k) : show.filter((n) => n === sc.k);
     for (const n of [...dots].reverse()) this.drawStartDot(ctx, strokes[n], n, n === sc.k);
-    if (show.includes(sc.k) && sc.k < strokes.length) this.drawArrow(ctx, strokes[sc.k], C.dot, 1);
+    if (show.includes(sc.k) && sc.k < strokes.length) this.drawArrow(ctx, strokes[sc.k], GUIDE_COLORS.dot, 1);
   }
 
   private drawStartDot(ctx: CanvasRenderingContext2D, s: StrokeData, n: number, next: boolean, scale = 1) {
@@ -247,7 +247,7 @@ export class Board {
     const r = this.cell.size * (next ? 0.042 : 0.032) * scale;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = next ? C.dot : C.dotLater;
+    ctx.fillStyle = next ? GUIDE_COLORS.dot : GUIDE_COLORS.dotLater;
     ctx.fill();
     ctx.lineWidth = 3;
     ctx.strokeStyle = "#fff";
@@ -460,7 +460,7 @@ export class Board {
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
             ctx.lineWidth = 5.5;
-            ctx.strokeStyle = C.demo;
+            ctx.strokeStyle = GUIDE_COLORS.demo;
             ctx.setLineDash([L, L]);
             ctx.lineDashOffset = L * (1 - ease);
           });
@@ -469,7 +469,7 @@ export class Board {
             ctx.globalAlpha = alpha;
             ctx.beginPath();
             ctx.arc(x, y, this.cell.size * 0.03, 0, Math.PI * 2);
-            ctx.fillStyle = C.demoTip;
+            ctx.fillStyle = GUIDE_COLORS.demoTip;
             ctx.fill();
             ctx.lineWidth = 3;
             ctx.strokeStyle = "#fff";
@@ -513,7 +513,7 @@ export class Board {
       p.vy = Math.sin(a) * sp - this.cell.size * 0.002;
       p.max = p.life = 40 + Math.random() * 25;
       p.size = this.cell.size * (0.012 + Math.random() * 0.014);
-      p.color = C.sparkle[n % C.sparkle.length];
+      p.color = GUIDE_COLORS.sparkle[n % GUIDE_COLORS.sparkle.length];
       spawned++;
     }
     if (spawned && !this.fxRaf) this.fxRaf = requestAnimationFrame(this.tick);
@@ -555,7 +555,7 @@ export class Board {
           ctx.stroke();
         }
         this.drawStartDot(ctx, s, n, true, 1 + 0.12 * Math.sin(ph * Math.PI));
-        this.drawArrow(ctx, s, C.dot, 1);
+        this.drawArrow(ctx, s, GUIDE_COLORS.dot, 1);
         return true;
       },
     });
@@ -578,7 +578,7 @@ export class Board {
         });
         ctx.globalAlpha = a;
         this.drawStartDot(ctx, s, n, true);
-        this.drawArrow(ctx, s, C.dot, a);
+        this.drawArrow(ctx, s, GUIDE_COLORS.dot, a);
         ctx.globalAlpha = 1;
         return true;
       },
