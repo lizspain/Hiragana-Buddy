@@ -9,7 +9,7 @@ import { starsFor } from "../engine/matcher";
 import { CharacterSession, type Outcome } from "../engine/session";
 import { boop, chime, fanfare, line, pop, praise, preloadWord, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
 import { Board } from "../ui/board";
-import { h, html, ICON, iconButton, kanaSvg } from "../ui/dom";
+import { h, html, ICON, iconButton, kanaSvg, mascot } from "../ui/dom";
 import { inkPalette } from "../ui/palette";
 import { PenInput } from "../ui/pen";
 import { getSettings, isMastered, recordSession, saveSettings, type KanaResult } from "../store";
@@ -30,24 +30,51 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
   });
   const replayBtn = iconButton(ICON.replay, "Show me again", () => replay(), "replay");
 
+  const paletteArea = h(
+    "aside",
+    { class: "palette-area" },
+    inkPalette(settings.inkColor, (c) => {
+      board.setInkColor(c);
+      void saveSettings({ inkColor: c });
+    }),
+  );
+  // The drawing square spans the page (so it is centred on it); the word strip
+  // and ink colours are pinned against the stone frame once it is placed.
+  const stageWrap = h("main", { class: "stage-wrap" }, stage, strip, paletteArea);
   const el = h(
     "div",
     { class: "screen write" },
     h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home"), pips, h("div", { class: "right" }, replayBtn, soundBtn)),
-    strip,
-    h("main", { class: "stage-wrap" }, stage),
-    h(
-      "aside",
-      { class: "palette-area" },
-      inkPalette(settings.inkColor, (c) => {
-        board.setInkColor(c);
-        void saveSettings({ inkColor: c });
-      }),
-    ),
+    stageWrap,
   );
 
   const board = new Board(stage);
   board.inkColor = settings.inkColor;
+
+  const STRIP_H = 70; // tiles + their lower edge
+  const STRIP_GAP = 4; // space between the tiles' edge and the top stones
+  const PALETTE_T = 74; // swatch + ring + gap
+  const wide = (w: number, h: number) => w > h * 1.15;
+  board.reserve = (w, h) => {
+    const top = plan.kana.length > 1 ? STRIP_H + STRIP_GAP : 0;
+    return wide(w, h) ? { top, side: PALETTE_T, bottom: 0 } : { top, side: 0, bottom: PALETTE_T };
+  };
+  board.onLayout = (f) => {
+    const isWide = wide(stage.clientWidth, stage.clientHeight);
+    stageWrap.dataset.layout = isWide ? "wide" : "tall";
+    // Strip: centred on the frame, its tiles sitting on the top stones.
+    const n = plan.kana.length;
+    const tile = Math.max(34, Math.min(58, (f.w - (n - 1) * 8) / n));
+    Object.assign(strip.style, { left: `${f.x}px`, width: `${f.w}px`, top: `${f.y - STRIP_H - STRIP_GAP}px`, height: `${STRIP_H}px` });
+    strip.style.setProperty("--tile", `${tile}px`);
+    // Colours: just right of the stones (wide screens) or just under them (tall).
+    Object.assign(
+      paletteArea.style,
+      isWide
+        ? { left: `${f.x + f.w + 6}px`, top: `${f.y + f.h / 2}px`, transform: "translateY(-50%)" }
+        : { left: `${f.x + f.w / 2}px`, top: `${f.y + f.h + 2}px`, transform: "translateX(-50%)" },
+    );
+  };
 
   // ---------- state ----------
   let idx = 0;
@@ -123,10 +150,14 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     strip.querySelector(".current")?.scrollIntoView({ block: "nearest", inline: "center" });
   }
 
+  /** Watch → Trace → Write, always all three (a skipped "watch" shows as done), so Trace stays centred. */
   function renderPips() {
+    const now = phase();
     pips.replaceChildren(
-      ...phases.map((p, i) =>
-        h("span", { class: `pip${i === pi ? " now" : ""}${i < pi ? " done" : ""}`, title: PHASE_LABEL[p], html: PHASE_ICON[p] }),
+      // The octopus watches the steps; positioned outside the row so Trace stays centred.
+      mascot("pip-mascot"),
+      ...([1, 2, 3] as Phase[]).map((p) =>
+        h("span", { class: `pip${p === now ? " now" : ""}${p < now ? " done" : ""}`, title: PHASE_LABEL[p], html: PHASE_ICON[p] }),
       ),
     );
   }

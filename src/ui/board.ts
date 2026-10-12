@@ -6,6 +6,7 @@
 import type { GlyphData, Phase, Pt, StrokeData } from "../engine/matcher";
 import art from "../art.json";
 import { createBurst, star } from "./burst";
+import { INK_COLORS } from "./palette";
 import type { CellRect } from "./pen";
 
 export interface GuideScene {
@@ -22,16 +23,19 @@ export interface GuideScene {
 export const GUIDE_COLORS = {
   paper: "#fffdf0",
   paperEdge: "#e9d3b4",
-  cross: "#d9b98f",
-  ghost: "#e6e9ee",
-  ghostLine: "#7d8794", // ≥3:1 on paper
-  ghostDone: "#eef0f3",
-  together: "#ffe3a3",
-  dot: "#3fae74",
-  dotLater: "#9fb7aa",
-  demo: "#3d4a5c",
-  demoTip: "#ff9f5a",
-  sparkle: ["#ffc93c", "#ff8fab", "#7ec8f2", "#9be38f", "#ffb36b"],
+  // Guides use the palette (design-export/Hiragana Buddy Palette.png).
+  cross: "#d4b38e", // tan
+  ghost: "#ffedd5", // orange-100: the wide trace band
+  ghostLine: "#9a7141", // brown dashed centre line, ≥3:1 on paper
+  ghostDone: "#fff3e3",
+  together: "#fdba74", // orange-300
+  dot: "#15803d", // green: start dot, number bubble, arrow
+  dotLater: "#d4b38e", // tan: later strokes' numbers
+  demo: "#292524", // near-black demo stroke
+  demoTip: "#d97706", // amber tip
+  highlight: "#fdba74", // "this one first"
+  pulse: "21, 128, 61", // green, as r, g, b for the pulsing ring
+  sparkle: INK_COLORS, // the palette's bright colours, same as the inks
 };
 
 const MAX_DPR = 2;
@@ -100,6 +104,15 @@ export class Board {
   /** Called after a resize so callers can drop a live stroke. */
   onResize: (() => void) | null = null;
 
+  /**
+   * Space to keep free around the stone frame (stage pixels), asked for on every
+   * resize. `side` is kept on both left and right so the square stays centred.
+   */
+  reserve: ((w: number, h: number) => { top: number; side: number; bottom: number }) | null = null;
+
+  /** Where the visible stones landed (stage pixels), so controls can sit right against them. */
+  onLayout: ((frame: { x: number; y: number; w: number; h: number }) => void) | null = null;
+
   constructor(stage: HTMLElement) {
     this.stage = stage;
     this.guide = this.layer("guide");
@@ -146,19 +159,21 @@ export class Board {
     this.w = Math.max(1, r.width);
     this.h = Math.max(1, r.height);
     this.dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
-    const size = Math.floor(Math.min((this.w * 0.98) / FRAME_PER_CELL, (this.h * 0.98) / (FRAME_PER_CELL * STRETCH_Y)));
-    this.cell = { x: Math.round((this.w - size) / 2), y: Math.round((this.h - size) / 2), size, left: r.left, top: r.top };
+    const res = this.reserve?.(this.w, this.h) ?? { top: 0, side: 0, bottom: 0 };
+    const availW = Math.max(40, this.w - 2 * res.side);
+    const availH = Math.max(40, this.h - res.top - res.bottom);
+    const size = Math.floor(Math.min((availW * 0.98) / FRAME_PER_CELL, (availH * 0.98) / (FRAME_PER_CELL * STRETCH_Y)));
+    // Horizontally centred on the stage (= the page); vertically centred in the space left.
+    const frameH = size * FRAME_PER_CELL * STRETCH_Y;
+    const cellY = res.top + (availH - frameH) / 2 + frameH * (IN_T + (1 - IN_T - IN_B) / 2) - size / 2;
+    this.cell = { x: Math.round((this.w - size) / 2), y: Math.round(cellY), size, left: r.left, top: r.top };
     // Frame: centre its opening on the cell.
     const fw = size * FRAME_PER_CELL;
     const fh = fw * STRETCH_Y;
     const cx = this.cell.x + size / 2;
     const cy = this.cell.y + size / 2;
-    Object.assign(this.frame.style, {
-      width: `${fw}px`,
-      height: `${fh}px`,
-      left: `${cx - fw * (IN_L + OPEN_W / 2)}px`,
-      top: `${cy - fh * (IN_T + (1 - IN_T - IN_B) / 2)}px`,
-    });
+    const frame = { x: cx - fw * (IN_L + OPEN_W / 2), y: cy - fh * (IN_T + (1 - IN_T - IN_B) / 2), w: fw, h: fh };
+    Object.assign(this.frame.style, { width: `${fw}px`, height: `${fh}px`, left: `${frame.x}px`, top: `${frame.y}px` });
     this.stage.dataset.cell = `${this.cell.x},${this.cell.y},${size}`; // read by e2e tests
     for (const [c, ctx] of [[this.guide, this.g], [this.ink, this.i], [this.fx, this.f]] as const) {
       c.width = Math.round(this.w * this.dpr);
@@ -172,6 +187,8 @@ export class Board {
     for (const p of this.particles) p.life = 0; // their pixel positions belong to the old size
     this.drawGuide();
     this.redrawInk();
+    const [vx0, vy0, vx1, vy1] = art.stoneFrame.visible;
+    this.onLayout?.({ x: frame.x + vx0 * fw, y: frame.y + vy0 * fh, w: (vx1 - vx0) * fw, h: (vy1 - vy0) * fh });
     this.onResize?.();
   }
 
@@ -574,7 +591,7 @@ export class Board {
           ctx.beginPath();
           ctx.arc(cx, cy, this.cell.size * (0.045 + ph * 0.06), 0, Math.PI * 2);
           ctx.lineWidth = 5;
-          ctx.strokeStyle = `rgba(63,174,116,${0.7 * (1 - ph)})`;
+          ctx.strokeStyle = `rgba(${GUIDE_COLORS.pulse},${0.7 * (1 - ph)})`;
           ctx.stroke();
         }
         this.drawStartDot(ctx, s, n, true, 1 + 0.12 * Math.sin(ph * Math.PI));
@@ -597,7 +614,7 @@ export class Board {
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
           ctx.lineWidth = 10;
-          ctx.strokeStyle = "#ffcf66";
+          ctx.strokeStyle = GUIDE_COLORS.highlight;
         });
         ctx.globalAlpha = a;
         this.drawStartDot(ctx, s, n, true);
@@ -608,7 +625,7 @@ export class Board {
     });
   }
 
-  /** Letter finished: a 1.5 s rainbow star swirl around the cell. */
+  /** Letter finished: a 1.5 s swirl of stars in the palette colours around the cell. */
   celebrate(ms = 1500): void {
     const burst = createBurst(ms);
     const t0 = performance.now();
