@@ -1,0 +1,21 @@
+{
+  "octopus": {
+    "width": 522,
+    "height": 512
+  },
+  "dance": {
+    "frameWidth": 225,
+    "frameHeight": 251,
+    "columns": 4,
+    "frames": 16
+  },
+  "stoneFrame": {
+    "size": 1024,
+    "inset": [
+      0.1191,
+      0.1338,
+      0.1172,
+      0.1377
+    ]
+  }
+}

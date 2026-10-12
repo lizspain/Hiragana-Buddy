@@ -62,6 +62,7 @@ export function parentScreen(nav: Nav): Screen {
         h("p", null, "Hiragana Buddy. Free, no ads, no accounts. Nothing is sent anywhere."),
         h("p", null, "Stroke order data: KanjiVG, © Ulrich Apel, CC BY-SA 3.0."),
         h("p", null, "Romaji conversion: WanaKana (MIT)."),
+        h("p", null, "Fonts: Nunito and Klee One, SIL Open Font License 1.1."),
         voiceCredit() ? h("p", null, voiceCredit()!) : null,
         h("p", null, "Name spellings are a seed list; check them with a Japanese speaker."),
       ),

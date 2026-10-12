@@ -9,13 +9,18 @@
     "preview": "vite preview",
     "test": "node --test \"tests/*.test.mjs\" && vitest run",
     "test:e2e": "playwright test",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "design-export": "node scripts/design/export.mjs",
+    "serve": "npm run build && vite preview --port 4173 --strictPort",
+    "serve:lan": "npm run build && vite preview --port 4173 --strictPort --host"
   },
   "dependencies": {
     "idb-keyval": "^6.3.0",
     "wanakana": "^5.3.1"
   },
   "devDependencies": {
+    "@fontsource/klee-one": "^5.3.1",
+    "@fontsource/nunito": "^5.3.0",
     "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.4",
     "typescript": "^7.0.2",
