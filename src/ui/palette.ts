@@ -2,7 +2,13 @@
 
 import { h } from "./dom";
 
-export const INK_COLORS = ["#f28c28", "#e85d9b", "#3e8ede", "#33a167", "#8a5cd6"];
+// The palette's bright colours (design-export/Hiragana Buddy Palette.png):
+// amber, rust, coral, green, cyan, violet. Its light orange (#fdba74) is left
+// out: too faint to see on the cream paper.
+export const INK_COLORS = ["#d97706", "#c2410c", "#f87171", "#15803d", "#0891b2", "#a78bfa"];
+
+/** A saved colour from before the palette change falls back to the first one. */
+export const inkOrDefault = (c: string) => (INK_COLORS.includes(c) ? c : INK_COLORS[0]);
 
 export function inkPalette(current: string, onPick: (color: string) => void): HTMLElement {
   const wrap = h("div", { class: "swatches", role: "radiogroup", "aria-label": "Ink colour", "data-testid": "palette" });

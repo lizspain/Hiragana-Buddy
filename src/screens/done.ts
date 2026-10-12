@@ -71,6 +71,13 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
       stars(r.stars, "stars big"),
       myWord,
       h("div", { class: "done-actions" }, iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round")),
+      // A clear way back to start another word (blue like "One letter" on the home page).
+      h(
+        "button",
+        { class: "home-big", "aria-label": "Home", "data-testid": "done-home", onclick: () => nav.home() },
+        h("span", { html: ICON.home }),
+        "Home",
+      ),
     ),
   );
 

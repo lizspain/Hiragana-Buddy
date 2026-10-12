@@ -2,6 +2,7 @@
 
 import { createStore, get, set } from "idb-keyval";
 import type { Pt } from "./engine/matcher";
+import { inkOrDefault } from "./ui/palette";
 
 export interface Settings {
   expandLongVowel: boolean;
@@ -52,7 +53,7 @@ export const DEFAULT_SETTINGS: Settings = {
   expandLongVowel: false,
   skipPhase1WhenMastered: true,
   sound: true,
-  inkColor: "#f28c28",
+  inkColor: "#d97706",
   iosTipShown: false,
 };
 
@@ -65,6 +66,7 @@ export async function loadStore(): Promise<void> {
   try {
     const [s, i] = await Promise.all([get<Partial<Settings>>("settings", store), get<Item[]>("items", store)]);
     settings = { ...DEFAULT_SETTINGS, ...(s ?? {}) };
+    settings.inkColor = inkOrDefault(settings.inkColor); // older saves used colours no longer offered
     items = i ?? [];
   } catch {
     // Private mode or storage blocked: run with defaults, in memory only.

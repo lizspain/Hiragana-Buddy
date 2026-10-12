@@ -1,6 +1,8 @@
-// Rainbow star burst: stars stream out from a centre on spiral arms while the
+// Star burst in the palette's bright colours: stars stream out from a centre on spiral arms while the
 // whole swirl turns slowly, then fade. Used when a letter is finished (on the
 // writing board) and when the "my word" screen opens (as a page overlay).
+
+import { INK_COLORS } from "./palette";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -17,7 +19,8 @@ export function createBurst(ms = 1500, count = 96): Burst {
     angle: i * golden,
     reach: 0.28 + Math.random() * 0.24, // how far out it travels, in units of `size`
     size: 0.022 + Math.random() * 0.024,
-    hue: (i * 137.5) % 360, // golden-angle steps: the full rainbow is out at any moment
+    color: INK_COLORS[(i * 5) % INK_COLORS.length], // stepping by 5 spreads every colour round the swirl
+    phase: i * 2.39,
     spin: (Math.random() - 0.5) * 6,
   }));
   return {
@@ -32,12 +35,12 @@ export function createBurst(ms = 1500, count = 96): Burst {
         const out = 1 - Math.pow(1 - f, 3); // ease out
         const r = size * (0.04 + s.reach * out);
         const a = s.angle + turn + out * 1.2; // curve outward like a spiral arm
-        const twinkle = 0.75 + 0.25 * Math.sin(age / 70 + s.hue);
+        const twinkle = 0.75 + 0.25 * Math.sin(age / 70 + s.phase);
         ctx.save();
         ctx.globalAlpha = Math.min(1, age / 120) * fadeOut;
         ctx.translate(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
         ctx.rotate(still ? 0 : (age / 1000) * s.spin);
-        ctx.fillStyle = `hsl(${(s.hue + t * 0.12) % 360} 92% 62%)`;
+        ctx.fillStyle = s.color;
         star(ctx, 0, 0, size * s.size * twinkle);
         ctx.restore();
       }

@@ -1,13 +1,14 @@
 // The octopus's celebration dance (art/octopus-dance.webp: 16 frames, 4x4).
-// Plays at 10 fps a couple of times, then rests on the calm first frame.
-// With reduced motion it simply shows that frame.
+// Plays at 10 fps, looping (or `loops` times, then resting on the calm first
+// frame). With reduced motion it simply shows that frame. rAF pauses it while
+// the page is hidden.
 
 import art from "../art.json";
 import { h } from "./dom";
 
 const FPS = 10;
 
-export function dance(cls = "dance", loops = 2): { el: HTMLCanvasElement; stop: () => void } {
+export function dance(cls = "dance", loops = Infinity): { el: HTMLCanvasElement; stop: () => void } {
   const { frameWidth: fw, frameHeight: fh, columns, frames } = art.dance;
   const el = h("canvas", { class: cls, width: fw, height: fh, "aria-hidden": "true" });
   const ctx = el.getContext("2d")!;

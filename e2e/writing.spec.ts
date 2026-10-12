@@ -63,8 +63,16 @@ test("draw あ correctly with a mouse in all three phases → 3 stars", async ({
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `test-results/done-${test.info().project.name}.png` });
 
-  // Saved to history: the home shelf shows it, with a Play it button.
-  await page.getByRole("button", { name: "Home" }).first().click();
+  // The octopus keeps dancing (loops): past the old 3.2 s stop, frames still change.
+  await expect(page.getByTestId("done-home")).toBeVisible();
+  await page.waitForTimeout(2500);
+  const frame = () => page.evaluate(() => document.querySelector<HTMLCanvasElement>(".dance")!.toDataURL());
+  const a = await frame();
+  await page.waitForTimeout(350);
+  expect(await frame()).not.toBe(a);
+
+  // Saved to history: the big blue Home goes back, and the shelf shows it with a Play it button.
+  await page.getByTestId("done-home").click();
   await expect(page.getByTestId("shelf-card")).toHaveCount(1);
   await expect(page.getByTestId("shelf-card").getByRole("button", { name: "Play it" })).toBeVisible();
   await expect(page.getByTestId("shelf-card")).toContainText("a");
@@ -272,10 +280,13 @@ test("voice lines take turns with a pause between them", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("go-letter").click(); // a user gesture so audio may start
   const starts = await page.evaluate(async () => {
-    const log: { at: number; dur: number }[] = [];
+    const log: { at: number; dur: number; ctx: string }[] = [];
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (when?: number, ...rest: number[]) {
-      log.push({ at: when ?? this.context.currentTime, dur: this.buffer?.duration ?? 0 });
+      // Real time the clip is due to start: wall clock now + how far ahead it's scheduled.
+      // (The audio clock alone can stall while a headless browser's audio starts up.)
+      const ahead = Math.max(0, (when ?? this.context.currentTime) - this.context.currentTime);
+      log.push({ at: performance.now() / 1000 + ahead, dur: this.buffer?.duration ?? 0, ctx: this.context.state });
       return start.call(this, when, ...rest);
     };
     // Served by the Vite dev server; a variable keeps TypeScript from resolving it here.
@@ -315,11 +326,11 @@ test("ink colour is picked on the drawing screen and recolours the letter", asyn
       const d = c.getContext("2d")!.getImageData(Math.round((x + u * size) * k), Math.round((y + v * size) * k), 1, 1).data;
       return [d[0], d[1], d[2]];
     }, p);
-  expect(await inkAt(pts[16])).toEqual([0xf2, 0x8c, 0x28]); // default orange
+  expect(await inkAt(pts[16])).toEqual([0xd9, 0x77, 0x06]); // default amber
 
-  await page.getByTestId("palette").locator('[data-color="#e85d9b"]').click();
-  await expect(page.getByTestId("palette").locator('[data-color="#e85d9b"]')).toHaveAttribute("aria-checked", "true");
-  expect(await inkAt(pts[16])).toEqual([0xe8, 0x5d, 0x9b]); // pink, same stroke
+  await page.getByTestId("palette").locator('[data-color="#f87171"]').click();
+  await expect(page.getByTestId("palette").locator('[data-color="#f87171"]')).toHaveAttribute("aria-checked", "true");
+  expect(await inkAt(pts[16])).toEqual([0xf8, 0x71, 0x71]); // coral, same stroke
   await page.screenshot({ path: `test-results/palette-portrait-${test.info().project.name}.png` });
 
   const vp = page.viewportSize()!;
@@ -330,7 +341,7 @@ test("ink colour is picked on the drawing screen and recolours the letter", asyn
   // The choice is remembered.
   await page.reload();
   await openLetter(page, "う");
-  await expect(page.getByTestId("palette").locator('[data-color="#e85d9b"]')).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("palette").locator('[data-color="#f87171"]')).toHaveAttribute("aria-checked", "true");
 });
 
 test("no requests leave the site", async ({ page }) => {

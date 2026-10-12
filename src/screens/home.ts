@@ -58,13 +58,13 @@ export function homeScreen(nav: Nav): Screen {
       h(
         "div",
         { class: "brand-lockup" },
+        mascot("mascot"),
         h(
           "div",
           { class: "title" },
           h("h1", null, h("span", null, "Hiragana"), " ", h("span", null, "Buddy")),
           h("p", { class: "subtitle", lang: "ja" }, "ひらがな の ともだち"),
         ),
-        mascot("mascot bob"),
       ),
       holdButton(ICON.gear, "Grown-ups", 1500, () => nav.parent()),
     ),

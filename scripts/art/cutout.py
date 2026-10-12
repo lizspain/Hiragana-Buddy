@@ -168,8 +168,11 @@ def main() -> None:
 
     l, r = inner(mid_r)
     t, b = inner(mid_c)
+    # Visible stones (alpha > 50%) as fractions of the image, so controls can sit right against them.
+    cx0, cy0, cx1, cy1 = bbox(f, 128)
     meta["stoneFrame"] = {
         "size": f.width,
+        "visible": [round(cx0 / f.width, 4), round(cy0 / f.height, 4), round(cx1 / f.width, 4), round(cy1 / f.height, 4)],
         # Inner opening as fractions of the image (left, top, right, bottom insets).
         "inset": [round(l / f.width, 4), round(t / f.height, 4), round((f.width - r) / f.width, 4), round((f.height - b) / f.height, 4)],
     }
