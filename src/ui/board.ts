@@ -4,6 +4,7 @@
 //   effects (top):    demo animation, sparkles, fades, pulses. Animated only while busy.
 
 import type { GlyphData, Phase, Pt, StrokeData } from "../engine/matcher";
+import art from "../art.json";
 import { createBurst, star } from "./burst";
 import type { CellRect } from "./pen";
 
@@ -19,8 +20,8 @@ export interface GuideScene {
 }
 
 export const GUIDE_COLORS = {
-  paper: "#fffdf8",
-  paperEdge: "#efd9bd",
+  paper: "#fffdf0",
+  paperEdge: "#e9d3b4",
   cross: "#d9b98f",
   ghost: "#e6e9ee",
   ghostLine: "#7d8794", // ≥3:1 on paper
@@ -34,6 +35,15 @@ export const GUIDE_COLORS = {
 };
 
 const MAX_DPR = 2;
+
+// Stone frame (art/stone-frame.webp) around the paper. Its opening is a little
+// shorter than it is wide, so the frame is stretched vertically to make the
+// opening square. It is sized so the stones cover only the outer ~5% of the
+// cell, where no letter has strokes (closest: ぴ at 0.073 from the top, ぼ at 0.94).
+const [IN_L, IN_T, IN_R, IN_B] = art.stoneFrame.inset;
+const OPEN_W = 1 - IN_L - IN_R;
+const STRETCH_Y = OPEN_W / (1 - IN_T - IN_B);
+const FRAME_PER_CELL = 1.17; // frame width / cell size → opening ≈ 0.89 of the cell
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 interface Effect {
@@ -61,6 +71,7 @@ export class Board {
   private i: CanvasRenderingContext2D;
   private f: CanvasRenderingContext2D;
   private ro: ResizeObserver;
+  private frame: HTMLImageElement;
 
   cell: CellRect = { x: 0, y: 0, size: 1, left: 0, top: 0 };
   private w = 1;
@@ -92,6 +103,12 @@ export class Board {
   constructor(stage: HTMLElement) {
     this.stage = stage;
     this.guide = this.layer("guide");
+    this.frame = document.createElement("img");
+    this.frame.className = "stone-frame";
+    this.frame.src = "art/stone-frame.webp";
+    this.frame.alt = "";
+    this.frame.draggable = false;
+    stage.appendChild(this.frame); // above the paper, below the ink: a child's line always shows
     this.ink = this.layer("ink");
     this.fx = this.layer("fx");
     this.g = this.guide.getContext("2d")!;
@@ -129,8 +146,19 @@ export class Board {
     this.w = Math.max(1, r.width);
     this.h = Math.max(1, r.height);
     this.dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
-    const size = Math.floor(Math.min(this.w, this.h) * 0.96);
+    const size = Math.floor(Math.min((this.w * 0.98) / FRAME_PER_CELL, (this.h * 0.98) / (FRAME_PER_CELL * STRETCH_Y)));
     this.cell = { x: Math.round((this.w - size) / 2), y: Math.round((this.h - size) / 2), size, left: r.left, top: r.top };
+    // Frame: centre its opening on the cell.
+    const fw = size * FRAME_PER_CELL;
+    const fh = fw * STRETCH_Y;
+    const cx = this.cell.x + size / 2;
+    const cy = this.cell.y + size / 2;
+    Object.assign(this.frame.style, {
+      width: `${fw}px`,
+      height: `${fh}px`,
+      left: `${cx - fw * (IN_L + OPEN_W / 2)}px`,
+      top: `${cy - fh * (IN_T + (1 - IN_T - IN_B) / 2)}px`,
+    });
     this.stage.dataset.cell = `${this.cell.x},${this.cell.y},${size}`; // read by e2e tests
     for (const [c, ctx] of [[this.guide, this.g], [this.ink, this.i], [this.fx, this.f]] as const) {
       c.width = Math.round(this.w * this.dpr);
@@ -180,18 +208,13 @@ export class Board {
     const { x, y, size } = this.cell;
     ctx.clearRect(0, 0, this.w, this.h);
 
-    // paper
-    ctx.save();
-    ctx.shadowColor = "rgba(160, 110, 60, 0.18)";
-    ctx.shadowBlur = 18;
-    ctx.shadowOffsetY = 6;
+    // paper (the stone frame drawn over its rim is the border)
     ctx.fillStyle = GUIDE_COLORS.paper;
-    roundRect(ctx, x, y, size, size, size * 0.06);
+    roundRect(ctx, x, y, size, size, size * 0.04);
     ctx.fill();
-    ctx.restore();
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.strokeStyle = GUIDE_COLORS.paperEdge;
-    roundRect(ctx, x, y, size, size, size * 0.06);
+    roundRect(ctx, x + 1, y + 1, size - 2, size - 2, size * 0.04);
     ctx.stroke();
 
     // cross guidelines

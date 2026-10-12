@@ -26,7 +26,9 @@ const VIEWPORTS = {
   "tablet-landscape": { width: 1180, height: 820 },
 };
 
-rmSync(OUT, { recursive: true, force: true });
+// Clear only what this script generates; anything else in design-export/
+// (e.g. palette images added by hand) is left alone.
+for (const d of ["screens-svg", "screens-png", "assets"]) rmSync(new URL(d, OUT), { recursive: true, force: true });
 for (const d of ["screens-svg", "screens-png", "assets/icons", "assets/kana"]) mkdirSync(new URL(d, OUT), { recursive: true });
 
 const server = await createServer({ root: fileURLToPath(root), server: { port: 5176, strictPort: true }, logLevel: "error" });

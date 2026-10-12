@@ -5,7 +5,8 @@ import type { Pt } from "../engine/matcher";
 import { fanfare, praise, sayKana, sayWord, unlockAudio } from "../ui/audio";
 import { traceSmooth } from "../ui/board";
 import { pageBurst } from "../ui/burst";
-import { h, ICON, iconButton, mascot, stars } from "../ui/dom";
+import { dance } from "../ui/dance";
+import { h, ICON, iconButton, stars } from "../ui/dom";
 import { getSettings } from "../store";
 
 export function drawingCanvas(strokes: Pt[][], color: string, cls = "my-letter"): HTMLCanvasElement {
@@ -42,6 +43,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
   const color = getSettings().inkColor;
   const word = r.plan.kana;
   const timers: number[] = [];
+  const octo = dance("dance");
 
   // Home (top left) and Again (top right) fade in once the drawn letters are shown.
   const corners = h(
@@ -65,7 +67,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
     h(
       "main",
       { class: "done-body" },
-      mascot("mascot cheer-bounce", "cheer"),
+      octo.el,
       stars(r.stars, "stars big"),
       myWord,
       h("div", { class: "done-actions" }, iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round")),
@@ -86,6 +88,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
     destroy() {
       timers.forEach(clearTimeout);
       stopBurst();
+      octo.stop();
     },
   };
 }

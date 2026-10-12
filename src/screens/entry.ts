@@ -286,14 +286,14 @@ export function entryScreen(nav: Nav): Screen {
       return;
     }
     if (micState !== "idle") return;
-    downAt = performance.now();
+    downAt = e.timeStamp; // when the finger went down, not when we got round to handling it
     swallowUp = false;
     void startListening();
   });
-  mic.addEventListener("pointerup", () => {
+  mic.addEventListener("pointerup", (e) => {
     if (swallowUp) return void (swallowUp = false);
     // Held down while listening → let go to stop. A quick tap keeps listening.
-    if (micState === "listening" && performance.now() - downAt >= HOLD_MS) void stopListening();
+    if (micState === "listening" && e.timeStamp - downAt >= HOLD_MS) void stopListening();
   });
   mic.addEventListener("click", (e) => {
     // Keyboard (Enter/Space) toggles.

@@ -27,3 +27,12 @@ WanaKana (MIT) — https://github.com/WaniKani/WanaKana
 Rendered with Kokoro-82M (https://huggingface.co/hexgrad/Kokoro-82M), voice
 jf_alpha, Apache-2.0, via kokoro-onnx (MIT) and misaki (Apache-2.0). See
 scripts/voice/README.md. Credit line: "Japanese voice: Kokoro-82M (jf_alpha), Apache-2.0."
+
+## src/fonts — Nunito and Klee One
+Nunito (Vernon Adams, Cyreal, Jacques Le Bailly) and Klee One (Fontworks), both
+SIL Open Font License 1.1, via Fontsource. Klee One is cut down to the home
+subtitle's characters by scripts/art/fonts.py.
+
+## public/art, art-source — octopus mascot, dance, stone frame
+Provided by the app's author. White backgrounds removed by
+scripts/art/cutout.py.

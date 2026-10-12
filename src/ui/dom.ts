@@ -129,7 +129,8 @@ export const ICON = {
   soundOn: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M32 17a10 10 0 0 1 0 14M36 12a16 16 0 0 1 0 24"/>`),
   soundOff: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M33 19l10 10M43 19 33 29"/>`),
   speaker: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M32 17a10 10 0 0 1 0 14"/>`),
-  gear: svg(`<circle cx="24" cy="24" r="6"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.6 10.6l4.2 4.2M33.2 33.2l4.2 4.2M10.6 37.4l4.2-4.2M33.2 14.8l4.2-4.2"/>`),
+  // Filled gear from the Figma Make mockup.
+  gear: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="m20 5-1.2 5.3-4.2 1.8-4.6-2.9-4.8 4.8 2.9 4.6L6.3 23 1 24l1 6 5.4.9 1.8 4.3-2.9 4.6 4.8 4.8 4.6-2.9 4.3 1.8 1 5.3h6l1-5.3 4.3-1.8 4.6 2.9 4.8-4.8-2.9-4.6 1.8-4.3L47 30l1-6-5.3-1-1.8-4.3 2.9-4.6L39 9.3l-4.6 2.9-4.3-1.8L29 5Z" fill="currentColor" stroke="#2d2928" stroke-width="1.5" stroke-linejoin="round"/><circle cx="24" cy="27" r="7" fill="#dfbe91" stroke="#2d2928" stroke-width="3"/></svg>`,
   mic: svg(`<rect x="17" y="5" width="14" height="24" rx="7" fill="currentColor"/><path d="M10 22a14 14 0 0 0 28 0M24 36v7M17 43h14"/>`),
   play: svg(`<path d="M16 10v28l22-14z" fill="currentColor"/>`),
   plus: svg(`<path d="M24 10v28M10 24h28"/>`),
@@ -148,16 +149,7 @@ export const ICON = {
   addSquare: svg(`<rect x="8" y="8" width="32" height="32" rx="8"/><path d="M24 16v16M16 24h16"/>`),
 };
 
-/** The mascot: a round onigiri with a happy face. */
-export function mascot(cls = "mascot", mood: "happy" | "cheer" = "happy"): Element {
-  const mouth = mood === "cheer" ? `<path d="M48 70q12 14 24 0z" fill="#e0607e" stroke="#4a3b35" stroke-width="3" stroke-linejoin="round"/>` : `<path d="M50 70q10 9 20 0" stroke="#4a3b35" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-  const arms = mood === "cheer" ? `<path d="M18 74 6 52M102 74l12-22" stroke="#4a3b35" stroke-width="5" stroke-linecap="round"/>` : "";
-  return html(`<svg class="${cls}" viewBox="0 0 120 120" aria-hidden="true">
-    ${arms}
-    <path d="M60 10C38 10 12 66 12 86c0 14 12 22 48 22s48-8 48-22C108 66 82 10 60 10z" fill="#fffaf2" stroke="#4a3b35" stroke-width="4"/>
-    <rect x="30" y="80" width="60" height="28" rx="6" fill="#36584a"/>
-    <circle cx="46" cy="58" r="5" fill="#4a3b35"/><circle cx="74" cy="58" r="5" fill="#4a3b35"/>
-    <circle cx="38" cy="68" r="6" fill="#ffb4a8" opacity=".8"/><circle cx="82" cy="68" r="6" fill="#ffb4a8" opacity=".8"/>
-    ${mouth}
-  </svg>`);
+/** The mascot: the octopus (art/octopus.webp, cut out from art-source/). */
+export function mascot(cls = "mascot"): HTMLImageElement {
+  return h("img", { class: cls, src: "art/octopus.webp", alt: "", "aria-hidden": "true", draggable: "false", decoding: "async" });
 }

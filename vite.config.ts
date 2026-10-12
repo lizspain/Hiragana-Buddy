@@ -7,6 +7,12 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
   base: "./",
   build: { target: "es2020", assetsInlineLimit: 0 },
+  // The dev-only voice/art toolkit (.voicegen, ~15k files) and generated folders
+  // live in the project; keep the dev server from scanning and watching them.
+  optimizeDeps: { entries: ["index.html"] },
+  server: {
+    watch: { ignored: ["**/.voicegen/**", "**/design-export/**", "**/voice-samples/**", "**/test-results/**", "**/art-source/**"] },
+  },
   plugins: [
     VitePWA({
       registerType: "autoUpdate",
@@ -32,7 +38,7 @@ export default defineConfig({
       workbox: {
         // Voice clips are not precached: each one downloads the first time it
         // is needed (a few KB) and is then kept for offline use.
-        globPatterns: ["**/*.{js,css,html,svg,png,json,webmanifest}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2,json,webmanifest}"],
         navigateFallback: "index.html",
         runtimeCaching: [
           {

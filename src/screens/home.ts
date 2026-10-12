@@ -29,7 +29,7 @@ export function homeScreen(nav: Nav): Screen {
                 },
               },
               h("div", { class: "shelf-kana" }, it.kana.map((k) => kanaSvg(k))),
-              label ? h("span", { class: "shelf-label" }, label) : null,
+              h("span", { class: "shelf-label" }, label || " "),
               stars(bestStars(it), "stars small"),
             ),
             h(
@@ -55,8 +55,17 @@ export function homeScreen(nav: Nav): Screen {
     h(
       "header",
       { class: "home-head" },
-      mascot("mascot bob"),
-      h("div", { class: "title" }, h("h1", null, "Hiragana Buddy"), h("p", { class: "subtitle", lang: "ja" }, "ひらがな の ともだち")),
+      h(
+        "div",
+        { class: "brand-lockup" },
+        h(
+          "div",
+          { class: "title" },
+          h("h1", null, h("span", null, "Hiragana"), " ", h("span", null, "Buddy")),
+          h("p", { class: "subtitle", lang: "ja" }, "ひらがな の ともだち"),
+        ),
+        mascot("mascot bob"),
+      ),
       holdButton(ICON.gear, "Grown-ups", 1500, () => nav.parent()),
     ),
     h(
