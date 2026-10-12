@@ -10,7 +10,9 @@
     "test": "node --test \"tests/*.test.mjs\" && vitest run",
     "test:e2e": "playwright test",
     "icons": "node scripts/make-icons.mjs",
-    "design-export": "node scripts/design/export.mjs"
+    "design-export": "node scripts/design/export.mjs",
+    "serve": "npm run build && vite preview --port 4173 --strictPort",
+    "serve:lan": "npm run build && vite preview --port 4173 --strictPort --host"
   },
   "dependencies": {
     "idb-keyval": "^6.3.0",
