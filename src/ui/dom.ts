@@ -1,6 +1,7 @@
 // Tiny DOM helpers: no framework, five screens.
 
 import { glyph } from "../data";
+import { starPathData } from "./star";
 
 type Child = Node | string | null | undefined | false;
 type Props = Record<string, unknown> & { class?: string; style?: string };
@@ -142,7 +143,7 @@ export const ICON = {
   wordBubble: svg(
     `<path d="M6 10h36v22H24l-9 8v-8H6z" fill="#fff"/><path d="M29 35 41 23l4 4-12 12h-4z" fill="#ffd27a"/>`,
   ),
-  star: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l6 13 14 1.6-10.5 9.6 3 14L24 35l-12.5 7.2 3-14L4 18.6 18 17z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>`,
+  star: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="${starPathData(24, 26.1, 22)}" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>`,
   download: svg(`<path d="M24 8v22M14 21l10 10 10-10M10 40h28"/>`),
   upload: svg(`<path d="M24 32V10M14 19l10-10 10 10M10 40h28"/>`),
   share: svg(`<path d="M24 6v24M15 15l9-9 9 9"/><path d="M14 22h-4v20h28V22h-4"/>`),

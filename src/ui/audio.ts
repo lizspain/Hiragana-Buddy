@@ -86,6 +86,8 @@ function buffer(file: string): Promise<AudioBuffer | null> {
 // clears the queue and cuts in at once.
 
 const GAP_MS = 280;
+/** Overlap between mora clips when a word is sounded out, s. */
+const CROSSFADE_S = 0.09;
 
 interface Job {
   run(): Promise<void>;
@@ -142,16 +144,32 @@ function clipJob(files: (string | null)[], fallback?: Job): Job {
       if (!c || !bufs || bufs.some((b, i) => files[i] && !b)) return fallback?.run();
       if (c.state === "suspended") await c.resume().catch(() => undefined);
       let t = c.currentTime + 0.02;
+      let prev: { gain: GainNode; end: number; dur: number } | null = null;
       for (const b of bufs) {
         if (!b) {
           t += 0.12;
+          prev = null;
           continue;
         }
         const src = c.createBufferSource();
         src.buffer = b;
-        src.connect(c.destination);
+        const gain = c.createGain();
+        src.connect(gain).connect(c.destination);
+        if (prev) {
+          // Sounded-out words (す・し): start each mora before the last one ends and
+          // crossfade, so they run together instead of stopping and starting.
+          // The last one tails off across the overlap; the next one's own lead-in
+          // silence covers its start, so a quick fade-in is enough.
+          const x = Math.min(CROSSFADE_S, b.duration / 3, prev.dur / 3);
+          t = prev.end - x;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(1, t + 0.015);
+          prev.gain.gain.setValueAtTime(1, t);
+          prev.gain.gain.linearRampToValueAtTime(0, prev.end);
+        }
         src.start(t);
         sources.push(src);
+        prev = { gain, end: t + b.duration, dur: b.duration };
         t += b.duration - 0.03; // clips carry a little silence at each end
       }
       const ms = (t - c.currentTime) * 1000;
@@ -321,7 +339,9 @@ function tone(freq: number, start: number, dur: number, gain: number, type: Osci
 // each stroke only moves two parameters, so it costs nothing per frame.
 
 let sand: { gain: GainNode; band: BiquadFilterNode } | null = null;
-const SAND_MAX_GAIN = 0.11;
+const SAND_MAX_GAIN = 0.055;
+/** Everything 10% higher than first tuned: the grains, the filters. */
+const SAND_PITCH = 1.1;
 
 function sandNodes() {
   const c = audio();
@@ -347,13 +367,14 @@ function sandNodes() {
   const src = c.createBufferSource();
   src.buffer = buf;
   src.loop = true;
+  src.playbackRate.value = SAND_PITCH;
   const band = c.createBiquadFilter();
   band.type = "bandpass";
-  band.frequency.value = 900;
+  band.frequency.value = 900 * SAND_PITCH;
   band.Q.value = 0.6;
   const soft = c.createBiquadFilter();
   soft.type = "lowpass";
-  soft.frequency.value = 3200;
+  soft.frequency.value = 3200 * SAND_PITCH;
   const gain = c.createGain();
   gain.gain.value = 0;
   src.connect(band).connect(soft).connect(gain).connect(c.destination);
@@ -373,7 +394,7 @@ export function sandSwoosh(speed: number): void {
   const v = enabled ? Math.min(1, speed / 2.2) : 0;
   // Quick to start, gentle to fade: like sand settling.
   s.gain.gain.setTargetAtTime(SAND_MAX_GAIN * Math.sqrt(v), t, v > 0 ? 0.03 : 0.09);
-  s.band.frequency.setTargetAtTime(650 + 900 * v, t, 0.05);
+  s.band.frequency.setTargetAtTime((650 + 900 * v) * SAND_PITCH, t, 0.05);
 }
 
 // Pentatonic so any chime sounds friendly.

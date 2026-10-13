@@ -176,7 +176,7 @@ test("a romaji word goes through the tile editor into practice", async ({ page }
   // Not in the English list → spelled by sound automatically, no toggle.
   await page.getByTestId("word-input").fill("neko");
   await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
-  await expect(page.getByTestId("hint")).toContainText("Spelled by sound");
+  await expect(page.getByTestId("hint")).toContainText("See Hiragana chosen below");
   await page.getByTestId("word-input").fill("Charlotte");
   await expect(page.getByTestId("hint")).toHaveText("");
   await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(6);

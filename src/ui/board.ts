@@ -5,7 +5,8 @@
 
 import type { GlyphData, Phase, Pt, StrokeData } from "../engine/matcher";
 import art from "../art.json";
-import { createBurst, star } from "./burst";
+import { createBurst } from "./burst";
+import { star } from "./star";
 import { INK_COLORS } from "./palette";
 import type { CellRect } from "./pen";
 
@@ -21,13 +22,11 @@ export interface GuideScene {
 }
 
 export const GUIDE_COLORS = {
-  paper: "#fffdf0",
-  paperEdge: "#e9d3b4",
   // Guides use the palette (design-export/Hiragana Buddy Palette.png).
   cross: "#d4b38e", // tan
-  ghost: "#ffedd5", // orange-100: the wide trace band
+  ghost: "#e6d5c0", // orange-100 #ffedd5 made 10% darker: the wide trace band
   ghostLine: "#9a7141", // brown dashed centre line, ≥3:1 on paper
-  ghostDone: "#fff3e3",
+  ghostDone: "#e6dbcc", // #fff3e3, 10% darker to match
   together: "#fdba74", // orange-300
   dot: "#15803d", // green: start dot, number bubble, arrow
   dotLater: "#d4b38e", // tan: later strokes' numbers
@@ -225,14 +224,7 @@ export class Board {
     const { x, y, size } = this.cell;
     ctx.clearRect(0, 0, this.w, this.h);
 
-    // paper (the stone frame drawn over its rim is the border)
-    ctx.fillStyle = GUIDE_COLORS.paper;
-    roundRect(ctx, x, y, size, size, size * 0.04);
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = GUIDE_COLORS.paperEdge;
-    roundRect(ctx, x + 1, y + 1, size - 2, size - 2, size * 0.04);
-    ctx.stroke();
+    // No paper: inside the stones is the same sand as the rest of the page.
 
     // cross guidelines
     ctx.save();
@@ -673,14 +665,4 @@ export function traceSmooth(ctx: CanvasRenderingContext2D, pts: Pt[]): void {
   }
   ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
   ctx.stroke();
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
 }
