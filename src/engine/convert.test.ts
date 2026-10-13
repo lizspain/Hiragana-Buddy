@@ -27,7 +27,25 @@ describe("convertInput", () => {
     expect(convert("Emma Noah")).toMatchObject({ hiragana: "えまのあ", source: "english" });
   });
 
+  it("reads English L as R and never drops syllables", () => {
+    expect(convert("Wally").hiragana).toBe("わり");
+    expect(convert("Liz").hiragana).toBe("りず");
+    expect(convert("Lilo").hiragana).toBe("りろ");
+    expect(convert("Lola").hiragana).toBe("ろら");
+    expect(convert("Bell").hiragana).toBe("べる");
+    expect(convert("Brayden")).toMatchObject({ hiragana: "ぶらいでん", leftovers: "" });
+    expect(convert("Matt").hiragana).toBe("まっと"); // マット, as Japanese writes it
+    expect(convert("Rex").hiragana).toBe("れくす");
+    expect(convert("Vince").hiragana).toBe("びんせ");
+    expect(convert("Phil").hiragana).toBe("ふぃる");
+  });
+
+  it("leaves plain romaji alone", () => {
+    for (const [r, k] of [["shin", "しん"], ["kitte", "きって"], ["tsuki", "つき"], ["kyouryuu", "きょうりゅう"], ["ohayo", "おはよ"], ["rizu", "りず"]])
+      expect(convert(r).hiragana).toBe(k);
+  });
+
   it("reports letters that could not become kana", () => {
-    expect(convert("Brayden").leftovers).not.toBe("");
+    expect(convert("rr!").leftovers).not.toBe("");
   });
 });

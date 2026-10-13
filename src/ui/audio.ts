@@ -314,6 +314,68 @@ function tone(freq: number, start: number, dur: number, gain: number, type: Osci
   o.stop(t + dur + 0.05);
 }
 
+// ---------- sand swoosh while drawing ----------
+//
+// A finger drawing through soft sand: looping noise, band-passed and softened,
+// whose volume and brightness follow how fast the finger moves. Built once;
+// each stroke only moves two parameters, so it costs nothing per frame.
+
+let sand: { gain: GainNode; band: BiquadFilterNode } | null = null;
+const SAND_MAX_GAIN = 0.11;
+
+function sandNodes() {
+  const c = audio();
+  if (!c) return null;
+  if (sand) return sand;
+  // 2 s of brown-ish noise (smoothed white noise): grainy, not hissy.
+  const len = c.sampleRate * 2;
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < len; i++) {
+    last = last * 0.97 + (Math.random() * 2 - 1) * 0.3;
+    // occasional grains catching
+    d[i] = last + (Math.random() < 0.002 ? (Math.random() - 0.5) * 0.6 : 0);
+  }
+  // Fade the loop's ends together so the repeat has no click.
+  const fade = Math.floor(c.sampleRate * 0.05);
+  for (let i = 0; i < fade; i++) {
+    const k = i / fade;
+    d[i] *= k;
+    d[len - 1 - i] *= k;
+  }
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  const band = c.createBiquadFilter();
+  band.type = "bandpass";
+  band.frequency.value = 900;
+  band.Q.value = 0.6;
+  const soft = c.createBiquadFilter();
+  soft.type = "lowpass";
+  soft.frequency.value = 3200;
+  const gain = c.createGain();
+  gain.gain.value = 0;
+  src.connect(band).connect(soft).connect(gain).connect(c.destination);
+  src.start();
+  sand = { gain, band };
+  return sand;
+}
+
+/**
+ * Finger speed while drawing, in cell sizes per second (0 = still).
+ * Call on every move; call with 0 when the stroke ends.
+ */
+export function sandSwoosh(speed: number): void {
+  const s = enabled ? sandNodes() : sand;
+  if (!s || !ctx) return;
+  const t = ctx.currentTime;
+  const v = enabled ? Math.min(1, speed / 2.2) : 0;
+  // Quick to start, gentle to fade: like sand settling.
+  s.gain.gain.setTargetAtTime(SAND_MAX_GAIN * Math.sqrt(v), t, v > 0 ? 0.03 : 0.09);
+  s.band.frequency.setTargetAtTime(650 + 900 * v, t, 0.05);
+}
+
 // Pentatonic so any chime sounds friendly.
 const SCALE = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5];
 

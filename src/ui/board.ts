@@ -31,7 +31,7 @@ export const GUIDE_COLORS = {
   together: "#fdba74", // orange-300
   dot: "#15803d", // green: start dot, number bubble, arrow
   dotLater: "#d4b38e", // tan: later strokes' numbers
-  demo: "#292524", // near-black demo stroke
+  demo: "#1c1917", // stone-900 demo stroke
   demoTip: "#d97706", // amber tip
   highlight: "#fdba74", // "this one first"
   pulse: "21, 128, 61", // green, as r, g, b for the pulsing ring

@@ -23,6 +23,45 @@ export interface Converted {
   leftovers: string;
 }
 
+const VOWEL = /[aeiou]/;
+/** Second letters that make a valid romaji pair with the consonant before them (sh, ch, ts, ky…). */
+const PAIRS = new Set(["sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry", "jy", "dy", "fy", "vy"]);
+
+/**
+ * Turn an English-ish spelling into romaji WanaKana can read before spelling by sound.
+ * WanaKana reads "l" and "x" as small-kana markers (li → ぃ) and drops what it can't
+ * convert, so "wally" became わ and "liz" ぃ. Japanese has no L; names use R
+ * (Liz → リズ). Also: a y not before a vowel is the vowel i (lily → riri), and a
+ * consonant that ends the word or sits in an English cluster gets a vowel the way
+ * loanwords do (brayden → buraiden; t/d take o, as in matto).
+ * Plain romaji (shi, tsu, kyou, kitte, n) passes through unchanged.
+ */
+export function soundSpell(part: string): string {
+  let s = part
+    .toLowerCase()
+    .replace(/ph/g, "f")
+    .replace(/th/g, "s") // Ethan → esan (no th in Japanese)
+    .replace(/c(?!h)(?=[eiy])/g, "s") // Cecil → sesiru
+    .replace(/c(?!h)/g, "k") // Lucas → rukasu
+    .replace(/q/g, "k")
+    .replace(/x/g, "ks") // WanaKana reads x as its small-kana marker
+    .replace(/v/g, "b") // Ava → aba, never ゔ
+    .replace(/ll/g, "r")
+    .replace(/l/g, "r");
+  s = s.replace(/y(?![aeiou])/g, "i");
+  let out = "";
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    const next = s[i + 1] ?? "";
+    out += c;
+    if (!/[a-z]/.test(c) || VOWEL.test(c) || c === "n") continue;
+    const ends = next === "" || next === "-";
+    const cluster = /[a-z]/.test(next) && !VOWEL.test(next) && next !== c && !PAIRS.has(c + next);
+    if (ends || cluster) out += c === "t" || c === "d" ? "o" : "u";
+  }
+  return out;
+}
+
 const lookup = (dict: DictLike, key: string) => dict.names[key] ?? dict.words[key];
 
 export function convertInput(input: string, dict: DictLike, toHiragana: (romaji: string) => string): Converted {
@@ -45,7 +84,7 @@ export function convertInput(input: string, dict: DictLike, toHiragana: (romaji:
       continue;
     }
     bySound.push(part);
-    const kana = toHiragana(part);
+    const kana = toHiragana(soundSpell(part));
     hiragana += kana;
     leftovers += kana.replace(/[^a-z]/gi, "");
   }

@@ -314,10 +314,12 @@ export function entryScreen(nav: Nav): Screen {
   const el = h(
     "div",
     { class: "screen entry" },
-    h("header", { class: "topbar" }, iconButton(ICON.back, "Back", () => nav.home(), "home"), h("h2", null, "Type a word or name")),
+    h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home")),
     h(
       "main",
       { class: "entry-body" },
+      // Title inside the content column so it lines up with the text and the input.
+      h("h2", { class: "entry-title" }, "Type a word or name"),
       h("p", { class: "for-grownups" }, "For grown-ups: type a name or word in English, or how it sounds (ne-ko). Check the letters, then hand over."),
       h("div", { class: "input-row" }, input, mic),
       hint,

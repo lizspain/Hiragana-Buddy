@@ -66,7 +66,7 @@ export function homeScreen(nav: Nav): Screen {
           h("p", { class: "subtitle", lang: "ja" }, "ひらがな の ともだち"),
         ),
       ),
-      holdButton(ICON.gear, "Grown-ups", 1500, () => nav.parent()),
+      holdButton(ICON.gear, "Settings", 1500, () => nav.parent()),
     ),
     h(
       "nav",

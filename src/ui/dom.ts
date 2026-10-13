@@ -130,7 +130,7 @@ export const ICON = {
   soundOff: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M33 19l10 10M43 19 33 29"/>`),
   speaker: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M32 17a10 10 0 0 1 0 14"/>`),
   // Filled gear from the Figma Make mockup.
-  gear: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="m20 5-1.2 5.3-4.2 1.8-4.6-2.9-4.8 4.8 2.9 4.6L6.3 23 1 24l1 6 5.4.9 1.8 4.3-2.9 4.6 4.8 4.8 4.6-2.9 4.3 1.8 1 5.3h6l1-5.3 4.3-1.8 4.6 2.9 4.8-4.8-2.9-4.6 1.8-4.3L47 30l1-6-5.3-1-1.8-4.3 2.9-4.6L39 9.3l-4.6 2.9-4.3-1.8L29 5Z" fill="currentColor" stroke="#2d2928" stroke-width="1.5" stroke-linejoin="round"/><circle cx="24" cy="27" r="7" fill="#dfbe91" stroke="#2d2928" stroke-width="3"/></svg>`,
+  gear: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="m20 5-1.2 5.3-4.2 1.8-4.6-2.9-4.8 4.8 2.9 4.6L6.3 23 1 24l1 6 5.4.9 1.8 4.3-2.9 4.6 4.8 4.8 4.6-2.9 4.3 1.8 1 5.3h6l1-5.3 4.3-1.8 4.6 2.9 4.8-4.8-2.9-4.6 1.8-4.3L47 30l1-6-5.3-1-1.8-4.3 2.9-4.6L39 9.3l-4.6 2.9-4.3-1.8L29 5Z" fill="currentColor" stroke="#1c1917" stroke-width="1.5" stroke-linejoin="round"/><circle cx="24" cy="27" r="7" fill="#dfbe91" stroke="#1c1917" stroke-width="3"/></svg>`,
   mic: svg(`<rect x="17" y="5" width="14" height="24" rx="7" fill="currentColor"/><path d="M10 22a14 14 0 0 0 28 0M24 36v7M17 43h14"/>`),
   play: svg(`<path d="M16 10v28l22-14z" fill="currentColor"/>`),
   plus: svg(`<path d="M24 10v28M10 24h28"/>`),

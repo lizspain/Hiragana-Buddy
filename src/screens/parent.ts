@@ -12,7 +12,7 @@ export function parentScreen(nav: Nav): Screen {
   const el = h(
     "div",
     { class: "screen parent" },
-    h("header", { class: "topbar" }, iconButton(ICON.back, "Back", () => nav.home(), "home"), h("h2", null, "Grown-ups")),
+    h("header", { class: "topbar" }, iconButton(ICON.back, "Back", () => nav.home(), "home"), h("h2", null, "Settings")),
     body,
   );
 

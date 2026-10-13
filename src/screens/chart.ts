@@ -63,7 +63,7 @@ export function chartScreen(nav: Nav): Screen {
   const el = h(
     "div",
     { class: "screen chart-screen" },
-    h("header", { class: "topbar" }, iconButton(ICON.back, "Back", () => nav.home(), "home")),
+    h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home")),
     kanaChart(
       (k) => {
         if (picked) return;

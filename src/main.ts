@@ -3,7 +3,6 @@ import { initRouter, nav } from "./app";
 import { loadStrokes } from "./data";
 import { loadStore, getSettings } from "./store";
 import { loadVoice, setSoundEnabled } from "./ui/audio";
-import { installBackdrop } from "./ui/backdrop";
 import { installPressFeedback } from "./ui/press";
 
 // No pinch / double-tap zoom anywhere (iOS ignores user-scalable=no).
@@ -12,7 +11,6 @@ document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: fals
 
 async function boot() {
   const root = document.getElementById("app")!;
-  installBackdrop();
   installPressFeedback();
   await Promise.all([loadStrokes(), loadStore(), loadVoice()]);
   setSoundEnabled(getSettings().sound);

@@ -344,6 +344,36 @@ test("ink colour is picked on the drawing screen and recolours the letter", asyn
   await expect(page.getByTestId("palette").locator('[data-color="#f87171"]')).toHaveAttribute("aria-checked", "true");
 });
 
+test("drawing makes a soft sand sound, built once and only while the finger moves", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { sandLoops: number; sandGain: number[] };
+    w.sandLoops = 0;
+    w.sandGain = [];
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
+      if (this.loop) w.sandLoops++;
+      return start.apply(this, args);
+    };
+    const target = AudioParam.prototype.setTargetAtTime;
+    AudioParam.prototype.setTargetAtTime = function (v: number, t: number, c: number) {
+      if (this.maxValue > 1e30 && this.defaultValue === 1) w.sandGain.push(v); // GainNode.gain
+      return target.call(this, v, t, c);
+    };
+  });
+  await openLetter(page, "い");
+  await waitReady(page, 1, 0);
+  await drawMouse(page, data["い"].strokes[0].points);
+  await waitReady(page, 1, 1);
+  await drawMouse(page, data["い"].strokes[1].points);
+  const r = await page.evaluate(() => {
+    const w = window as unknown as { sandLoops: number; sandGain: number[] };
+    return { sandLoops: w.sandLoops, sandGain: w.sandGain };
+  });
+  expect(r.sandLoops).toBe(1); // one looping sand source for the whole session
+  expect(Math.max(...r.sandGain)).toBeGreaterThan(0); // audible while moving
+  expect(r.sandGain.at(-1)).toBe(0); // silent once the stroke ends
+});
+
 test("no requests leave the site", async ({ page }) => {
   const foreign: string[] = [];
   page.on("request", (r) => {

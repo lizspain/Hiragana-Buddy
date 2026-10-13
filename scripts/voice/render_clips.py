@@ -32,7 +32,11 @@ PEAK = 0.9
 CREDIT = "Japanese voice: Kokoro-82M (jf_alpha), Apache-2.0."
 
 # Alone, these are read as particles (wa, e); as letters they are ha, he.
-OVERRIDES = {"は": "ha", "へ": "he"}
+# ん alone is very short and hissy; a held nasal (ɴː) sounds like the letter.
+OVERRIDES = {"は": "ha", "へ": "he", "ん": "ɴː"}
+# Bump when clip audio changes: file names change, so devices that cached the
+# old clips for offline use fetch the new ones.
+CLIP_VERSION = "2"
 
 
 def phonemize(g2p: ja.JAG2P, text: str) -> str:
@@ -40,6 +44,41 @@ def phonemize(g2p: ja.JAG2P, text: str) -> str:
         return OVERRIDES[text]
     p, _ = g2p(text)
     return re.sub(r" *ː *", "ː", p).strip()  # ー arrives as " ː "
+
+
+def trim_breath(audio: np.ndarray, sr: int, strict: bool) -> np.ndarray:
+    """Cut Kokoro's trailing breath and leading silence.
+
+    After a short utterance the model adds 100-180 ms of quiet, hissy breath
+    (mostly >3 kHz); chained mora clips then sound like "och-hych-yoech".
+    strict (single kana, which get chained to sound out words): keep only the
+    one continuous sounding stretch around the loudest 10 ms frame, so a later
+    puff of breath is dropped. Otherwise (whole words: may contain pauses and
+    soft final syllables like the ぐ in どっぐ): keep from the first to the last
+    frame above 12% of the peak. Either way, fade the end out over 40 ms.
+    """
+    w = int(sr * 0.01)
+    env = np.array([np.sqrt(np.mean(audio[i : i + w] ** 2)) for i in range(0, len(audio) - w, w)])
+    if not len(env):
+        return audio
+    floor = 0.12 * env.max()
+    if strict:
+        peak = int(np.argmax(env))
+        first = last = peak
+        while first > 0 and env[first - 1] > floor:
+            first -= 1
+        while last < len(env) - 1 and env[last + 1] > floor:
+            last += 1
+    else:
+        loud = np.nonzero(env > floor)[0]
+        first, last = int(loud[0]), int(loud[-1])
+    start = max(0, (first - 2) * w)
+    end = min(len(audio), (last + 2) * w)
+    out = audio[start:end].copy()
+    fade = min(len(out) // 3, int(sr * 0.04))
+    if fade:
+        out[-fade:] *= np.linspace(1, 0, fade, dtype=out.dtype) ** 1.5
+    return out
 
 
 def to_mp3(audio: np.ndarray, sr: int) -> bytes:
@@ -84,10 +123,11 @@ def main() -> int:
             problems.append(f"{text}: phonemes {ph!r} unknown {unknown}")
             continue
         audio, sr = kokoro.create(ph, voice=VOICE, speed=SPEED, lang="ja", is_phonemes=True)
+        audio = trim_breath(audio, sr, strict=len(text) <= 2)  # single kana / きゃ-style pairs
         if len(audio) < sr * 0.1 or float(np.abs(audio).max()) < 0.05:
             problems.append(f"{text}: audio too short or quiet ({len(audio) / sr:.2f}s)")
             continue
-        name = hashlib.sha1(text.encode("utf-8")).hexdigest()[:12] + ".mp3"
+        name = hashlib.sha1((CLIP_VERSION + text).encode("utf-8")).hexdigest()[:12] + ".mp3"
         data = to_mp3(audio, sr)
         (OUT / "ja" / name).write_bytes(data)
         manifest[text] = f"ja/{name}"
