@@ -36,7 +36,7 @@
   /* palette */
   --canvas: #fff8e8;
   --surface: #fffdf0;
-  --ink: #2d2928;
+  --ink: #1c1917; /* Tailwind stone-900: every "black" border and text */
   --outline: #4b3026;
   --muted: #7d6654;
   --brand: #146449;
@@ -58,6 +58,8 @@
   --focus: #7d66df;
   --orange-100: #ffedd5; /* "very light orange" from the palette */
   --title-blue: #0891b2; /* the palette's blue (cyan-600) */
+  --hold-ring: #d97706; /* the palette's orange */
+  --title-blue-dark: #155e75; /* cyan-800: the Japanese subtitle under it */
   --step-blue: #bae6fd; /* light blue for the Watch / Trace / Write steps */
   --step-blue-soft: #e3f4fd;
   --cast: rgb(67 43 28 / 13%);
@@ -94,83 +96,19 @@ body {
   touch-action: manipulation;
 }
 
+/* Soft sand, recoloured to the palette (art-source/sand-tile.webp → src/art/sand.webp),
+   shown large so it reads as gentle texture rather than a pattern. */
 body {
-  background: radial-gradient(circle at 50% 12%, rgb(255 255 255 / 45%), transparent 45%), var(--canvas);
+  background:
+    radial-gradient(circle at 50% 12%, rgb(255 255 255 / 40%), transparent 45%),
+    url("./art/sand.webp") center top / 900px 900px repeat,
+    var(--canvas);
   background-attachment: fixed;
 }
 
 #app {
   position: relative;
   z-index: 1;
-}
-
-/* ---------- backdrop (ui/backdrop.ts) ---------- */
-
-#backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-#backdrop .grain-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-#backdrop .grain {
-  fill: none;
-  stroke: #d9b98f;
-  stroke-width: 6;
-  stroke-linecap: round;
-  opacity: 0.27;
-}
-
-#backdrop .pebbles {
-  position: absolute;
-  width: clamp(110px, 16vw, 170px);
-  height: auto;
-  opacity: 0.9;
-}
-
-#backdrop .pebbles-a {
-  left: 6px;
-  bottom: calc(6px + var(--safe-b));
-}
-
-#backdrop .pebbles-b {
-  right: 4px;
-  top: 42%;
-  width: clamp(90px, 13vw, 140px);
-}
-
-#backdrop .pebbles-c {
-  right: 6px;
-  bottom: calc(6px + var(--safe-b));
-}
-
-/* Home and "my word": wood grain only (no pebbles or sprouts). */
-body[data-screen="home"] #backdrop .pebbles,
-body[data-screen="done"] #backdrop .pebbles {
-  display: none;
-}
-
-/* Writing: faint grain only, nothing behind the controls. */
-body[data-screen="write"] #backdrop .grain {
-  opacity: 0.16;
-}
-
-body[data-screen="write"] #backdrop .pebbles {
-  display: none;
-}
-
-@media (max-width: 600px) {
-  #backdrop .pebbles-b {
-    display: none;
-  }
 }
 
 button {
@@ -343,14 +281,16 @@ input:focus-visible {
   fill: var(--orange-100);
 }
 
+/* Press-and-hold ring: a thick orange ring that shows a quarter full at once
+   (so a tap visibly does something) and fills the rest while held. */
 .hold-btn::after {
   content: "";
   position: absolute;
-  inset: -8px;
+  inset: -12px;
   border-radius: 50%;
-  background: conic-gradient(var(--brand) var(--p, 0%), transparent 0);
-  -webkit-mask: radial-gradient(circle, transparent 62%, #000 63%);
-  mask: radial-gradient(circle, transparent 62%, #000 63%);
+  background: conic-gradient(var(--hold-ring) var(--p, 25%), transparent 0);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 80%, #000 81%);
+  mask: radial-gradient(circle closest-side, transparent 80%, #000 81%);
   opacity: 0;
 }
 
@@ -362,10 +302,14 @@ input:focus-visible {
 @property --p {
   syntax: "<percentage>";
   inherits: false;
-  initial-value: 0%;
+  initial-value: 25%;
 }
 
 @keyframes hold-fill {
+  from {
+    --p: 25%;
+  }
+
   to {
     --p: 100%;
   }
@@ -466,7 +410,7 @@ input:focus-visible {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgb(45 41 40 / 40%);
+  background: rgb(28 25 23 / 40%);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -536,10 +480,14 @@ input:focus-visible {
   min-width: 0;
 }
 
+.home-head {
+  --title-size: clamp(27px, 8vw, 32px);
+}
+
 .home-head h1 {
   margin: 0;
   color: var(--title-blue);
-  font-size: clamp(27px, 8vw, 32px);
+  font-size: var(--title-size);
   font-weight: 900;
   line-height: 0.98;
   letter-spacing: -0.025em;
@@ -551,10 +499,10 @@ input:focus-visible {
 }
 
 .subtitle {
-  margin: 7px 0 0;
-  color: var(--muted);
+  margin: 1px 0 0;
+  color: var(--title-blue-dark);
   font-family: "Klee One Subtitle", var(--font);
-  font-size: clamp(13px, 3.7vw, 16px);
+  font-size: calc(var(--title-size) * 2 / 3); /* two thirds of the "Hiragana Buddy" lettering */
   font-weight: 600;
   white-space: nowrap;
 }
@@ -717,6 +665,27 @@ input:focus-visible {
   display: inline-grid;
 }
 
+/* The entry page's "hear it": the card button, bigger. */
+.shelf-play.hear-play {
+  width: 88px;
+  height: 60px;
+  margin-top: 0;
+  border-radius: 18px;
+}
+
+.hear-play .shelf-play-icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* Remove a tile: the palette's pink with light tan icon. */
+.shelf-play.trash-btn {
+  --edge: #c24f4f;
+  background: #f87171;
+  border-color: #b04545;
+  color: #d4b38e;
+}
+
 .shelf-kana {
   display: flex;
   flex-wrap: wrap;
@@ -814,6 +783,13 @@ input:focus-visible {
   flex-direction: column;
   gap: 14px;
   padding-top: 8px;
+}
+
+.entry-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--brand);
 }
 
 .for-grownups {
@@ -971,7 +947,7 @@ input:focus-visible {
   z-index: 5;
   position: relative;
   transition: none;
-  box-shadow: 0 12px 24px rgb(45 41 40 / 25%);
+  box-shadow: 0 12px 24px rgb(28 25 23 / 25%);
 }
 
 .tile.add {
@@ -1153,13 +1129,9 @@ body[data-screen="write"] {
 }
 
 /* Own compositing layers: drawing ink repaints only the ink canvas, never the
-   backdrop, paper or stones underneath. */
+   paper or stones underneath. */
 .stage .layer {
   will-change: transform;
-}
-
-#backdrop {
-  contain: strict;
 }
 
 .stage.cheer {
@@ -1252,11 +1224,11 @@ body[data-screen="write"] {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 3px solid var(--outline);
+  border: 3px solid var(--tan); /* light brown, like the Home button */
   background: var(--c);
   box-shadow:
     inset 0 4px 0 rgb(255 255 255 / 30%),
-    0 4px 0 rgb(45 41 40 / 35%);
+    0 4px 0 rgb(28 25 23 / 35%);
   transition: transform 0.15s;
 }
 
@@ -1639,8 +1611,11 @@ body[data-screen="write"] {
     gap: 12px;
   }
 
+  .home-head {
+    --title-size: 39px;
+  }
+
   .home-head h1 {
-    font-size: 39px;
     line-height: 1;
     white-space: nowrap;
   }
@@ -1650,8 +1625,7 @@ body[data-screen="write"] {
   }
 
   .subtitle {
-    margin-top: 5px;
-    font-size: 16px;
+    margin-top: -1px;
   }
 
   .mascot {

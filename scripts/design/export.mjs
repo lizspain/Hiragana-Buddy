@@ -203,7 +203,7 @@ for (const device of ["phone", "tablet"]) {
   await capture(page, device, "19-my-word", "My word: summary");
 
   await page.goto(BASE);
-  const gear = page.getByRole("button", { name: "Grown-ups" });
+  const gear = page.getByRole("button", { name: "Settings" });
   await gear.hover();
   await page.mouse.down();
   await page.waitForTimeout(1700);

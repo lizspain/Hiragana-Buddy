@@ -8,7 +8,8 @@ Reads art-source/, writes public/art/:
     octopus-dance.webp    16 dance frames re-aligned on a shared ground point,
                           4x4 sheet of equal cells
     stone-frame.webp      the pebble ring, square
-and src/art.json (dance frame size, stone ring's inner edge) for the app.
+and src/art.json (dance frame size, stone ring's inner edge) for the app,
+and src/art/sand.webp, the background tile recoloured to the palette.
 
 How the background goes: flood-fill inward from the image edges through pixels
 that are white or a pale shadow tone; the dark cartoon outlines stop the fill,
@@ -177,6 +178,20 @@ def main() -> None:
         "inset": [round(l / f.width, 4), round(t / f.height, 4), round((f.width - r) / f.width, 4), round((f.height - b) / f.height, 4)],
     }
     print(f"stone-frame.webp {f.width}x{f.height} {n // 1024} KB, inner opening insets {meta['stoneFrame']['inset']}")
+
+    # Sand background tile: re-coloured onto the palette's creams and softened, so
+    # it reads as a gentle texture behind everything (src/styles.css).
+    sand = np.asarray(Image.open(SRC / "sand-tile.webp").convert("RGB")).astype(np.float64)
+    lum = sand.mean(axis=2)
+    lo, hi = np.percentile(lum, [1, 99])
+    t = np.clip((lum - lo) / (hi - lo), 0, 1)[..., None]
+    shade = np.array([247, 229, 202], dtype=np.float64)  # between orange-100 #ffedd5 and tan, for the sand's shadows
+    light = np.array([255, 249, 236], dtype=np.float64)  # just above the canvas cream #fff8e8
+    out_rgb = (shade + (light - shade) * t).round().astype(np.uint8)
+    tile = Image.fromarray(out_rgb, "RGB").resize((1200, 1200), Image.LANCZOS)
+    (ROOT / "src" / "art").mkdir(exist_ok=True)
+    tile.save(ROOT / "src" / "art" / "sand.webp", "WEBP", quality=82, method=6)
+    print(f"sand.webp 1200x1200 {(ROOT / 'src' / 'art' / 'sand.webp').stat().st_size // 1024} KB")
 
     # Read by the app (src/ui/dance.ts, src/ui/board.ts).
     (ROOT / "src" / "art.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")

@@ -3,6 +3,7 @@
 // writing board) and when the "my word" screen opens (as a page overlay).
 
 import { INK_COLORS } from "./palette";
+import { star } from "./star";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -83,15 +84,4 @@ export function pageBurst(around?: Element | null, ms = 1500): () => void {
     cancelAnimationFrame(raf);
     c.remove();
   };
-}
-
-export function star(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
-  ctx.beginPath();
-  for (let n = 0; n < 8; n++) {
-    const rr = n % 2 ? r * 0.38 : r;
-    const a = (n * Math.PI) / 4 - Math.PI / 2;
-    ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-  }
-  ctx.closePath();
-  ctx.fill();
 }

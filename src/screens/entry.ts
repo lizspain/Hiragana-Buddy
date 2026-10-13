@@ -69,7 +69,7 @@ export function entryScreen(nav: Nav): Screen {
       hint.prepend(
         r.leftovers
           ? "Spelled by sound. Some letters didn't fit, so check the tiles, or type it how it sounds, like e-mi-ri. "
-          : "Spelled by sound. Check the tiles below. ",
+          : "See Hiragana chosen below. ",
       );
     } else if (r.bySound.length) {
       hint.textContent = "Type it how it sounds, like e-mi-ri or ne-ko.";
@@ -115,24 +115,34 @@ export function entryScreen(nav: Nav): Screen {
     tools.replaceChildren();
     if (selected >= 0) {
       tools.append(
-        h("button", { class: "pill-btn", onclick: () => openChart(selected) }, h("span", { html: ICON.swap }), "Change"),
+        h(
+          "button",
+          { class: "shelf-play hear-play", "aria-label": "Change", onclick: () => openChart(selected) },
+          h("span", { class: "shelf-play-icon", html: ICON.swap }),
+        ),
         h(
           "button",
           {
-            class: "pill-btn soft",
+            class: "shelf-play hear-play trash-btn",
+            "aria-label": "Remove",
             onclick: () => {
               tiles.splice(selected, 1);
               selected = -1;
               render();
             },
           },
-          h("span", { html: ICON.trash }),
-          "Remove",
+          h("span", { class: "shelf-play-icon", html: ICON.trash }),
         ),
       );
     }
     if (tiles.length) {
-      tools.append(h("button", { class: "pill-btn soft", onclick: () => (unlockAudio(), sayWord(tiles)) }, h("span", { html: ICON.speaker }), "Hear it"));
+      tools.append(
+        h(
+          "button",
+          { class: "shelf-play hear-play", "aria-label": "Hear it", onclick: () => (unlockAudio(), sayWord(tiles)) },
+          h("span", { class: "shelf-play-icon", html: ICON.speaker }),
+        ),
+      );
     }
 
     const m = moraCount(tiles);
@@ -314,11 +324,13 @@ export function entryScreen(nav: Nav): Screen {
   const el = h(
     "div",
     { class: "screen entry" },
-    h("header", { class: "topbar" }, iconButton(ICON.back, "Back", () => nav.home(), "home"), h("h2", null, "Type a word or name")),
+    h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home")),
     h(
       "main",
       { class: "entry-body" },
-      h("p", { class: "for-grownups" }, "For grown-ups: type a name or word in English, or how it sounds (ne-ko). Check the letters, then hand over."),
+      // Title inside the content column so it lines up with the text and the input.
+      h("h2", { class: "entry-title" }, "Type a word or name"),
+      h("p", { class: "for-grownups" }, "Enter a name or word in English or type out how it sounds. Then tap Start."),
       h("div", { class: "input-row" }, input, mic),
       hint,
       choices,

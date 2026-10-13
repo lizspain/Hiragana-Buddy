@@ -7,7 +7,7 @@ import { glyph } from "../data";
 import type { Phase, Pt } from "../engine/matcher";
 import { starsFor } from "../engine/matcher";
 import { CharacterSession, type Outcome } from "../engine/session";
-import { boop, chime, fanfare, line, pop, praise, preloadWord, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
+import { boop, chime, fanfare, line, pop, praise, preloadWord, sandSwoosh, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
 import { Board } from "../ui/board";
 import { h, html, ICON, iconButton, kanaSvg, mascot } from "../ui/dom";
 import { inkPalette } from "../ui/palette";
@@ -99,15 +99,43 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
   const kana = () => plan.kana[idx];
   const phase = () => phases[pi];
 
+  // Sand swoosh: loudness follows finger speed; goes quiet if the finger rests.
+  let lastX = 0, lastY = 0, lastT = 0, sandQuiet = 0;
+  const sandFollow = (x: number, y: number) => {
+    const now = performance.now();
+    const dt = Math.max(8, now - lastT);
+    const speed = Math.hypot(x - lastX, y - lastY) / board.cell.size / (dt / 1000);
+    lastX = x;
+    lastY = y;
+    lastT = now;
+    sandSwoosh(speed);
+    clearTimeout(sandQuiet);
+    sandQuiet = window.setTimeout(() => sandSwoosh(0), 90);
+  };
+  const sandStop = () => {
+    clearTimeout(sandQuiet);
+    sandSwoosh(0);
+  };
+
   const pen = new PenInput(stage, () => board.cell, {
     start(x, y) {
       unlockAudio();
       clearTimeout(demoTimer);
       board.beginLive(x, y);
+      lastX = x;
+      lastY = y;
+      lastT = performance.now();
     },
-    move: (xs, ys) => board.extendLive(xs, ys),
-    discard: () => board.dropLive(),
+    move: (xs, ys) => {
+      board.extendLive(xs, ys);
+      sandFollow(xs[xs.length - 1], ys[ys.length - 1]);
+    },
+    discard: () => {
+      sandStop();
+      board.dropLive();
+    },
     end(points) {
+      sandStop();
       if (busy) {
         board.fadeLive();
         return;
@@ -305,6 +333,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     },
     destroy() {
       destroyed = true;
+      sandStop();
       timers.forEach((t) => clearTimeout(t));
       pen.destroy();
       board.destroy();
