@@ -176,16 +176,28 @@ test("a romaji word goes through the tile editor into practice", async ({ page }
   // Not in the English list → spelled by sound automatically, no toggle.
   await page.getByTestId("word-input").fill("neko");
   await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
-  await expect(page.getByTestId("hint")).toContainText("See Hiragana chosen below");
+  await expect(page.getByTestId("hint")).toHaveText(""); // the tiles speak for themselves
   await page.getByTestId("word-input").fill("Charlotte");
   await expect(page.getByTestId("hint")).toHaveText("");
   await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(6);
-  await expect(page.locator(".mora-count")).toHaveText("5 / 14 sounds");
+  await expect(page.getByTestId("max-reached")).toHaveCount(0);
   await page.screenshot({ path: `test-results/entry-${test.info().project.name}.png` });
   await page.getByTestId("start").click();
   await expect(stage(page)).toHaveAttribute("data-kana", "し");
   await page.waitForTimeout(400);
   await page.screenshot({ path: `test-results/write-${test.info().project.name}.png` });
+});
+
+test("at 14 sounds the add tile gives way to a note", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("go-word").click();
+  await page.getByTestId("word-input").fill("aiueokakikukekosasisuse"); // exactly 14 sounds
+  await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(14);
+  await expect(page.getByTestId("tiles").locator(".tile.add")).toHaveCount(0);
+  await expect(page.getByTestId("max-reached")).toHaveText("Max 14 sounds");
+  await page.getByTestId("word-input").fill("aiueokakikukekosasisu"); // 13: room for one more
+  await expect(page.getByTestId("tiles").locator(".tile.add")).toHaveCount(1);
+  await expect(page.getByTestId("max-reached")).toHaveCount(0);
 });
 
 for (const phase of [2, 3]) {

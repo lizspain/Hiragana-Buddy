@@ -34,7 +34,6 @@ export function entryScreen(nav: Nav): Screen {
   const choices = h("div", { class: "choices" });
   const row = h("div", { class: "tile-row", "data-testid": "tiles" });
   const tools = h("div", { class: "tile-tools" });
-  const count = h("p", { class: "mora-count" });
   const start = h(
     "button",
     {
@@ -66,11 +65,7 @@ export function entryScreen(nav: Nav): Screen {
     source = r.source;
     setTiles(glyphsOf(r.hiragana));
     if (r.bySound.length && tiles.length) {
-      hint.prepend(
-        r.leftovers
-          ? "Spelled by sound. Some letters didn't fit, so check the tiles, or type it how it sounds, like e-mi-ri. "
-          : "See Hiragana chosen below. ",
-      );
+      if (r.leftovers) hint.prepend("Spelled by sound. Some letters didn't fit, so check the tiles, or type it how it sounds, like e-mi-ri. ");
     } else if (r.bySound.length) {
       hint.textContent = "Type it how it sounds, like e-mi-ri or ne-ko.";
     }
@@ -98,12 +93,13 @@ export function entryScreen(nav: Nav): Screen {
         dragTile(t, i);
         return t;
       }),
-      h("button", { class: "tile add", "aria-label": "Add a letter", html: ICON.plus, onclick: () => openChart(-1) }),
+      // At the limit, the add tile gives way to a note saying so.
+      moraCount(tiles) >= MAX_MORAE
+        ? h("p", { class: "max-reached", "data-testid": "max-reached" }, `Max ${MAX_MORAE} sounds`)
+        : h("button", { class: "tile add", "aria-label": "Add a letter", html: ICON.plus, onclick: () => openChart(-1) }),
     );
     renderTools();
-    const m = moraCount(tiles);
-    count.textContent = tiles.length ? `${m} / ${MAX_MORAE} sounds` : "";
-    start.disabled = !tiles.length || m > MAX_MORAE;
+    start.disabled = !tiles.length || moraCount(tiles) > MAX_MORAE;
   }
 
   /** Built once per conversion, then only the "on" chip changes, so it can fade across. */
@@ -370,7 +366,6 @@ export function entryScreen(nav: Nav): Screen {
       choices,
       row,
       tools,
-      count,
       start,
     ),
   );
