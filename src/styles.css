@@ -58,6 +58,10 @@
   --focus: #7d66df;
   --orange-100: #ffedd5; /* "very light orange" from the palette */
   --title-blue: #0891b2; /* the palette's blue (cyan-600) */
+  /* motion (Emil Kowalski's curves): enter/respond fast, settle softly */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* a small overshoot: toys springing back */
   --hold-ring: #d97706; /* the palette's orange */
   --title-blue-dark: #155e75; /* cyan-800: the Japanese subtitle under it */
   --step-blue: #bae6fd; /* light blue for the Watch / Trace / Write steps */
@@ -175,17 +179,41 @@ input:focus-visible {
   box-shadow:
     0 var(--lift) 0 var(--edge, var(--card-edge)),
     0 calc(var(--lift) + 4px) 0 var(--cast);
+  /* Release: spring back up with a tiny overshoot, like a squishy toy. */
   transition:
-    transform 100ms ease,
-    filter 100ms ease,
-    box-shadow 100ms ease;
+    transform 260ms var(--ease-bounce),
+    box-shadow 260ms var(--ease-bounce),
+    filter 160ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    outline-color 180ms ease,
+    outline-offset 260ms var(--ease-bounce);
 }
 
+/* Press: sink at once (feedback on pointer-down, see ui/press.ts). */
 .is-pressed,
 .shelf-card:has(.shelf-main.is-pressed) {
   --lift: 2px;
   transform: translateY(4px);
   filter: brightness(0.9);
+  /* Only the sink speeds up; colour changes keep their own pace. */
+  transition-duration: 70ms, 70ms, 70ms, 180ms, 180ms, 180ms, 260ms;
+  transition-timing-function: var(--ease-out), var(--ease-out), var(--ease-out), ease, ease, ease, var(--ease-bounce);
+}
+
+/* Mouse only: a gentle brighten under the pointer (never sticks on touch). */
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover:not(.is-pressed),
+  .pill-btn:hover:not(.is-pressed),
+  .big-btn:hover:not(.is-pressed),
+  .shelf-play:hover:not(.is-pressed),
+  .chart-tab:hover:not(.is-pressed),
+  .chart-cell:not(.empty):hover:not(.is-pressed),
+  .chip:hover:not(.is-pressed),
+  .start-btn:hover:not(.is-pressed),
+  .home-big:hover:not(.is-pressed) {
+    filter: brightness(1.05);
+  }
 }
 
 .shelf-card:has(.shelf-main.is-pressed) .shelf-main {
@@ -286,11 +314,21 @@ input:focus-visible {
 .hold-btn::after {
   content: "";
   position: absolute;
-  inset: -12px;
-  border-radius: 50%;
+  /* Same rule as the selection rings: even gap all round, passing below the
+     10px depth (--lift 6px + 4px cast). The padding is the ring; the mask
+     cuts out the middle, so the ring is an even 8px all the way round. */
+  --out: calc(-1 * (3px + 4px + 8px));
+  inset: var(--out) var(--out) calc(var(--out) - 10px) var(--out);
+  padding: 8px;
+  border-radius: 999px;
   background: conic-gradient(var(--hold-ring) var(--p, 25%), transparent 0);
-  -webkit-mask: radial-gradient(circle closest-side, transparent 80%, #000 81%);
-  mask: radial-gradient(circle closest-side, transparent 80%, #000 81%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   opacity: 0;
 }
 
@@ -425,6 +463,50 @@ input:focus-visible {
   width: 100%;
   max-height: calc(100dvh - 32px);
   overflow: auto;
+}
+
+/* Modals spring in from just below centre and leave faster than they came. */
+.modal-back {
+  animation: backdrop-in 200ms var(--ease-out);
+}
+
+.modal-back .modal {
+  animation: modal-in 280ms var(--ease-bounce);
+}
+
+.modal-back.closing {
+  pointer-events: none;
+  animation: backdrop-out 150ms var(--ease-out) forwards;
+}
+
+.modal-back.closing .modal {
+  animation: modal-out 150ms var(--ease-out) forwards;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+}
+
+@keyframes modal-out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
 }
 
 .modal-head {
@@ -678,6 +760,18 @@ input:focus-visible {
   height: 36px;
 }
 
+/* Tools that have just appeared on the entry page pop up from slightly small. */
+.pop-in {
+  animation: pop-in 240ms var(--ease-bounce);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
 /* Remove a tile: the palette's pink with light tan icon. */
 .shelf-play.trash-btn {
   --edge: #c24f4f;
@@ -927,6 +1021,10 @@ input:focus-visible {
   background: var(--surface);
   padding: 10px;
   touch-action: none;
+  position: relative;
+  --ring-color: var(--peach);
+  --ring-radius: 20px;
+  --depth: 9px; /* --lift 5px + the 4px cast shadow below it */
 }
 
 .tile .kana {
@@ -939,8 +1037,33 @@ input:focus-visible {
 .tile.selected {
   --edge: var(--peach-edge);
   background: #ffe4cf;
-  outline: 4px solid var(--peach);
-  outline-offset: 3px;
+}
+
+/* Selection ring for raised buttons. It hugs the whole button, depth shadow
+   included: an even gap on every side, and taller than the face by --depth so
+   it passes below the shadow instead of across it. Grows in with a spring. */
+.tile::after,
+.swatch::after {
+  content: "";
+  position: absolute;
+  --gap: 4px;
+  --ring: 4px;
+  --out: calc(-1 * (3px + var(--gap) + var(--ring))); /* 3px: the button's own border */
+  inset: var(--out) var(--out) calc(var(--out) - var(--depth)) var(--out);
+  border: var(--ring) solid var(--ring-color);
+  border-radius: calc(var(--ring-radius) + var(--gap) + var(--ring));
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 180ms ease,
+    transform 260ms var(--ease-bounce);
+}
+
+.tile.selected::after,
+.swatch.on::after {
+  opacity: 1;
+  transform: none;
 }
 
 .tile.dragging {
@@ -1063,7 +1186,12 @@ body[data-screen="write"] {
   color: var(--outline);
   background: var(--step-blue);
   border: 3px solid var(--outline);
-  transition: transform 0.2s;
+  /* The current step grows with a little bounce; finished steps fill blue. */
+  transition:
+    transform 320ms var(--ease-bounce),
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
 }
 
 .pip svg {
@@ -1163,7 +1291,11 @@ body[data-screen="write"] {
   background: var(--surface);
   padding: calc(var(--tile) * 0.13);
   color: #b9a796;
-  transition: transform 0.2s;
+  transition:
+    transform 320ms var(--ease-bounce),
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
 }
 
 .strip-tile .kana {
@@ -1216,7 +1348,7 @@ body[data-screen="write"] {
 
 .swatches {
   display: flex;
-  gap: 14px;
+  gap: 16px; /* room for the picked colour's ring */
   padding: 8px;
 }
 
@@ -1229,13 +1361,15 @@ body[data-screen="write"] {
   box-shadow:
     inset 0 4px 0 rgb(255 255 255 / 30%),
     0 4px 0 rgb(28 25 23 / 35%);
-  transition: transform 0.15s;
+  position: relative;
+  --ring-color: var(--c);
+  --ring-radius: 999px;
+  --depth: 4px; /* its 4px drop shadow */
+  transition: transform 260ms var(--ease-bounce);
 }
 
 .swatch.on {
-  transform: scale(1.14);
-  outline: 4px solid var(--c);
-  outline-offset: 3px;
+  transform: scale(1.08);
 }
 
 @media (max-width: 480px) {
@@ -1273,7 +1407,7 @@ body[data-screen="write"] {
   }
 
   .swatches {
-    gap: 9px;
+    gap: 12px;
   }
 
   .swatch {
@@ -1671,6 +1805,30 @@ body[data-screen="write"] {
 
 /* ---------- motion ---------- */
 
+/* A new screen fades and rises a few pixels instead of snapping in. It never
+   blocks taps. The write screen only fades: the board measures where the
+   drawing square sits on mount, and a moving screen would offset the ink. */
+.screen {
+  animation: screen-in 220ms var(--ease-out);
+}
+
+.screen.write {
+  animation-name: screen-fade;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes screen-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes bob {
   50% {
     transform: translateY(-6px);
@@ -1685,7 +1843,7 @@ body[data-screen="write"] {
 
 @keyframes star-in {
   from {
-    transform: scale(0) rotate(-40deg);
+    transform: scale(0.4) rotate(-40deg);
     opacity: 0;
   }
 }
@@ -1709,5 +1867,33 @@ body[data-screen="write"] {
 
   .hold-btn.holding::after {
     animation-duration: var(--hold-ms) !important;
+  }
+
+  /* Reduced motion keeps gentle fades (they help show what changed) and drops movement. */
+  .screen {
+    animation: screen-fade 160ms ease !important;
+  }
+
+  .modal-back,
+  .modal-back .modal {
+    animation: backdrop-in 160ms ease !important;
+  }
+
+  .modal-back.closing,
+  .modal-back.closing .modal {
+    animation: backdrop-out 120ms ease forwards !important;
+  }
+
+  .tile,
+  .chip,
+  .chart-tab,
+  .pip,
+  .strip-tile,
+  .swatch {
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      border-color 150ms ease,
+      outline-color 150ms ease !important;
   }
 }

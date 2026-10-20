@@ -37,6 +37,7 @@ export function homeScreen(nav: Nav): Screen {
               {
                 class: "shelf-play",
                 "aria-label": "Play it",
+                "data-quiet": "",
                 onclick: () => {
                   unlockAudio();
                   sayWord(it.kana);

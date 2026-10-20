@@ -69,14 +69,14 @@ export function parentScreen(nav: Nav): Screen {
     );
   }
 
+  /** Only speaks up when letter sounds would be silent; otherwise there's nothing a grown-up needs to know. */
   function voiceStatus() {
-    const clips = clipCount();
-    const msg = clips
-      ? `Voice: ${clips} recorded clips.`
-      : hasJapaneseVoice()
-        ? "Voice: this device's built-in speech."
-        : "This device has no Japanese voice, so letter sounds are silent. Add the Japanese language pack (with speech) in system settings, or use a phone or tablet.";
-    return h("p", { class: "voice-status" }, msg);
+    if (clipCount() || hasJapaneseVoice()) return null;
+    return h(
+      "p",
+      { class: "voice-status" },
+      "This device has no Japanese voice, so letter sounds are silent. Add the Japanese language pack (with speech) in system settings, or use a phone or tablet.",
+    );
   }
 
   function historyList(items: Item[]) {

@@ -6,7 +6,7 @@ import { fanfare, praise, sayKana, sayWord, unlockAudio } from "../ui/audio";
 import { traceSmooth } from "../ui/board";
 import { pageBurst } from "../ui/burst";
 import { dance } from "../ui/dance";
-import { h, ICON, iconButton, stars } from "../ui/dom";
+import { h, ICON, iconButton, quiet, stars } from "../ui/dom";
 import { getSettings } from "../store";
 
 export function drawingCanvas(strokes: Pt[][], color: string, cls = "my-letter"): HTMLCanvasElement {
@@ -56,7 +56,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
     "div",
     { class: "my-word", "data-testid": "my-word", "data-stars": String(r.stars) },
     r.drawings.map((d, i) =>
-      h("button", { class: "my-letter-wrap", style: `--i:${i}`, "aria-label": word[i], onclick: () => sayKana(word[i]) }, drawingCanvas(d, color)),
+      h("button", { class: "my-letter-wrap", style: `--i:${i}`, "aria-label": word[i], "data-quiet": "", onclick: () => sayKana(word[i]) }, drawingCanvas(d, color)),
     ),
   );
 
@@ -70,7 +70,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
       octo.el,
       stars(r.stars, "stars big"),
       myWord,
-      h("div", { class: "done-actions" }, iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round")),
+      h("div", { class: "done-actions" }, quiet(iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round"))),
       // A clear way back to start another word (blue like "One letter" on the home page).
       h(
         "button",

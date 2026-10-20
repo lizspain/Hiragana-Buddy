@@ -91,18 +91,7 @@ export function entryScreen(nav: Nav): Screen {
   }
 
   function render() {
-    choices.replaceChildren();
-    if (japanese) {
-      const sound = glyphsOf(soundSpelling);
-      const jp = glyphsOf(japanese);
-      const same = (a: string[]) => a.join("") === tiles.join("");
-      choices.append(
-        h("span", { class: "choices-label" }, "Write:"),
-        h("button", { class: `chip${same(sound) ? " on" : ""}`, onclick: () => ((source = "english"), setTilesKeep(sound)) }, "Sounds like ", h("b", { lang: "ja" }, soundSpelling)),
-        h("button", { class: `chip${same(jp) ? " on" : ""}`, onclick: () => ((source = "japanese"), setTilesKeep(jp)) }, "Japanese word ", h("b", { lang: "ja" }, japanese)),
-      );
-    }
-
+    renderChoices();
     row.replaceChildren(
       ...tiles.map((k, i) => {
         const t = h("button", { class: `tile${i === selected ? " selected" : ""}`, "aria-label": k, "data-kana": k }, kanaSvg(k));
@@ -111,43 +100,89 @@ export function entryScreen(nav: Nav): Screen {
       }),
       h("button", { class: "tile add", "aria-label": "Add a letter", html: ICON.plus, onclick: () => openChart(-1) }),
     );
-
-    tools.replaceChildren();
-    if (selected >= 0) {
-      tools.append(
-        h(
-          "button",
-          { class: "shelf-play hear-play", "aria-label": "Change", onclick: () => openChart(selected) },
-          h("span", { class: "shelf-play-icon", html: ICON.swap }),
-        ),
-        h(
-          "button",
-          {
-            class: "shelf-play hear-play trash-btn",
-            "aria-label": "Remove",
-            onclick: () => {
-              tiles.splice(selected, 1);
-              selected = -1;
-              render();
-            },
-          },
-          h("span", { class: "shelf-play-icon", html: ICON.trash }),
-        ),
-      );
-    }
-    if (tiles.length) {
-      tools.append(
-        h(
-          "button",
-          { class: "shelf-play hear-play", "aria-label": "Hear it", onclick: () => (unlockAudio(), sayWord(tiles)) },
-          h("span", { class: "shelf-play-icon", html: ICON.speaker }),
-        ),
-      );
-    }
-
+    renderTools();
     const m = moraCount(tiles);
     count.textContent = tiles.length ? `${m} / ${MAX_MORAE} sounds` : "";
     start.disabled = !tiles.length || m > MAX_MORAE;
+  }
+
+  /** Built once per conversion, then only the "on" chip changes, so it can fade across. */
+  let choicesKey = "";
+  function renderChoices() {
+    const key = japanese ? `${soundSpelling}|${japanese}` : "";
+    if (key !== choicesKey) {
+      choicesKey = key;
+      choices.replaceChildren();
+      if (japanese) {
+        const sound = glyphsOf(soundSpelling);
+        const jp = glyphsOf(japanese);
+        choices.append(
+          h("span", { class: "choices-label" }, "Write:"),
+          h("button", { class: "chip", "data-glyphs": sound.join(""), onclick: () => ((source = "english"), setTilesKeep(sound)) }, "Sounds like ", h("b", { lang: "ja" }, soundSpelling)),
+          h("button", { class: "chip", "data-glyphs": jp.join(""), onclick: () => ((source = "japanese"), setTilesKeep(jp)) }, "Japanese word ", h("b", { lang: "ja" }, japanese)),
+        );
+      }
+    }
+    choices.querySelectorAll<HTMLElement>(".chip").forEach((c) => c.classList.toggle("on", c.dataset.glyphs === tiles.join("")));
+  }
+
+  /** Tap a tile: move the selection ring in place (no rebuild) and update the tools. */
+  function select(i: number) {
+    selected = i;
+    row.querySelectorAll(".tile:not(.add)").forEach((t, j) => t.classList.toggle("selected", j === i));
+    renderTools();
+  }
+
+  // Tools that have just appeared pop in; ones already showing stay still.
+  let hadEdit = false;
+  let hadHear = false;
+  function renderTools() {
+    const edit = selected >= 0;
+    const hear = tiles.length > 0;
+    const pop = (b: HTMLElement, was: boolean) => (was || b.classList.add("pop-in"), b);
+    tools.replaceChildren();
+    if (edit) {
+      tools.append(
+        pop(
+          h(
+            "button",
+            { class: "shelf-play hear-play", "aria-label": "Change", onclick: () => openChart(selected) },
+            h("span", { class: "shelf-play-icon", html: ICON.swap }),
+          ),
+          hadEdit,
+        ),
+        pop(
+          h(
+            "button",
+            {
+              class: "shelf-play hear-play trash-btn",
+              "aria-label": "Remove",
+              onclick: () => {
+                tiles.splice(selected, 1);
+                selected = -1;
+                render();
+              },
+            },
+            h("span", { class: "shelf-play-icon", html: ICON.trash }),
+          ),
+          hadEdit,
+        ),
+      );
+    }
+    if (hear) {
+      tools.append(
+        pop(
+          h(
+            "button",
+            { class: "shelf-play hear-play", "aria-label": "Hear it", "data-quiet": "", onclick: () => (unlockAudio(), sayWord(tiles)) },
+            h("span", { class: "shelf-play-icon", html: ICON.speaker }),
+          ),
+          hadHear,
+        ),
+      );
+    }
+    hadEdit = edit;
+    hadHear = hear;
   }
 
   function setTilesKeep(next: string[]) {
@@ -203,8 +238,7 @@ export function entryScreen(nav: Nav): Screen {
         if (cancelled) return;
         unlockAudio();
         sayKana(tiles[i]);
-        selected = selected === i ? -1 : i;
-        return render();
+        return select(selected === i ? -1 : i);
       }
       let best = i, bestD = Infinity;
       rects.forEach((r, j) => {

@@ -86,8 +86,31 @@ function buffer(file: string): Promise<AudioBuffer | null> {
 // clears the queue and cuts in at once.
 
 const GAP_MS = 280;
-/** Overlap between mora clips when a word is sounded out, s. */
-const CROSSFADE_S = 0.09;
+/** How much of one mora's sound runs under the next one's when a word is sounded out, s. */
+const OVERLAP_S = 0.05;
+
+/** Where a clip's sound really starts and stops (seconds), past its quiet lead-in and tail. */
+const edgesOf = new WeakMap<AudioBuffer, { on: number; off: number }>();
+function edges(b: AudioBuffer): { on: number; off: number } {
+  let e = edgesOf.get(b);
+  if (!e) {
+    const d = b.getChannelData(0);
+    const w = Math.max(1, Math.floor(b.sampleRate * 0.005)); // 5 ms windows
+    const rms: number[] = [];
+    for (let i = 0; i + w <= d.length; i += w) {
+      let sum = 0;
+      for (let j = i; j < i + w; j++) sum += d[j] * d[j];
+      rms.push(Math.sqrt(sum / w));
+    }
+    const floor = Math.max(...rms) * 0.06;
+    const first = rms.findIndex((v) => v > floor);
+    let last = rms.length - 1;
+    while (last > 0 && rms[last] <= floor) last--;
+    e = first < 0 ? { on: 0, off: b.duration } : { on: (first * w) / b.sampleRate, off: Math.min(b.duration, ((last + 1) * w) / b.sampleRate) };
+    edgesOf.set(b, e);
+  }
+  return e;
+}
 
 interface Job {
   run(): Promise<void>;
@@ -144,7 +167,7 @@ function clipJob(files: (string | null)[], fallback?: Job): Job {
       if (!c || !bufs || bufs.some((b, i) => files[i] && !b)) return fallback?.run();
       if (c.state === "suspended") await c.resume().catch(() => undefined);
       let t = c.currentTime + 0.02;
-      let prev: { gain: GainNode; end: number; dur: number } | null = null;
+      let prev: { gain: GainNode; end: number; heardUntil: number } | null = null;
       for (const b of bufs) {
         if (!b) {
           t += 0.12;
@@ -155,21 +178,22 @@ function clipJob(files: (string | null)[], fallback?: Job): Job {
         src.buffer = b;
         const gain = c.createGain();
         src.connect(gain).connect(c.destination);
+        const e = edges(b);
         if (prev) {
-          // Sounded-out words (す・し): start each mora before the last one ends and
-          // crossfade, so they run together instead of stopping and starting.
-          // The last one tails off across the overlap; the next one's own lead-in
-          // silence covers its start, so a quick fade-in is enough.
-          const x = Math.min(CROSSFADE_S, b.duration / 3, prev.dur / 3);
-          t = prev.end - x;
+          // Sounded-out words (ち・く): each clip has quiet at both ends, so line
+          // up the sound itself. The next mora's sound starts OVERLAP_S before the
+          // last one's sound ends, and the last one fades out across that overlap,
+          // so there is no gap ("chi ... ku") between them.
+          const nextHeard = prev.heardUntil - OVERLAP_S;
+          t = Math.max(c.currentTime + 0.01, nextHeard - e.on);
           gain.gain.setValueAtTime(0, t);
-          gain.gain.linearRampToValueAtTime(1, t + 0.015);
-          prev.gain.gain.setValueAtTime(1, t);
-          prev.gain.gain.linearRampToValueAtTime(0, prev.end);
+          gain.gain.linearRampToValueAtTime(1, t + Math.min(0.015, e.on + 0.005));
+          prev.gain.gain.setValueAtTime(1, nextHeard);
+          prev.gain.gain.linearRampToValueAtTime(0, prev.heardUntil + 0.02);
         }
         src.start(t);
         sources.push(src);
-        prev = { gain, end: t + b.duration, dur: b.duration };
+        prev = { gain, end: t + b.duration, heardUntil: t + e.off };
         t += b.duration - 0.03; // clips carry a little silence at each end
       }
       const ms = (t - c.currentTime) * 1000;
@@ -395,6 +419,72 @@ export function sandSwoosh(speed: number): void {
   // Quick to start, gentle to fade: like sand settling.
   s.gain.gain.setTargetAtTime(SAND_MAX_GAIN * Math.sqrt(v), t, v > 0 ? 0.03 : 0.09);
   s.band.frequency.setTargetAtTime((650 + 900 * v) * SAND_PITCH, t, 0.05);
+}
+
+// ---------- button thunk ----------
+//
+// A finger tapping a small plastic beach bucket: a soft, hollow "tok". Three
+// short layers through one gentle low-pass: a low knock that drops in pitch
+// (the bucket's body), a filtered click (the plastic shell) and a brief
+// resonance. Each tap is pitched a few percent differently so repeats don't
+// sound mechanical.
+
+let clickNoise: AudioBuffer | null = null;
+/** 30% quieter than first tuned. */
+const THUNK_VOLUME = 0.7;
+
+export function thunk(): void {
+  if (!enabled) return;
+  const c = audio();
+  if (!c) return;
+  if (c.state === "suspended") void c.resume();
+  const t = c.currentTime + 0.005;
+  const v = 0.95 + Math.random() * 0.1;
+  const soft = c.createBiquadFilter();
+  soft.type = "lowpass";
+  soft.frequency.value = 2600;
+  soft.connect(c.destination);
+
+  const env = (peak: number, attack: number, decay: number) => {
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    g.connect(soft);
+    return g;
+  };
+
+  // Body: a hollow knock, 230 → 140 Hz.
+  const body = c.createOscillator();
+  body.type = "sine";
+  body.frequency.setValueAtTime(230 * v, t);
+  body.frequency.exponentialRampToValueAtTime(140 * v, t + 0.08);
+  body.connect(env(0.17 * THUNK_VOLUME, 0.004, 0.1));
+  body.start(t);
+  body.stop(t + 0.13);
+
+  // Shell: a short burst of noise through a band-pass, the plastic "t" of "tok".
+  if (!clickNoise) {
+    clickNoise = c.createBuffer(1, Math.floor(c.sampleRate * 0.04), c.sampleRate);
+    const d = clickNoise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  }
+  const click = c.createBufferSource();
+  click.buffer = clickNoise;
+  const band = c.createBiquadFilter();
+  band.type = "bandpass";
+  band.frequency.value = 1150 * v;
+  band.Q.value = 2.5;
+  click.connect(band).connect(env(0.09 * THUNK_VOLUME, 0.002, 0.035));
+  click.start(t);
+
+  // Resonance: the bucket's wall ringing for an instant.
+  const ring = c.createOscillator();
+  ring.type = "triangle";
+  ring.frequency.setValueAtTime(540 * v, t);
+  ring.connect(env(0.035 * THUNK_VOLUME, 0.003, 0.06));
+  ring.start(t);
+  ring.stop(t + 0.08);
 }
 
 // Pentatonic so any chime sounds friendly.

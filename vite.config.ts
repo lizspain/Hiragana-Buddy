@@ -27,8 +27,8 @@ export default defineConfig({
         scope: ".",
         display: "standalone",
         orientation: "any",
-        background_color: "#fff8ef",
-        theme_color: "#ffb36b",
+        background_color: "#fff8e8",
+        theme_color: "#fff8e8", // the sand page colour, so the status bar blends in
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png" },

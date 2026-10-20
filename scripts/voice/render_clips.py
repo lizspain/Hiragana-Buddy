@@ -31,6 +31,9 @@ SPEED = 0.9
 # (speed 0.72) makes it invent a voiced lead-in on short clips (す → "a-zu"),
 # so render at 0.9 and time-stretch afterwards, keeping the pitch.
 STRETCH = 0.8
+# Single kana (one sound: す, きゃ) a further 30% slower than words, so each
+# letter is easy to hear on its own and sounded-out words aren't rushed.
+ONE_MORA_PACE = 0.7
 KBPS = 48
 PAD_S = 0.03  # silence at each end; the app overlaps clips by about this much
 PEAK = 0.9
@@ -195,12 +198,13 @@ def main() -> int:
             audio = audio[: int(sr * take.keep_s)].copy()
             fade = int(sr * 0.05)
             audio[-fade:] *= np.linspace(1, 0, fade, dtype=audio.dtype) ** 1.5
-        audio = stretch(audio, sr, STRETCH * SPEED / take.speed * take.longer)
+        pace = ONE_MORA_PACE if one_mora else 1.0
+        audio = stretch(audio, sr, STRETCH * SPEED / take.speed * take.longer * pace)
         if len(audio) < sr * 0.1 or float(np.abs(audio).max()) < 0.05:
             problems.append(f"{text}: audio too short or quiet ({len(audio) / sr:.2f}s)")
             continue
         # A new take for one clip gives it a new name, so offline copies refresh.
-        key = CLIP_VERSION + text + (repr(TAKES[text]) if text in TAKES else "")
+        key = CLIP_VERSION + text + (repr(TAKES[text]) if text in TAKES else "") + (f"|pace{ONE_MORA_PACE}" if one_mora else "")
         name = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12] + ".mp3"
         data = to_mp3(audio, sr)
         (OUT / "ja" / name).write_bytes(data)

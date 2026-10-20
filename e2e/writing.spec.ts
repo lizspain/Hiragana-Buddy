@@ -85,7 +85,7 @@ test("a practised word's card shows what was typed and plays it", async ({ page 
     w.clipStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
-      w.clipStarts++;
+      if ((this.buffer?.duration ?? 0) > 0.05) w.clipStarts++; // voice clips, not the 40 ms button "tok"
       return start.apply(this, args);
     };
   });
@@ -242,7 +242,7 @@ test("speaker buttons play recorded clips when they exist", async ({ page }) => 
     w.clipStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
-      w.clipStarts++;
+      if ((this.buffer?.duration ?? 0) > 0.05) w.clipStarts++; // voice clips, not the 40 ms button "tok"
       return start.apply(this, args);
     };
   });
@@ -261,7 +261,7 @@ test("the shipped Japanese clips play for a kana and for a dictionary word", asy
     w.clipStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
-      w.clipStarts++;
+      if ((this.buffer?.duration ?? 0) > 0.05) w.clipStarts++; // voice clips, not the 40 ms button "tok"
       return start.apply(this, args);
     };
   });
@@ -286,7 +286,7 @@ test("voice lines take turns with a pause between them", async ({ page }) => {
       // Real time the clip is due to start: wall clock now + how far ahead it's scheduled.
       // (The audio clock alone can stall while a headless browser's audio starts up.)
       const ahead = Math.max(0, (when ?? this.context.currentTime) - this.context.currentTime);
-      log.push({ at: performance.now() / 1000 + ahead, dur: this.buffer?.duration ?? 0, ctx: this.context.state });
+      if ((this.buffer?.duration ?? 0) > 0.05) log.push({ at: performance.now() / 1000 + ahead, dur: this.buffer?.duration ?? 0, ctx: this.context.state });
       return start.call(this, when, ...rest);
     };
     // Served by the Vite dev server; a variable keeps TypeScript from resolving it here.
