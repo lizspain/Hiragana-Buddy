@@ -85,7 +85,7 @@ test("a practised word's card shows what was typed and plays it", async ({ page 
     w.clipStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
-      w.clipStarts++;
+      if ((this.buffer?.duration ?? 0) > 0.05) w.clipStarts++; // voice clips, not the 40 ms button "tok"
       return start.apply(this, args);
     };
   });
@@ -176,16 +176,28 @@ test("a romaji word goes through the tile editor into practice", async ({ page }
   // Not in the English list → spelled by sound automatically, no toggle.
   await page.getByTestId("word-input").fill("neko");
   await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
-  await expect(page.getByTestId("hint")).toContainText("See Hiragana chosen below");
+  await expect(page.getByTestId("hint")).toHaveText(""); // the tiles speak for themselves
   await page.getByTestId("word-input").fill("Charlotte");
   await expect(page.getByTestId("hint")).toHaveText("");
   await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(6);
-  await expect(page.locator(".mora-count")).toHaveText("5 / 14 sounds");
+  await expect(page.getByTestId("max-reached")).toHaveCount(0);
   await page.screenshot({ path: `test-results/entry-${test.info().project.name}.png` });
   await page.getByTestId("start").click();
   await expect(stage(page)).toHaveAttribute("data-kana", "し");
   await page.waitForTimeout(400);
   await page.screenshot({ path: `test-results/write-${test.info().project.name}.png` });
+});
+
+test("at 14 sounds the add tile gives way to a note", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("go-word").click();
+  await page.getByTestId("word-input").fill("aiueokakikukekosasisuse"); // exactly 14 sounds
+  await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(14);
+  await expect(page.getByTestId("tiles").locator(".tile.add")).toHaveCount(0);
+  await expect(page.getByTestId("max-reached")).toHaveText("Max 14 sounds");
+  await page.getByTestId("word-input").fill("aiueokakikukekosasisu"); // 13: room for one more
+  await expect(page.getByTestId("tiles").locator(".tile.add")).toHaveCount(1);
+  await expect(page.getByTestId("max-reached")).toHaveCount(0);
 });
 
 for (const phase of [2, 3]) {
@@ -242,7 +254,7 @@ test("speaker buttons play recorded clips when they exist", async ({ page }) => 
     w.clipStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
-      w.clipStarts++;
+      if ((this.buffer?.duration ?? 0) > 0.05) w.clipStarts++; // voice clips, not the 40 ms button "tok"
       return start.apply(this, args);
     };
   });
@@ -261,7 +273,7 @@ test("the shipped Japanese clips play for a kana and for a dictionary word", asy
     w.clipStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
-      w.clipStarts++;
+      if ((this.buffer?.duration ?? 0) > 0.05) w.clipStarts++; // voice clips, not the 40 ms button "tok"
       return start.apply(this, args);
     };
   });
@@ -286,7 +298,7 @@ test("voice lines take turns with a pause between them", async ({ page }) => {
       // Real time the clip is due to start: wall clock now + how far ahead it's scheduled.
       // (The audio clock alone can stall while a headless browser's audio starts up.)
       const ahead = Math.max(0, (when ?? this.context.currentTime) - this.context.currentTime);
-      log.push({ at: performance.now() / 1000 + ahead, dur: this.buffer?.duration ?? 0, ctx: this.context.state });
+      if ((this.buffer?.duration ?? 0) > 0.05) log.push({ at: performance.now() / 1000 + ahead, dur: this.buffer?.duration ?? 0, ctx: this.context.state });
       return start.call(this, when, ...rest);
     };
     // Served by the Vite dev server; a variable keeps TypeScript from resolving it here.

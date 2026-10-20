@@ -12,25 +12,32 @@ export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: bo
   const grid = h("div", { class: "chart-grid" });
   const tabs = h("div", { class: "chart-tabs", role: "tablist" });
 
-  function render() {
-    tabs.replaceChildren(
-      ...(Object.keys(PAGE_ICON) as Page[]).map((p) =>
-        h(
-          "button",
-          {
-            class: `chart-tab${p === page ? " on" : ""}`,
-            role: "tab",
-            "aria-selected": String(p === page),
-            "aria-label": p,
-            onclick: () => {
-              page = p;
-              render();
-            },
+  // Tabs are built once; switching only moves the "on" class, so the colour can fade across.
+  tabs.append(
+    ...(Object.keys(PAGE_ICON) as Page[]).map((p) =>
+      h(
+        "button",
+        {
+          class: "chart-tab",
+          role: "tab",
+          "aria-label": p,
+          "data-page": p,
+          onclick: () => {
+            page = p;
+            render();
           },
-          kanaSvg(PAGE_ICON[p]),
-        ),
+        },
+        kanaSvg(PAGE_ICON[p]),
       ),
-    );
+    ),
+  );
+
+  function render() {
+    tabs.querySelectorAll<HTMLElement>(".chart-tab").forEach((t) => {
+      const on = t.dataset.page === page;
+      t.classList.toggle("on", on);
+      t.setAttribute("aria-selected", String(on));
+    });
     const rows = charts[page].map((r) => [...r]);
     if (page === "small" && opts.withLongMark !== false) rows.push(["ー", null, null, null, null]);
     grid.replaceChildren(
@@ -40,6 +47,7 @@ export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: bo
               "button",
               {
                 class: "chart-cell",
+                "data-quiet": "", // it says its kana
                 "aria-label": k,
                 "data-kana": k,
                 onclick: () => {

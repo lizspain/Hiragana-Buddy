@@ -61,6 +61,12 @@ export function iconButton(icon: string, label: string, onClick: (e: MouseEvent)
   return h("button", { class: `icon-btn ${cls}`, "aria-label": label, title: label, onclick: onClick, html: icon });
 }
 
+/** No tap sound on this button (it speaks, and the "tok" would talk over the voice). See ui/press.ts. */
+export function quiet<T extends HTMLElement>(el: T): T {
+  el.dataset.quiet = "";
+  return el;
+}
+
 /** Press-and-hold gate for parent-only controls. */
 export function holdButton(icon: string, label: string, ms: number, onDone: () => void): HTMLButtonElement {
   const b = h("button", { class: "icon-btn hold-btn", "aria-label": label, title: `${label} (press and hold)`, html: icon });
@@ -107,9 +113,16 @@ export function modal(content: HTMLElement, onClose?: () => void): { close: () =
   const back = h("div", { class: "modal-back" });
   const box = h("div", { class: "modal", role: "dialog", "aria-modal": "true" }, content);
   back.appendChild(box);
+  let closed = false;
   const close = () => {
-    back.remove();
+    if (closed) return;
+    closed = true;
     onClose?.();
+    // Fade out quickly (styles.css), then leave the page. The timer covers
+    // reduced motion and a missed animationend.
+    back.classList.add("closing");
+    back.addEventListener("animationend", () => back.remove(), { once: true });
+    window.setTimeout(() => back.remove(), 220);
   };
   back.addEventListener("pointerdown", (e) => {
     if (e.target === back) close();

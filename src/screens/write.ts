@@ -7,9 +7,9 @@ import { glyph } from "../data";
 import type { Phase, Pt } from "../engine/matcher";
 import { starsFor } from "../engine/matcher";
 import { CharacterSession, type Outcome } from "../engine/session";
-import { boop, chime, fanfare, line, pop, praise, preloadWord, sandSwoosh, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, unlockAudio } from "../ui/audio";
+import { boop, chime, fanfare, line, pop, praise, preloadWord, sandSwoosh, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, thunk, unlockAudio } from "../ui/audio";
 import { Board } from "../ui/board";
-import { h, html, ICON, iconButton, kanaSvg, mascot } from "../ui/dom";
+import { h, html, ICON, iconButton, kanaSvg, mascot, quiet } from "../ui/dom";
 import { inkPalette } from "../ui/palette";
 import { PenInput } from "../ui/pen";
 import { getSettings, isMastered, recordSession, saveSettings, type KanaResult } from "../store";
@@ -27,7 +27,9 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     setSoundEnabled(on);
     void saveSettings({ sound: on });
     soundBtn.innerHTML = on ? ICON.soundOn : ICON.soundOff;
+    if (on) thunk(); // a little "tok" says sound is back; muting stays silent
   });
+  quiet(soundBtn);
   const replayBtn = iconButton(ICON.replay, "Show me again", () => replay(), "replay");
 
   const paletteArea = h(
@@ -159,35 +161,38 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
 
   // ---------- rendering ----------
 
+  // Both are built once and then only change classes, so the current tile and
+  // step glide into place (CSS transitions) and only a newly earned sticker pops.
   function renderStrip() {
-    strip.replaceChildren(
-      ...plan.kana.map((k, i) =>
-        h(
-          "button",
-          {
-            class: `strip-tile${i === idx ? " current" : ""}${i < idx ? " done" : ""}`,
-            "aria-label": `${k}`,
-            onclick: () => sayKana(k),
-          },
-          kanaSvg(k),
-          i < idx ? html(`<span class="sticker">${ICON.star}</span>`) : null,
-        ),
-      ),
-    );
-    strip.hidden = plan.kana.length < 2;
-    strip.querySelector(".current")?.scrollIntoView({ block: "nearest", inline: "center" });
+    if (!strip.childElementCount) {
+      strip.append(
+        ...plan.kana.map((k) => h("button", { class: "strip-tile", "aria-label": `${k}`, "data-quiet": "", onclick: () => sayKana(k) }, kanaSvg(k))),
+      );
+      strip.hidden = plan.kana.length < 2;
+    }
+    [...strip.children].forEach((t, i) => {
+      t.classList.toggle("current", i === idx);
+      t.classList.toggle("done", i < idx);
+      if (i < idx && !t.querySelector(".sticker")) t.append(html(`<span class="sticker">${ICON.star}</span>`));
+    });
+    strip.querySelector(".current")?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
   }
 
   /** Watch → Trace → Write, always all three (a skipped "watch" shows as done), so Trace stays centred. */
   function renderPips() {
     const now = phase();
-    pips.replaceChildren(
-      // The octopus watches the steps; positioned outside the row so Trace stays centred.
-      mascot("pip-mascot"),
-      ...([1, 2, 3] as Phase[]).map((p) =>
-        h("span", { class: `pip${p === now ? " now" : ""}${p < now ? " done" : ""}`, title: PHASE_LABEL[p], html: PHASE_ICON[p] }),
-      ),
-    );
+    if (!pips.childElementCount) {
+      pips.append(
+        // The octopus watches the steps; positioned outside the row so Trace stays centred.
+        mascot("pip-mascot"),
+        ...([1, 2, 3] as Phase[]).map((p) => h("span", { class: "pip", title: PHASE_LABEL[p], html: PHASE_ICON[p] })),
+      );
+    }
+    pips.querySelectorAll(".pip").forEach((el, i) => {
+      const p = (i + 1) as Phase;
+      el.classList.toggle("now", p === now);
+      el.classList.toggle("done", p < now);
+    });
   }
 
   function refreshGuide() {
