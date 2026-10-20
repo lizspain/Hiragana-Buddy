@@ -113,6 +113,143 @@ def trim_breath(audio: np.ndarray, sr: int, strict: bool) -> np.ndarray:
     return out
 
 
+# Said alone, Kokoro lifts the pitch of every kana by 4-8 semitones, like a
+# question; sounded out, "porcupine" became "po^ roo^ ku^ pi^ n^". Single
+# kana get one shared contour instead: a gentle fall, as at the end of a
+# statement, so they also match each other when strung together.
+PITCH_START_HZ = 250.0
+PITCH_FALL_ST = 1.5  # semitones down from the first to the last voiced moment
+PITCH_STRENGTH = 0.5  # how far toward that contour: 0 = as Kokoro said it, 1 = exactly on it
+
+
+def pitch_track(audio: np.ndarray, sr: int, hop: int) -> np.ndarray:
+    """F0 in Hz every `hop` samples (0 = unvoiced), by normalised autocorrelation.
+
+    Gaps inside the voiced stretch are filled, and the last pitch is held
+    through the voice's quiet tail, so the tail isn't chopped as noise.
+    """
+    w = int(sr * 0.03)
+    lo, hi = int(sr / 500), int(sr / 120)
+    peak = float(np.abs(audio).max()) or 1.0
+    f0, loud = [], []
+    for i in range(0, len(audio), hop):
+        x = audio[max(0, i - w // 2) : i + w // 2].astype(np.float64)
+        rms = float(np.sqrt(np.mean(x * x))) if len(x) else 0.0
+        loud.append(rms)
+        if len(x) < hi * 2 or rms < 0.03 * peak:
+            f0.append(0.0)
+            continue
+        x = x - x.mean()
+        r = np.correlate(x, x, "full")[len(x) - 1 :]
+        j = lo + int(np.argmax(r[lo:hi]))
+        f0.append(sr / j if r[j] > 0.3 * r[0] else 0.0)
+    f0 = np.array(f0)
+    out = f0.copy()
+    for i in range(len(f0)):  # median-smooth to drop octave slips
+        if f0[i]:
+            out[i] = float(np.median([v for v in f0[max(0, i - 2) : i + 3] if v]))
+    v = np.nonzero(out)[0]
+    if len(v):
+        a, b = v[0], v[-1]
+        idx = np.arange(a, b + 1)
+        known = out[a : b + 1] > 0
+        out[a : b + 1] = np.interp(idx, idx[known], out[a : b + 1][known])
+        # Hold the last pitch while the voice fades (until it is really quiet).
+        k = b + 1
+        while k < len(out) and loud[k] > 0.008 * peak:
+            out[k] = out[b]
+            k += 1
+    return out
+
+
+def level_pitch(audio: np.ndarray, sr: int, strength: float) -> np.ndarray:
+    """Move voiced pitch part of the way onto the shared contour (TD-PSOLA).
+
+    strength 0 leaves the clip alone, 1 lands exactly on the contour; in
+    between keeps some of the voice's own movement. Pitch marks sit one
+    glottal period apart on waveform peaks while voiced, every 4 ms
+    otherwise. Output marks are spaced by the new period; at each, the nearest
+    input mark's two-period Hann grain is added, so timing and vowel colour
+    stay and only pitch moves.
+    """
+    hop = int(sr * 0.005)
+    f0 = pitch_track(audio, sr, hop)
+    voiced = np.nonzero(f0)[0]
+    if len(voiced) < 4 or strength <= 0:
+        return audio
+    f0_at = lambda n: f0[min(len(f0) - 1, n // hop)]
+    v0, v1 = voiced[0] * hop, voiced[-1] * hop
+
+    def new_f0(n: int) -> float:
+        f = f0_at(n)
+        t = min(1.0, max(0.0, (n - v0) / max(1, v1 - v0)))
+        goal = PITCH_START_HZ * 2 ** (-PITCH_FALL_ST * t / 12)
+        return f * (goal / f) ** strength
+
+    unv = int(sr * 0.004)
+    marks: list[int] = []
+    n, was_voiced = 0, False
+    while n < len(audio):
+        f = f0_at(n)
+        if f:
+            per = sr / f
+            if was_voiced:
+                # Next cycle: where the waveform best matches the last cycle (not just
+                # the tallest peak, which can hop between two similar peaks and jitter).
+                prev, h = marks[-1], int(per / 2)
+                ref = audio[max(0, prev - h) : prev + h]
+                best, score = int(prev + per), -np.inf
+                for c in range(int(prev + 0.9 * per), int(prev + 1.1 * per) + 1):
+                    seg = audio[max(0, c - h) : c + h]
+                    if len(seg) != len(ref) or c + h > len(audio):
+                        continue
+                    v = float(np.dot(ref, seg))
+                    if v > score:
+                        best, score = c, v
+                if best + h > len(audio):
+                    break
+                n = best
+            else:
+                b = min(int(n + per), len(audio))
+                if b <= n:
+                    break
+                n = n + int(np.argmax(audio[n:b]))
+            marks.append(n)
+            was_voiced = True
+            n = int(marks[-1] + 0.8 * per)
+        else:
+            if was_voiced:
+                n = marks[-1] + unv
+            marks.append(n)
+            was_voiced = False
+            n += unv
+    marks = np.array(sorted(set(m for m in marks if 0 <= m < len(audio))))
+    if len(marks) < 3:
+        return audio
+
+    out = np.zeros(len(audio) + sr // 10, np.float64)
+    norm = np.zeros_like(out)
+    ts = int(marks[0])
+    while ts < len(audio):
+        i = int(np.searchsorted(marks, ts))
+        if i >= len(marks) or (i > 0 and ts - marks[i - 1] < marks[i] - ts):
+            i -= 1
+        i = max(0, min(len(marks) - 1, i))
+        m = int(marks[i])
+        prev_gap = m - marks[i - 1] if i > 0 else marks[1] - marks[0]
+        next_gap = marks[i + 1] - m if i + 1 < len(marks) else prev_gap
+        half = int(max(prev_gap, next_gap))
+        a, b = max(0, m - half), min(len(audio), m + half)
+        win = np.hanning(b - a + 2)[1:-1]
+        o = ts - (m - a)
+        if o >= 0:
+            out[o : o + (b - a)] += audio[a:b] * win
+            norm[o : o + (b - a)] += win
+        ts += int(round(sr / new_f0(m))) if f0_at(m) else unv
+    res = out[: len(audio)] / np.maximum(norm[: len(audio)], 0.5)
+    return res.astype(audio.dtype)
+
+
 def stretch(audio: np.ndarray, sr: int, rate: float) -> np.ndarray:
     """Play at `rate` × speed with the same pitch (WSOLA).
 
@@ -193,6 +330,8 @@ def main() -> int:
         audio, sr = kokoro.create(ph, voice=VOICE, speed=take.speed, lang="ja", is_phonemes=True)
         # Strict only for one sound (す, きゃ): two-kana words like ねこ lost their こ.
         one_mora = len(text) == 1 or (len(text) == 2 and text[1] in SMALL)
+        if one_mora:  # before the trim, so the voice's own fade-out is re-pitched smoothly
+            audio = level_pitch(audio, sr, PITCH_STRENGTH)
         audio = trim_breath(audio, sr, strict=one_mora)
         if take.keep_s:
             audio = audio[: int(sr * take.keep_s)].copy()
@@ -204,7 +343,7 @@ def main() -> int:
             problems.append(f"{text}: audio too short or quiet ({len(audio) / sr:.2f}s)")
             continue
         # A new take for one clip gives it a new name, so offline copies refresh.
-        key = CLIP_VERSION + text + (repr(TAKES[text]) if text in TAKES else "") + (f"|pace{ONE_MORA_PACE}" if one_mora else "")
+        key = CLIP_VERSION + text + (repr(TAKES[text]) if text in TAKES else "") + (f"|pace{ONE_MORA_PACE}|pitch{PITCH_START_HZ},{PITCH_FALL_ST},{PITCH_STRENGTH}" if one_mora else "")
         name = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12] + ".mp3"
         data = to_mp3(audio, sr)
         (OUT / "ja" / name).write_bytes(data)
