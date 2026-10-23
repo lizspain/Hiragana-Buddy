@@ -164,5 +164,5 @@ export function scoreCharacter(strokes, kana, firstTryCount = strokes.length) {
   const proportion = Math.max(0, 1 - (Math.abs(Math.log(rw)) + Math.abs(Math.log(rh))) / 1.4);
   const retryPenalty = 1 - 0.05 * Math.max(0, strokes.length - firstTryCount);
   const score = Math.round(100 * retryPenalty * (0.7 * shape + 0.15 * placement + 0.15 * proportion));
-  return { score: Math.max(0, score), shape, placement, proportion, stars: score >= 80 ? 3 : score >= 55 ? 2 : 1 };
+  return { score: Math.max(0, score), shape, placement, proportion, stars: score >= 80 ? 3 : score >= 68 ? 2 : 1 };
 }

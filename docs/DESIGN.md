@@ -128,7 +128,7 @@ An order slip (the child drew a later stroke) says "Ooh, that's stroke 3! Let's 
 
 **Hot potato / cold potato (stretch).** While the finger moves, each new ink point is tinted by its distance to the model stroke: warm orange-gold when on the line, cooling through yellow to soft sky-blue when far off. Red is never used. The tint also changes ink thickness slightly so the cue works for colour-blind children. For speed, precompute a 64×64 distance grid per stroke when a character loads, so each lookup is a single array read.
 
-**Scoring (phase 3).** A character scores 0–100: shape 70% (mean per-stroke quality), placement 15% (character centre vs the model's), proportion 15% (width and height vs the model's), minus 5 points for each stroke that needed a retry. The word score is the mean of its characters. Children only ever see stars: 80+ is 3 stars, 55+ is 2, anything else is 1, so every finished word earns at least one star. Numbers appear only in the parent view. In tests, a neat drawing of あ scored 97 and a wobbly one 74.
+**Scoring (phase 3).** A character scores 0–100: shape 70% (mean per-stroke quality), placement 15% (character centre vs the model's), proportion 15% (width and height vs the model's), minus 5 points for each stroke that needed a retry. The word score is the mean of its characters. Children only ever see stars: 80+ is 3 stars, 68+ is 2 (raised from 55 so a sloppy letter can earn one star), anything else is 1, so every finished word earns at least one star. Numbers appear only in the parent view. In tests, a neat drawing of あ scored 97 and a wobbly one 74.
 
 ## Input handling and palm rejection
 
