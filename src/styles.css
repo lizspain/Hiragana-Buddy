@@ -88,6 +88,14 @@
   box-sizing: border-box;
 }
 
+/* Keep room for a desktop scrollbar on every screen, so moving between a
+   short page and a tall one (the chart) never shifts the layout sideways.
+   Touch devices use overlay scrollbars, so nothing changes there. */
+html {
+  overflow-y: auto; /* the gutter only applies to an explicit scroll setting */
+  scrollbar-gutter: stable;
+}
+
 html,
 body {
   margin: 0;
@@ -114,6 +122,11 @@ body {
 #app {
   position: relative;
   z-index: 1;
+  /* A screen rises in from 8px below (.screen animation). Clip that overshoot
+     so it never makes the page taller than the window: otherwise desktop
+     Chrome shows a scrollbar for the animation and the page jumps sideways
+     when it goes away. */
+  overflow: clip;
 }
 
 button {
