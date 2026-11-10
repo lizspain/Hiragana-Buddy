@@ -120,7 +120,8 @@ Tolerances shrink in proportion for short strokes, with a 0.07 floor. On synthet
 
 1. Miss 1: the ink softly fades, a friendly "boop", and the correct stroke replays as a moving dot.
 2. Miss 2: the start dot pulses and an arrow shows the direction.
-3. Miss 3: "Let's do it together" — the ghost stroke lights up and any stroke that starts near the dot is accepted, then the app moves on.
+3. Miss 3: "Let's do it together" — the ghost stroke lights up and a stroke that starts near the dot is accepted as long as it is still roughly the right stroke (right direction and length, shape within 1.25× the phase-1 tolerance), then the app moves on. A scribble or a line across the page is not accepted.
+4. Three "together" tries that still miss: "Oops. We'll try that one together another time." The child's try fades, the model stroke settles into the ink in its place (counted as a retried stroke for scoring), and the app moves on to the next stroke. No child gets stuck on a stroke forever.
 
 An order slip (the child drew a later stroke) says "Ooh, that's stroke 3! Let's do stroke 2 first" and highlights stroke 2. There is never a red X, buzzer, sad face or "wrong".
 

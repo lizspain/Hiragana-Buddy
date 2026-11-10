@@ -7,17 +7,21 @@
 //                goes back to phase-1 "watch and trace": demo, its own ghost,
 //                phase-1 tolerance) · 6+ do it together
 
-import { judgeNext, resample, scoreCharacter, startTolerance, type CharacterScore, type GlyphData, type Phase, type Pt } from "./matcher";
+import { compareStroke, judgeNext, resample, scoreCharacter, startTolerance, type CharacterScore, type GlyphData, type Phase, type Pt } from "./matcher";
 
-/** Accept anything that starts this close to the dot once we are "doing it together". */
+/** "Doing it together": a stroke that starts this close to the dot… */
 const TOGETHER_START = 0.22;
 const FOLLOW_AT = 3;
 const TOGETHER_AFTER_FOLLOW = 6;
+/** "Together" tries before the stroke is filled in and we move on. */
+const TOGETHER_TRIES = 3;
 
 export type Help = "replay" | "pulse" | "follow" | "together";
 
 export type Outcome =
   | { kind: "accept"; stroke: number; together: boolean; phaseDone: boolean }
+  /** Still no match after the "together" tries: the model stroke stands in for theirs. */
+  | { kind: "moveOn"; stroke: number; points: Pt[]; phaseDone: boolean }
   | { kind: "retry"; stroke: number; help: Help }
   /** Drew a later stroke: "That's stroke {drawn+1}! Let's do stroke {stroke+1} first." */
   | { kind: "order"; stroke: number; drawn: number; help: Help };
@@ -54,7 +58,11 @@ export class CharacterSession {
 
   /** Accept any stroke that starts near the dot. */
   get together(): boolean {
-    return this.misses >= (this.phase === 1 ? FOLLOW_AT : TOGETHER_AFTER_FOLLOW);
+    return this.misses >= this.togetherAt;
+  }
+
+  private get togetherAt(): number {
+    return this.phase === 1 ? FOLLOW_AT : TOGETHER_AFTER_FOLLOW;
   }
 
   /** Tolerances used for the current stroke. */
@@ -73,13 +81,13 @@ export class CharacterSession {
     const target = this.glyph.strokes[stroke];
     if (this.together) {
       const tol = Math.max(TOGETHER_START, startTolerance(target, this.judgePhase));
-      if (Math.hypot(points[0][0] - target.points[0][0], points[0][1] - target.points[0][1]) <= tol) {
-        return this.accept(points, true);
-      }
+      const nearDot = Math.hypot(points[0][0] - target.points[0][0], points[0][1] - target.points[0][1]) <= tol;
+      if (nearDot && roughlyThisStroke(points, target)) return this.accept(points, true);
     }
     const res = judgeNext(points, this.glyph, stroke, this.judgePhase);
     if (res.kind === "ok") return this.accept(points, false);
     this.misses++;
+    if (this.misses >= this.togetherAt + TOGETHER_TRIES) return this.moveOn();
     if (res.kind === "order") return { kind: "order", stroke, drawn: res.matchedStroke!, help: this.help };
     return { kind: "retry", stroke, help: this.help };
   }
@@ -91,6 +99,17 @@ export class CharacterSession {
     this.k++;
     this.misses = 0;
     return { kind: "accept", stroke, together, phaseDone: this.done };
+  }
+
+  /** Fill in the model stroke (counted as retried) and go on to the next one. */
+  private moveOn(): Outcome {
+    const stroke = this.k;
+    const points = this.glyph.strokes[stroke].points.map(([x, y]) => [x, y] as Pt);
+    this.retried++;
+    this.accepted.push(points);
+    this.k++;
+    this.misses = 0;
+    return { kind: "moveOn", stroke, points, phaseDone: this.done };
   }
 
   /** Phase-3 score; call once `done`. */
@@ -105,3 +124,15 @@ export class CharacterSession {
 }
 
 const round3 = (v: number) => Math.round(v * 1000) / 1000;
+
+/**
+ * …is accepted if it is still recognisably this stroke: the right direction and
+ * about the right length, with its shape within 1.25× the gentlest (phase 1)
+ * tolerance. A sloppy try passes; a scribble or a line across the page doesn't.
+ * (Until Nov 2026 any stroke starting near the dot was accepted.)
+ */
+function roughlyThisStroke(points: Pt[], target: GlyphData["strokes"][number]): boolean {
+  const r = compareStroke(points, target, 1);
+  const forgiven = new Set(["shape", "start"]); // start is checked by the caller, more leniently
+  return r.reasons.every((x) => forgiven.has(x)) && r.quality > 0;
+}
