@@ -38,6 +38,10 @@ export const GUIDE_COLORS = {
 };
 
 const MAX_DPR = 2;
+/** Demo strokes play at 70% of their first speed. */
+const DEMO_PACE = 0.7;
+/** Ghost strokes other than the one to draw now. */
+const OTHER_STROKE_ALPHA = 0.35;
 
 // Stone frame (art/stone-frame.webp) around the paper. Its opening is a little
 // shorter than it is wide, so the frame is stretched vertically to make the
@@ -153,6 +157,9 @@ export class Board {
     this.cell.top = r.top;
   };
 
+  /** Pin the frame to the top of the space left (after `reserve.top`) instead of centring it. */
+  alignTop = false;
+
   resize(): void {
     const r = this.stage.getBoundingClientRect();
     this.w = Math.max(1, r.width);
@@ -162,9 +169,12 @@ export class Board {
     const availW = Math.max(40, this.w - 2 * res.side);
     const availH = Math.max(40, this.h - res.top - res.bottom);
     const size = Math.floor(Math.min((availW * 0.98) / FRAME_PER_CELL, (availH * 0.98) / (FRAME_PER_CELL * STRETCH_Y)));
-    // Horizontally centred on the stage (= the page); vertically centred in the space left.
+    // Horizontally centred on the stage (= the page); vertically centred in the
+    // space left, or pinned to its top (alignTop) so nothing floats under the top bar.
     const frameH = size * FRAME_PER_CELL * STRETCH_Y;
-    const cellY = res.top + (availH - frameH) / 2 + frameH * (IN_T + (1 - IN_T - IN_B) / 2) - size / 2;
+    // Top-aligned, the visible stones (not the image's transparent margin) touch the top.
+    const slack = this.alignTop ? -art.stoneFrame.visible[1] * frameH : (availH - frameH) / 2;
+    const cellY = res.top + slack + frameH * (IN_T + (1 - IN_T - IN_B) / 2) - size / 2;
     this.cell = { x: Math.round((this.w - size) / 2), y: Math.round(cellY), size, left: r.left, top: r.top };
     // Frame: centre its opening on the cell.
     const fw = size * FRAME_PER_CELL;
@@ -173,6 +183,9 @@ export class Board {
     const cy = this.cell.y + size / 2;
     const frame = { x: cx - fw * (IN_L + OPEN_W / 2), y: cy - fh * (IN_T + (1 - IN_T - IN_B) / 2), w: fw, h: fh };
     Object.assign(this.frame.style, { width: `${fw}px`, height: `${fh}px`, left: `${frame.x}px`, top: `${frame.y}px` });
+    // Ink stays inside the stones: a stroke may wander out (it still counts), but its ink is trimmed to the square.
+    const c = this.cell;
+    this.ink.style.clipPath = `inset(${c.y}px ${this.w - c.x - c.size}px ${this.h - c.y - c.size}px ${c.x}px round ${Math.round(c.size * 0.04)}px)`;
     this.stage.dataset.cell = `${this.cell.x},${this.cell.y},${size}`; // read by e2e tests
     for (const [c, ctx] of [[this.guide, this.g], [this.ink, this.i], [this.fx, this.f]] as const) {
       c.width = Math.round(this.w * this.dpr);
@@ -253,6 +266,9 @@ export class Board {
       const s = strokes[n];
       const done = n < sc.k;
       const lit = sc.together && n === sc.k;
+      // With several strokes showing, the one to draw now stands out: the rest at 35%.
+      ctx.save();
+      if (show.length > 1 && n !== sc.k) ctx.globalAlpha *= OTHER_STROKE_ALPHA;
       this.strokePath(ctx, s, () => {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
@@ -266,6 +282,7 @@ export class Board {
           ctx.strokeStyle = GUIDE_COLORS.ghostLine;
         });
       }
+      ctx.restore();
     }
 
     // start dots: phase 2 numbers every stroke still to come; others show the next one only
@@ -468,7 +485,8 @@ export class Board {
   playDemo(s: StrokeData): Promise<void> {
     this.stopDemo();
     return new Promise((resolve) => {
-      const dur = Math.min(1200, Math.max(600, 500 + s.length * 700));
+      // 600-1200 ms by length, then 30% slower so little eyes can follow the line.
+      const dur = Math.min(1200, Math.max(600, 500 + s.length * 700)) / DEMO_PACE;
       const hold = 350;
       const fade = 300;
       const L = s.length * 109 * 1.03;

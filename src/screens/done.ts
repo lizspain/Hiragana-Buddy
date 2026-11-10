@@ -60,6 +60,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
     ),
   );
 
+  const starRow = stars(r.stars, "stars big");
   const el = h(
     "div",
     { class: "screen done" },
@@ -68,7 +69,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
       "main",
       { class: "done-body" },
       octo.el,
-      stars(r.stars, "stars big"),
+      starRow,
       myWord,
       h("div", { class: "done-actions" }, quiet(iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round"))),
       // A clear way back to start another word (blue like "One letter" on the home page).
@@ -86,7 +87,17 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
     el,
     mounted() {
       fanfare();
-      requestAnimationFrame(() => (stopBurst = pageBurst(myWord)));
+      // The burst comes from the last star earned, once it has filled with gold
+      // (stars pop in one after another: styles star-in, 0.35 s apart, 0.6 s each).
+      const last = starRow.querySelectorAll<HTMLElement>(".star.on")[r.stars - 1];
+      let burst = false;
+      const go = () => {
+        if (burst) return;
+        burst = true;
+        stopBurst = pageBurst(last);
+      };
+      last?.addEventListener("animationend", go, { once: true });
+      timers.push(window.setTimeout(go, 350 + r.stars * 350 + 600 + 150)); // if animationend never comes
       // Letters pop in one by one (styles: letter-in, 0.12 s apart, 0.5 s each).
       timers.push(window.setTimeout(() => corners.classList.add("show"), 500 + word.length * 120));
       timers.push(window.setTimeout(() => sayWord(word), 600));

@@ -57,7 +57,7 @@ test("draw あ correctly with a mouse in all three phases → 3 stars", async ({
   const word = page.getByTestId("my-word");
   await expect(word).toBeVisible({ timeout: 10_000 });
   await expect(word).toHaveAttribute("data-stars", "3");
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2000); // the burst waits for the third star to fill
   await page.screenshot({ path: `test-results/done-burst-${test.info().project.name}.png` });
   await expect(page.locator(".done-corners")).toHaveClass(/show/);
   await page.waitForTimeout(1500);
@@ -394,4 +394,16 @@ test("no requests leave the site", async ({ page }) => {
   await openLetter(page, "か");
   await page.getByTestId("stage").waitFor();
   expect(foreign).toEqual([]);
+});
+
+test("after three together tries that miss, the stroke is filled in and the letter moves on", async ({ page }) => {
+  await openLetter(page, "あ");
+  for (let i = 0; i < 6; i++) {
+    await waitReady(page, 1, 0);
+    await drawMouse(page, [[0.85, 0.85], [0.9, 0.88], [0.86, 0.92]]);
+    await page.waitForTimeout(300);
+  }
+  await expect(stage(page)).toHaveAttribute("data-outcome", "moveOn");
+  await expect(stage(page)).toHaveAttribute("data-stroke", "1");
+  await expect(stage(page)).toHaveAttribute("data-together", "false");
 });

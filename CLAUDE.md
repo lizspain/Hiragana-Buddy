@@ -76,7 +76,12 @@ next character. After the last one, show the phase-3 drawings side by side
 - Phase 3: empty cell with dashed cross guidelines, no ghost.
 - Engine state per character: `demo(k) → await(k) → judge → accept | retry`.
 - Correction ladder on miss: 1) fade ink + replay stroke, 2) pulse start dot +
-  arrow, 3) "let's do it together": accept any stroke starting near the dot.
+  arrow, 3) "let's do it together": accept a stroke that starts near the dot
+  and is still roughly this stroke (right direction and length, shape within
+  1.25× the phase-1 tolerance). Agreed Nov 2026; it used to accept any stroke.
+  4) after three "together" tries that still miss: "Oops. We'll try that one
+  together another time.", the model stroke is filled in (counted as a
+  retried stroke) and the character moves on.
 - Order slip (`judgeNext` returns `kind: "order"`): "That's stroke N+1! Let's
   do stroke N first", highlight stroke N.
 
@@ -90,7 +95,8 @@ next character. After the last one, show the phase-3 drawings side by side
 
 Short strokes scale down with a 0.07 floor. Length 0.4–2.0× (ticks up to 3×),
 direction cosine > 0.2. Score (phase 3): 70 shape + 15 placement + 15
-proportion, −5 per retried stroke; stars 80+ → 3, 55+ → 2, else 1.
+proportion, −5 per retried stroke; stars 80+ → 3, 68+ → 2, else 1
+(2-star line raised from 55, agreed Oct 2026).
 
 Hot/cold (stretch): `warmth(p, strokePoints, phase)` → 0 hot … 1 cold. Ink
 colour ramps warm orange-gold → yellow → soft sky blue; also thin the line as

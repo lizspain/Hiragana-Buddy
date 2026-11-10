@@ -26,6 +26,7 @@ export function inkPalette(current: string, onPick: (color: string) => void): HT
         style: `--c:${c}`,
         role: "radio",
         "data-color": c,
+        "data-sound": "splash", // a little splash of paint instead of the button "tok" (ui/press.ts)
         "aria-label": "Ink colour",
         onclick: () => {
           select(c);

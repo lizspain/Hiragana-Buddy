@@ -22,6 +22,7 @@ export const LINES = {
   follow: en("Follow me!"),
   together: en("Let's do it together!"),
   togetherDone: en("We did it together!"),
+  movedOn: en("Oops. We'll try that one together another time."),
 } satisfies Record<string, Line>;
 
 export type LineId = keyof typeof LINES;

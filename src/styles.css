@@ -102,7 +102,9 @@ body {
 }
 
 /* Soft sand, recoloured to the palette (art-source/sand-tile.webp → src/art/sand.webp),
-   shown large so it reads as gentle texture rather than a pattern. */
+   shown large so it reads as gentle texture rather than a pattern. The tile is
+   seamless and repeats, so it reaches every edge at any window size. (No
+   scrollbar-gutter: Chrome paints only a plain strip there, never the sand.) */
 body {
   background:
     radial-gradient(circle at 50% 12%, rgb(255 255 255 / 40%), transparent 45%),
@@ -114,6 +116,11 @@ body {
 #app {
   position: relative;
   z-index: 1;
+  /* A screen rises in from 8px below (.screen animation). Clip that overshoot
+     so it never makes the page taller than the window: otherwise desktop
+     Chrome shows a scrollbar for the animation and the page jumps sideways
+     when it goes away. */
+  overflow: clip;
 }
 
 button {
@@ -546,7 +553,7 @@ input:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 16px; /* the title wraps before it gets closer than this to the gear */
   width: 100%;
   max-width: 920px;
   min-height: 100px;
@@ -577,8 +584,16 @@ input:focus-visible {
   text-shadow: 0 2px 0 rgb(255 255 255 / 75%);
 }
 
+/* "Hiragana Buddy" on one line; the two words only wrap onto two lines when
+   the page is too narrow to fit them beside the gear. */
+.home-head h1 {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.25em;
+}
+
 .home-head h1 span {
-  display: block;
+  white-space: nowrap;
 }
 
 .subtitle {
@@ -1142,7 +1157,7 @@ body[data-screen="write"] {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+  gap: 0; /* the word strip starts right under the top buttons' raised edge */
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
@@ -1756,11 +1771,6 @@ body[data-screen="write"] {
 
   .home-head h1 {
     line-height: 1;
-    white-space: nowrap;
-  }
-
-  .home-head h1 span {
-    display: inline;
   }
 
   .subtitle {

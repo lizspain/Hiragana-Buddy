@@ -210,7 +210,10 @@ export function warmth(p: Pt, line: Pt[], phase: Phase = 2): number {
   return Math.min(1, nearestDistance(p, line) / t);
 }
 
-export const starsFor = (score: number): 1 | 2 | 3 => (score >= 80 ? 3 : score >= 55 ? 2 : 1);
+// Two stars from 68 (was 55, agreed Oct 2026): at 55 almost any accepted drawing
+// earned two, since even sloppy letters score in the 60s-70s. Now a sloppy letter
+// gets one star about a quarter of the time; neat and OK letters are unaffected.
+export const starsFor = (score: number): 1 | 2 | 3 => (score >= 80 ? 3 : score >= 68 ? 2 : 1);
 
 // Phase-3 character score, 0..100: shape 70, placement 15, proportion 15,
 // minus 5 per retried stroke. `strokes` = accepted drawn strokes in order.
