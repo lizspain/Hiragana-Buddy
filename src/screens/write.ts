@@ -40,26 +40,34 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
       void saveSettings({ inkColor: c });
     }),
   );
-  // The drawing square spans the page (so it is centred on it); the word strip
-  // and ink colours are pinned against the stone frame once it is placed.
-  const stageWrap = h("main", { class: "stage-wrap" }, stage, strip, paletteArea);
-  const el = h(
-    "div",
-    { class: "screen write" },
-    h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home"), pips, h("div", { class: "right" }, replayBtn, soundBtn)),
-    stageWrap,
-  );
+  // The drawing square spans the page (so it is centred on it); the word strip,
+  // ink colours and Watch/Trace/Write steps are pinned against the stone frame
+  // once it is placed.
+  const stageWrap = h("main", { class: "stage-wrap" }, stage, strip, paletteArea, pips);
+  const topbar = h("header", { class: "topbar" }, iconButton(ICON.home, "Home", () => nav.home(), "home"), h("div", { class: "right" }, replayBtn, soundBtn));
+  const el = h("div", { class: "screen write" }, topbar, stageWrap);
 
   const board = new Board(stage);
   board.inkColor = settings.inkColor;
+  board.alignTop = true; // the word strip sits right under the top bar, the stones under it
 
-  const STRIP_H = 70; // tiles + their lower edge
+  const STRIP_H = 70; // the largest tile (58) grown 10% as the current one, + its raised lower edge (6)
   const STRIP_GAP = 4; // space between the tiles' edge and the top stones
   const PALETTE_T = 74; // swatch + ring + gap
+  // Steps row: the current step grows 15%; matches --pip in styles.css (38px on phones).
+  const pipsH = () => (innerWidth <= 480 ? 38 : 58) * 1.15 + 10;
   const wide = (w: number, h: number) => w > h * 1.15;
+  // How far below the top of the drawing area the top buttons' raised edge ends,
+  // so the word strip starts exactly there (no gap, no overlap).
+  const underTopBar = () => {
+    const b = topbar.querySelector<HTMLElement>(".icon-btn");
+    if (!b) return 0;
+    const lift = parseFloat(getComputedStyle(b).getPropertyValue("--lift")) || 0;
+    return b.getBoundingClientRect().bottom + lift - stageWrap.getBoundingClientRect().top; // may be negative
+  };
   board.reserve = (w, h) => {
-    const top = plan.kana.length > 1 ? STRIP_H + STRIP_GAP : 0;
-    return wide(w, h) ? { top, side: PALETTE_T, bottom: 0 } : { top, side: 0, bottom: PALETTE_T };
+    const top = underTopBar() + STRIP_H + STRIP_GAP; // the strip shows for single letters too
+    return wide(w, h) ? { top, side: PALETTE_T, bottom: pipsH() } : { top, side: 0, bottom: PALETTE_T + pipsH() };
   };
   board.onLayout = (f) => {
     const isWide = wide(stage.clientWidth, stage.clientHeight);
@@ -76,6 +84,9 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
         ? { left: `${f.x + f.w + 6}px`, top: `${f.y + f.h / 2}px`, transform: "translateY(-50%)" }
         : { left: `${f.x + f.w / 2}px`, top: `${f.y + f.h + 2}px`, transform: "translateX(-50%)" },
     );
+    // Steps: under the colours (tall), or under the stones when the colours sit beside them (wide).
+    const below = f.y + f.h + (isWide ? 4 : PALETTE_T + 2);
+    Object.assign(pips.style, { left: `${f.x + f.w / 2}px`, top: `${below + pipsH() / 2}px` });
   };
 
   // ---------- state ----------
@@ -168,8 +179,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
       strip.append(
         ...plan.kana.map((k) => h("button", { class: "strip-tile", "aria-label": `${k}`, "data-quiet": "", onclick: () => sayKana(k) }, kanaSvg(k))),
       );
-      strip.hidden = plan.kana.length < 2;
-    }
+      }
     [...strip.children].forEach((t, i) => {
       t.classList.toggle("current", i === idx);
       t.classList.toggle("done", i < idx);
@@ -259,6 +269,17 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
       if (o.phaseDone) return phaseDone();
       refreshGuide();
       if (phase() === 1) demoSoon(450);
+      return;
+    }
+    if (o.kind === "moveOn") {
+      // Gentle, no fanfare: their try fades and the model stroke settles in its place.
+      board.fadeLive();
+      board.clearEffects(); // the together hints for the old stroke
+      board.acceptLive(o.points);
+      line("movedOn");
+      if (o.phaseDone) return phaseDone();
+      refreshGuide();
+      if (phase() === 1) demoSoon(3200); // after the line, so the next demo isn't talked over
       return;
     }
 

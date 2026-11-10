@@ -6,6 +6,9 @@ import { bestStars, getItems, getSettings, saveSettings } from "../store";
 
 export function homeScreen(nav: Nav): Screen {
   const items = getItems();
+  // Word cards built from letters picked one by one (nothing typed, or only the
+  // kana themselves) show their romaji instead, filled in once WanaKana loads.
+  const romajiLater: { el: HTMLElement; kana: string }[] = [];
 
   const shelf = items.length
     ? h(
@@ -29,7 +32,11 @@ export function homeScreen(nav: Nav): Screen {
                 },
               },
               h("div", { class: "shelf-kana" }, it.kana.map((k) => kanaSvg(k))),
-              h("span", { class: "shelf-label" }, label || " "),
+              (() => {
+                const el = h("span", { class: "shelf-label" }, label || " ");
+                if (!label && it.kind === "word") romajiLater.push({ el, kana: it.kana.join("") });
+                return el;
+              })(),
               stars(bestStars(it), "stars small"),
             ),
             h(
@@ -106,6 +113,8 @@ export function homeScreen(nav: Nav): Screen {
     el,
     mounted() {
       maybeShowInstallTip();
+      if (romajiLater.length)
+        void import("wanakana").then(({ toRomaji }) => romajiLater.forEach(({ el, kana }) => (el.textContent = toRomaji(kana))));
     },
   };
 }

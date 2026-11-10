@@ -487,6 +487,63 @@ export function thunk(): void {
   ring.stop(t + 0.08);
 }
 
+// ---------- colour splash ----------
+//
+// Picking an ink colour: a tiny, cute splash. A soft swish of water (noise
+// through a band-pass sweeping down) and two droplets that "plip" upward,
+// the second a touch higher and later. Quiet, like the button thunk.
+
+let splashNoise: AudioBuffer | null = null;
+
+export function splash(): void {
+  if (!enabled) return;
+  const c = audio();
+  if (!c) return;
+  if (c.state === "suspended") void c.resume();
+  const t = c.currentTime + 0.005;
+  const v = 0.95 + Math.random() * 0.1;
+  const out = c.createGain();
+  out.gain.value = 0.7; // same overall level as the thunk
+  out.connect(c.destination);
+
+  // Swish: 120 ms of decaying noise, band-pass sweeping 2.4 kHz → 900 Hz.
+  if (!splashNoise) {
+    splashNoise = c.createBuffer(1, Math.floor(c.sampleRate * 0.14), c.sampleRate);
+    const d = splashNoise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+  }
+  const swish = c.createBufferSource();
+  swish.buffer = splashNoise;
+  const band = c.createBiquadFilter();
+  band.type = "bandpass";
+  band.Q.value = 1.4;
+  band.frequency.setValueAtTime(2400 * v, t);
+  band.frequency.exponentialRampToValueAtTime(900 * v, t + 0.12);
+  const sg = c.createGain();
+  sg.gain.setValueAtTime(0.0001, t);
+  sg.gain.exponentialRampToValueAtTime(0.09, t + 0.008);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+  swish.connect(band).connect(sg).connect(out);
+  swish.start(t);
+
+  // Droplets: quick sine "plips" gliding upward.
+  const plip = (at: number, from: number, to: number, peak: number) => {
+    const o = c.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(from * v, t + at);
+    o.frequency.exponentialRampToValueAtTime(to * v, t + at + 0.05);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t + at);
+    g.gain.exponentialRampToValueAtTime(peak, t + at + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.07);
+    o.connect(g).connect(out);
+    o.start(t + at);
+    o.stop(t + at + 0.09);
+  };
+  plip(0.03, 700, 1300, 0.07);
+  plip(0.085, 950, 1700, 0.045);
+}
+
 // Pentatonic so any chime sounds friendly.
 const SCALE = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5];
 
