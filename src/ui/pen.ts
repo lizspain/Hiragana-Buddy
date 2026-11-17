@@ -4,7 +4,8 @@
 //  - only pointers that start inside the cell (+12 px) count
 //  - one active pen; a second pointer within 150 ms that is larger / further
 //    from the centre is the palm (the other becomes the pen)
-//  - contact > ~40 CSS px across is a palm
+//  - contact > ~40 CSS px across is a palm (72 px on iOS, which reports
+//    contact size larger: see PALM_CONTACT_PX_IOS)
 //  - strokes < 2% of the cell lasting < 80 ms are dropped silently
 //  - a palm landing mid-stroke never cancels the live stroke
 //  - pointercancel discards without a miss
@@ -34,6 +35,15 @@ export interface PenHandlers {
 const MARGIN = 12;
 const PALM_WINDOW_MS = 150;
 const PALM_CONTACT_PX = 40;
+// iOS/iPadOS WebKit reports touch width/height as 2 × UITouch.majorRadius, and
+// a normal fingertip there is ~21 pt (steps of ~5: 21, 26, 31), i.e. 42-63 px.
+// With the 40 px limit every finger looked like a palm and nothing drew on iPad.
+// A resting hand on iOS reports a much larger radius, so it is still caught.
+const PALM_CONTACT_PX_IOS = 72;
+const IS_IOS =
+  typeof navigator !== "undefined" &&
+  (/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+const palmContactPx = IS_IOS ? PALM_CONTACT_PX_IOS : PALM_CONTACT_PX;
 const TAP_LEN = 0.02;
 const TAP_MS = 80;
 
@@ -98,7 +108,7 @@ export class PenInput {
 
     const w = e.pointerType === "touch" ? e.width || 0 : 0;
     const hgt = e.pointerType === "touch" ? e.height || 0 : 0;
-    if (Math.max(w, hgt) > PALM_CONTACT_PX) return;
+    if (Math.max(w, hgt) > palmContactPx) return;
 
     const cx = r.x + r.size / 2;
     const cy = r.y + r.size / 2;

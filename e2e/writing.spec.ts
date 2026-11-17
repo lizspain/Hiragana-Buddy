@@ -170,6 +170,52 @@ test("two touches at once (a large palm at the cell edge) still give one clean s
   await expect(stage(page)).toHaveAttribute("data-stroke", "1");
 });
 
+test.describe("on iPad", () => {
+  // iPadOS Safari reports a fingertip as ~42 px across (2 × a ~21 pt radius).
+  test.use({
+    userAgent:
+      "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+  });
+
+  async function touchStroke(page: Page, pts: Pt[], radius: number) {
+    const map = await cellToPage(page);
+    const tp = (p: Pt) => {
+      const [x, y] = map(p);
+      return { x, y, radiusX: radius, radiusY: radius, id: 1 };
+    };
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [tp(pts[0])] });
+    for (const p of pts.slice(1)) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [tp(p)] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+
+  // The one-time "Add to Home Screen" tip shows first on iOS; a grown-up taps OK.
+  async function openOnIPad(page: Page, kana: string) {
+    await page.goto("/");
+    await page.getByRole("button", { name: "OK" }).click();
+    await page.getByTestId("go-letter").click();
+    await page.locator(`[data-kana="${kana}"]`).click();
+    await expect(stage(page)).toHaveAttribute("data-kana", kana);
+  }
+
+  test("a finger draws", async ({ page }) => {
+    await openOnIPad(page, "い");
+    await waitReady(page, 1, 0);
+    await touchStroke(page, data["い"].strokes[0].points, 21);
+    await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
+    await expect(stage(page)).toHaveAttribute("data-stroke", "1");
+  });
+
+  test("a resting hand still does nothing", async ({ page }) => {
+    await openOnIPad(page, "い");
+    await waitReady(page, 1, 0);
+    await touchStroke(page, data["い"].strokes[0].points, 45);
+    await page.waitForTimeout(300);
+    await expect(stage(page)).toHaveAttribute("data-stroke", "0");
+    await expect(stage(page)).not.toHaveAttribute("data-outcome", "accept");
+  });
+});
+
 test("a romaji word goes through the tile editor into practice", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("go-word").click();
