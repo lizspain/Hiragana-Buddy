@@ -33,6 +33,8 @@ export class CharacterSession {
   /** Misses (incl. order slips) on the current stroke. */
   misses = 0;
   accepted: Pt[][] = [];
+  /** Per accepted stroke: true when it is the model filled in after "Oops", not the child's drawing. */
+  filledIn: boolean[] = [];
   /** Strokes in this phase that needed at least one retry. */
   retried = 0;
 
@@ -96,6 +98,7 @@ export class CharacterSession {
     const stroke = this.k;
     if (this.misses > 0) this.retried++;
     this.accepted.push(points);
+    this.filledIn.push(false);
     this.k++;
     this.misses = 0;
     return { kind: "accept", stroke, together, phaseDone: this.done };
@@ -107,6 +110,8 @@ export class CharacterSession {
     const points = this.glyph.strokes[stroke].points.map(([x, y]) => [x, y] as Pt);
     this.retried++;
     this.accepted.push(points);
+    this.filledIn.push(true); // never scored as theirs
+
     this.k++;
     this.misses = 0;
     return { kind: "moveOn", stroke, points, phaseDone: this.done };
@@ -114,7 +119,7 @@ export class CharacterSession {
 
   /** Phase-3 score; call once `done`. */
   score(): CharacterScore {
-    return scoreCharacter(this.accepted, this.glyph, this.strokeCount - this.retried);
+    return scoreCharacter(this.accepted, this.glyph, this.strokeCount - this.retried, this.filledIn);
   }
 
   /** Accepted strokes downsampled to 16 points each, rounded, for history. */

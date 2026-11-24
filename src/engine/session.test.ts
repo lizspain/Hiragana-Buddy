@@ -93,4 +93,22 @@ describe("CharacterSession", () => {
     while (!s.done) s.submit(scribble);
     expect(s.score().stars).toBeGreaterThanOrEqual(1);
   });
+
+  // Bug: the filled-in model stroke used to be scored as the child's drawing,
+  // so a one-stroke letter that ended in "Oops" scored 95 (3 stars).
+  it("a filled-in stroke never earns stars: a one-stroke letter that moves on gets 1", () => {
+    const s = new CharacterSession(data["し"], 3);
+    while (!s.done) s.submit(scribble);
+    expect(s.score()).toMatchObject({ score: 0, stars: 1 });
+  });
+
+  it("with one stroke filled in, the score comes from the child's own strokes only", () => {
+    const s = new CharacterSession(a, 3);
+    while (s.k === 0) s.submit(scribble); // stroke 1 is filled in
+    for (const st of a.strokes.slice(1)) expect(s.submit(st.points).kind).toBe("accept");
+    const sc = s.score();
+    expect(sc.shape).toBeCloseTo(2 / 3, 2); // the filled-in stroke adds nothing to shape
+    expect(sc.stars).toBeLessThan(3);
+    expect(sc.score).toBeLessThan(80);
+  });
 });
