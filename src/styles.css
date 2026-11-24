@@ -1076,6 +1076,12 @@ input:focus-visible {
     transform 260ms var(--ease-bounce);
 }
 
+/* Swatches shrink with the stones (--ui), and so does their ring. */
+.swatch::after {
+  --gap: calc(4px * var(--ui, 1));
+  --ring: max(2.5px, calc(4px * var(--ui, 1)));
+}
+
 .tile.selected::after,
 .swatch.on::after {
   opacity: 1;
@@ -1172,8 +1178,9 @@ body[data-screen="write"] {
 /* Steps: Watch → Trace → Write, chained on a line and centred on the page.
    Not buttons, so no raised edge. */
 .pips {
-  --pip: 58px;
-  --step-gap: 26px;
+  /* --ui: set by write.ts so the steps keep their proportion to the stones */
+  --pip: calc(58px * var(--ui, 1));
+  --step-gap: calc(26px * var(--ui, 1));
   position: absolute;
   left: 50%;
   top: 50%;
@@ -1222,7 +1229,7 @@ body[data-screen="write"] {
 /* The little octopus, just left of Watch (out of the flex row, so Trace stays centred). */
 .pip-mascot {
   position: absolute;
-  right: calc(100% + 10px);
+  right: calc(100% + 10px * var(--ui, 1));
   top: 50%;
   transform: translateY(-52%);
   width: calc(var(--pip) * 1.15);
@@ -1368,13 +1375,14 @@ body[data-screen="write"] {
 
 .swatches {
   display: flex;
-  gap: 16px; /* room for the picked colour's ring */
+  gap: calc(16px * var(--ui, 1)); /* room for the picked colour's ring */
   padding: 8px;
 }
 
 .swatch {
-  width: 48px;
-  height: 48px;
+  /* --ui: set by write.ts so the colours keep their proportion to the stones */
+  width: calc(48px * var(--ui, 1));
+  height: calc(48px * var(--ui, 1));
   border-radius: 50%;
   border: 3px solid var(--tan); /* light brown, like the Home button */
   background: var(--c);
@@ -1409,8 +1417,8 @@ body[data-screen="write"] {
   }
 
   .pips {
-    --pip: 38px;
-    --step-gap: 12px;
+    --pip: calc(38px * var(--ui, 1));
+    --step-gap: calc(12px * var(--ui, 1));
   }
 
   .pip {
@@ -1418,8 +1426,8 @@ body[data-screen="write"] {
   }
 
   .pip-mascot {
-    right: calc(100% + 6px);
-    width: 48px;
+    right: calc(100% + 6px * var(--ui, 1));
+    width: calc(48px * var(--ui, 1));
   }
 
   .pip.now {
@@ -1427,12 +1435,12 @@ body[data-screen="write"] {
   }
 
   .swatches {
-    gap: 12px;
+    gap: calc(12px * var(--ui, 1));
   }
 
   .swatch {
-    width: 42px;
-    height: 42px;
+    width: calc(42px * var(--ui, 1));
+    height: calc(42px * var(--ui, 1));
   }
 }
 

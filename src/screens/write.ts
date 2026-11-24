@@ -51,11 +51,29 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
   board.inkColor = settings.inkColor;
   board.alignTop = true; // the word strip sits right under the top bar, the stones under it
 
-  const STRIP_H = 70; // the largest tile (58) grown 10% as the current one, + its raised lower edge (6)
+  // The word strip, ink colours and steps keep their proportions to the stones:
+  // at full size (ui = 1) they are sized for a frame at least REF px across;
+  // a smaller frame (a short or narrow window) shrinks them by the same factor.
+  const phone = () => innerWidth <= 480;
   const STRIP_GAP = 4; // space between the tiles' edge and the top stones
-  const PALETTE_T = 74; // swatch + ring + gap
-  // Steps row: the current step grows 15%; matches --pip in styles.css (38px on phones).
-  const pipsH = () => (innerWidth <= 480 ? 38 : 58) * 1.15 + 10;
+  const base = () =>
+    phone()
+      ? { swatch: 42, swatchGap: 12, pip: 38, stepGap: 12, mascot: 48, mascotGap: 6 }
+      : { swatch: 48, swatchGap: 16, pip: 58, stepGap: 26, mascot: 58 * 1.15, mascotGap: 10 };
+  /** Frame size (px) at which everything is full size: the colours fit along it, and the steps (with the octopus) under it. */
+  const REF = () => {
+    const b = base();
+    const colours = 6 * b.swatch + 5 * b.swatchGap; // the picked one's ring may reach past the stones' edge
+    const steps = 2 * (b.pip * 1.15 * 1.5 + b.stepGap + b.mascotGap + b.mascot); // Trace centred, octopus at the left
+    return Math.max(colours, steps);
+  };
+  const MIN_UI = 0.5;
+  let ui = 1;
+  /** Visible stones ÷ the space they were given; measured after each layout. */
+  let fill = 0.9;
+  const stripH = (s: number) => 64 * s + 6; // the largest tile (58) grown 10% as the current one, + its raised lower edge (6)
+  const paletteT = (s: number) => base().swatch * s * 1.08 + 22; // swatch + ring + gap
+  const pipsH = (s: number) => base().pip * s * 1.15 + 10;
   const wide = (w: number, h: number) => w > h * 1.15;
   // How far below the top of the drawing area the top buttons' raised edge ends,
   // so the word strip starts exactly there (no gap, no overlap).
@@ -65,17 +83,32 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     const lift = parseFloat(getComputedStyle(b).getPropertyValue("--lift")) || 0;
     return b.getBoundingClientRect().bottom + lift - stageWrap.getBoundingClientRect().top; // may be negative
   };
+  const reserveAt = (w: number, h: number, s: number) => {
+    const top = underTopBar() + stripH(s) + STRIP_GAP; // the strip shows for single letters too
+    return wide(w, h) ? { top, side: paletteT(s), bottom: pipsH(s) } : { top, side: 0, bottom: paletteT(s) + pipsH(s) };
+  };
+  let avail = 1;
   board.reserve = (w, h) => {
-    const top = underTopBar() + STRIP_H + STRIP_GAP; // the strip shows for single letters too
-    return wide(w, h) ? { top, side: PALETTE_T, bottom: pipsH() } : { top, side: 0, bottom: PALETTE_T + pipsH() };
+    // Shrinking the controls gives the stones more room, so settle the scale in a few steps.
+    let s = 1;
+    for (let i = 0; i < 4; i++) {
+      const r = reserveAt(w, h, s);
+      avail = Math.min(w - 2 * r.side, h - r.top - r.bottom);
+      s = Math.max(MIN_UI, Math.min(1, (avail * fill) / REF()));
+    }
+    ui = s;
+    stageWrap.style.setProperty("--ui", s.toFixed(3));
+    return reserveAt(w, h, s);
   };
   board.onLayout = (f) => {
+    if (avail > 0) fill = Math.min(f.w, f.h) / avail;
     const isWide = wide(stage.clientWidth, stage.clientHeight);
     stageWrap.dataset.layout = isWide ? "wide" : "tall";
     // Strip: centred on the frame, its tiles sitting on the top stones.
     const n = plan.kana.length;
-    const tile = Math.max(34, Math.min(58, (f.w - (n - 1) * 8) / n));
-    Object.assign(strip.style, { left: `${f.x}px`, width: `${f.w}px`, top: `${f.y - STRIP_H - STRIP_GAP}px`, height: `${STRIP_H}px` });
+    const tile = Math.max(34 * ui, Math.min(58 * ui, (f.w - (n - 1) * 8) / n));
+    const sh = stripH(ui);
+    Object.assign(strip.style, { left: `${f.x}px`, width: `${f.w}px`, top: `${f.y - sh - STRIP_GAP}px`, height: `${sh}px` });
     strip.style.setProperty("--tile", `${tile}px`);
     // Colours: just right of the stones (wide screens) or just under them (tall).
     Object.assign(
@@ -85,8 +118,8 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
         : { left: `${f.x + f.w / 2}px`, top: `${f.y + f.h + 2}px`, transform: "translateX(-50%)" },
     );
     // Steps: under the colours (tall), or under the stones when the colours sit beside them (wide).
-    const below = f.y + f.h + (isWide ? 4 : PALETTE_T + 2);
-    Object.assign(pips.style, { left: `${f.x + f.w / 2}px`, top: `${below + pipsH() / 2}px` });
+    const below = f.y + f.h + (isWide ? 4 : paletteT(ui) + 2);
+    Object.assign(pips.style, { left: `${f.x + f.w / 2}px`, top: `${below + pipsH(ui) / 2}px` });
   };
 
   // ---------- state ----------
