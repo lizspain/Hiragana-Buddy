@@ -5,7 +5,7 @@
 import type { Nav, PracticePlan, Screen } from "../app";
 import { glyph } from "../data";
 import type { Phase, Pt } from "../engine/matcher";
-import { starsFor } from "../engine/matcher";
+import { starsFor, type Stars } from "../engine/matcher";
 import { CharacterSession, type Outcome } from "../engine/session";
 import { boop, chime, fanfare, line, pop, praise, preloadWord, sandSwoosh, sayKana, sayOrderSlip, setSoundEnabled, soundEnabled, thunk, unlockAudio } from "../ui/audio";
 import { Board } from "../ui/board";
@@ -350,7 +350,7 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
     stage.classList.add("cheer");
     if (p === 3) {
       const sc = session.score();
-      results.push({ kana: k, score: sc.score, retries: session.retried });
+      results.push({ kana: k, score: sc.score, retries: session.retried, autoTraced: sc.stars === 0 });
       drawings.push(session.drawing());
       fanfare();
       board.celebrate();
@@ -372,7 +372,8 @@ export function writeScreen(nav: Nav, plan: PracticePlan): Screen {
 
   async function finish() {
     const score = Math.round(results.reduce((a, r) => a + r.score, 0) / results.length);
-    const stars = starsFor(score);
+    // 0 stars only if the app traced every letter itself; otherwise at least 1.
+    const stars: Stars = results.every((r) => r.autoTraced) ? 0 : starsFor(score);
     await recordSession(plan.kind, plan.kana, plan.input, plan.mode, {
       at: new Date().toISOString(),
       score,

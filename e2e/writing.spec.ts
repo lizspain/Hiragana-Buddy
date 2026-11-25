@@ -520,8 +520,9 @@ test("after three together tries that miss, the stroke is filled in and the lett
 });
 
 // Bug: after "Oops" on the do-it-yourself step, the filled-in model stroke was
-// scored as the child's drawing and a one-stroke letter earned 3 stars.
-test("a letter finished by \"Oops\" on the do-it-yourself step gets 1 star, not 3", async ({ page }) => {
+// scored as the child's drawing and a one-stroke letter earned 3 stars. A letter
+// the app traced entirely by itself now gets 0 stars (agreed Nov 2026).
+test("a letter finished by \"Oops\" on the do-it-yourself step gets 0 stars, not 3", async ({ page }) => {
   await openLetter(page, "し");
   const stroke = data["し"].strokes[0].points;
   for (const phase of [1, 2]) {
@@ -537,5 +538,7 @@ test("a letter finished by \"Oops\" on the do-it-yourself step gets 1 star, not 
   }
   const word = page.getByTestId("my-word");
   await expect(word).toBeVisible({ timeout: 15_000 });
-  await expect(word).toHaveAttribute("data-stars", "1");
+  await expect(word).toHaveAttribute("data-stars", "0");
+  await expect(page.locator(".stars.big .star")).toHaveCount(3); // three grey stars
+  await expect(page.locator(".stars.big .star.on")).toHaveCount(0);
 });

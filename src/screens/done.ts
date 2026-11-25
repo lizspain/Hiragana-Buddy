@@ -90,7 +90,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
       // The burst comes from the last star earned, once it has filled with gold
       // (stars pop in one after another: styles star-in, 0.35 s apart, 0.6 s each).
       const last = starRow.querySelectorAll<HTMLElement>(".star.on")[r.stars - 1];
-      let burst = false;
+      let burst = r.stars === 0; // no star to burst from
       const go = () => {
         if (burst) return;
         burst = true;
