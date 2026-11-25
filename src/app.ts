@@ -1,6 +1,7 @@
 // Screen router. Screens are plain functions that build a DOM tree and may
 // return a cleanup. Back (browser/Android) always returns home.
 
+import type { Stars } from "./engine/matcher";
 import type { Item } from "./store";
 import { chartScreen } from "./screens/chart";
 import { doneScreen } from "./screens/done";
@@ -26,7 +27,7 @@ export interface PracticePlan {
 export interface WordResult {
   plan: PracticePlan;
   score: number;
-  stars: 1 | 2 | 3;
+  stars: Stars;
   drawings: [number, number][][][];
 }
 

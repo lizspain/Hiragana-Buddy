@@ -1,7 +1,7 @@
 // On-device storage (IndexedDB via idb-keyval). Nothing ever leaves the device.
 
 import { createStore, get, set } from "idb-keyval";
-import type { Pt } from "./engine/matcher";
+import type { Pt, Stars } from "./engine/matcher";
 import { inkOrDefault } from "./ui/palette";
 
 export interface Settings {
@@ -23,12 +23,14 @@ export interface KanaResult {
   kana: string;
   score: number;
   retries: number;
+  /** Every stroke was filled in by the app after "Oops" (the child drew none of it). */
+  autoTraced?: boolean;
 }
 
 export interface Session {
   at: string;
   score: number;
-  stars: 1 | 2 | 3;
+  stars: Stars;
   perKana: KanaResult[];
   /** Per kana: phase-3 strokes, 16 points each, cell units. */
   drawing: Pt[][][];
@@ -125,7 +127,7 @@ async function persistItems() {
   await set("items", items, store).catch(() => undefined);
 }
 
-export const bestStars = (item: Item): number => Math.max(1, ...item.sessions.map((s) => s.stars));
+export const bestStars = (item: Item): number => Math.max(0, ...item.sessions.map((s) => s.stars));
 
 /** A kana counts as mastered after a 3-star phase-3 result in any session. */
 export function isMastered(kana: string): boolean {

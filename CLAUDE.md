@@ -9,7 +9,9 @@ summary; if the two disagree, ask before guessing.
 ## Non-negotiables
 
 - Never discouraging. No red, no X marks, no buzzers, no "wrong", no timers,
-  no lives. Every finished word earns at least 1 star.
+  no lives. Every finished word earns at least 1 star, unless "Oops" filled in
+  every stroke of every letter: a letter the app traced itself gets 0 (agreed
+  Nov 2026).
 - Stroke order is enforced: only the next expected stroke can be accepted.
 - Ink appears under the finger on the next frame, in every phase.
 - 40 fps minimum, 60 target, on a mid-tier phone and a base iPad.

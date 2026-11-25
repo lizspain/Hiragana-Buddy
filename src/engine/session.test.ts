@@ -66,7 +66,7 @@ describe("CharacterSession", () => {
     expect(s.misses).toBe(0);
   });
 
-  it("never scores below 1 star", () => {
+  it("never scores below 1 star while the child drew some of it", () => {
     const s = new CharacterSession(a, 3);
     for (const st of a.strokes) {
       for (let i = 0; i < 6; i++) s.submit(scribble);
@@ -88,18 +88,18 @@ describe("CharacterSession", () => {
     }
   });
 
-  it("a word where every stroke moves on still finishes with at least 1 star", () => {
+  it("a letter where every stroke moves on gets 0 stars", () => {
     const s = new CharacterSession(a, 3);
     while (!s.done) s.submit(scribble);
-    expect(s.score().stars).toBeGreaterThanOrEqual(1);
+    expect(s.score()).toMatchObject({ score: 0, stars: 0 });
   });
 
   // Bug: the filled-in model stroke used to be scored as the child's drawing,
   // so a one-stroke letter that ended in "Oops" scored 95 (3 stars).
-  it("a filled-in stroke never earns stars: a one-stroke letter that moves on gets 1", () => {
+  it("a filled-in stroke never earns stars: a one-stroke letter that moves on gets 0", () => {
     const s = new CharacterSession(data["し"], 3);
     while (!s.done) s.submit(scribble);
-    expect(s.score()).toMatchObject({ score: 0, stars: 1 });
+    expect(s.score()).toMatchObject({ score: 0, stars: 0 });
   });
 
   it("with one stroke filled in, the score comes from the child's own strokes only", () => {
@@ -110,5 +110,13 @@ describe("CharacterSession", () => {
     expect(sc.shape).toBeCloseTo(2 / 3, 2); // the filled-in stroke adds nothing to shape
     expect(sc.stars).toBeLessThan(3);
     expect(sc.score).toBeLessThan(80);
+  });
+
+  it("い with stroke 1 filled in gets 1 star even when stroke 2 is perfect", () => {
+    const i = data["い"];
+    const s = new CharacterSession(i, 3);
+    while (s.k === 0) s.submit(scribble);
+    expect(s.submit(i.strokes[1].points).kind).toBe("accept");
+    expect(s.score().stars).toBe(1);
   });
 });

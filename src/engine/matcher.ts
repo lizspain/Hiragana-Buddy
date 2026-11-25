@@ -8,6 +8,8 @@
 
 export type Pt = [number, number];
 export type Phase = 1 | 2 | 3;
+/** 0 only for a letter (or word) the app traced entirely by itself after "Oops". */
+export type Stars = 0 | 1 | 2 | 3;
 
 export interface StrokeData {
   d: string;
@@ -43,7 +45,7 @@ export interface CharacterScore {
   shape: number;
   placement: number;
   proportion: number;
-  stars: 1 | 2 | 3;
+  stars: Stars;
 }
 
 export const N = 32; // points per resampled stroke (matches the data file)
@@ -220,11 +222,12 @@ export const starsFor = (score: number): 1 | 2 | 3 => (score >= 80 ? 3 : score >
 // `filledIn[i]` marks a stroke the app filled in after "Oops" (the model, not the
 // child's drawing): it adds nothing to shape, and placement and proportion are
 // measured on the child's own strokes against the matching model strokes only.
+// A letter whose every stroke was filled in scores 0 with 0 stars (agreed Nov 2026).
 export function scoreCharacter(strokes: Pt[][], kana: GlyphData, firstTryCount = strokes.length, filledIn: boolean[] = []): CharacterScore {
   const own = strokes.map((_, i) => !filledIn[i]);
   const results = strokes.map((s, i) => (own[i] ? compareStroke(s, kana.strokes[i], 3).quality : 0));
   const shape = results.reduce((a, q) => a + q, 0) / results.length;
-  if (!own.some(Boolean)) return { score: 0, shape: 0, placement: 0, proportion: 0, stars: starsFor(0) };
+  if (!own.some(Boolean)) return { score: 0, shape: 0, placement: 0, proportion: 0, stars: 0 };
   const all = strokes.filter((_, i) => own[i]).flat();
   const model = kana.strokes.filter((_, i) => own[i]).flatMap((s) => s.points);
   const bb = (pts: Pt[]) => {
