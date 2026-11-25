@@ -217,11 +217,16 @@ export const starsFor = (score: number): 1 | 2 | 3 => (score >= 80 ? 3 : score >
 
 // Phase-3 character score, 0..100: shape 70, placement 15, proportion 15,
 // minus 5 per retried stroke. `strokes` = accepted drawn strokes in order.
-export function scoreCharacter(strokes: Pt[][], kana: GlyphData, firstTryCount = strokes.length): CharacterScore {
-  const results = strokes.map((s, i) => compareStroke(s, kana.strokes[i], 3));
-  const shape = results.reduce((a, r) => a + r.quality, 0) / results.length;
-  const all = strokes.flat();
-  const model = kana.strokes.flatMap((s) => s.points);
+// `filledIn[i]` marks a stroke the app filled in after "Oops" (the model, not the
+// child's drawing): it adds nothing to shape, and placement and proportion are
+// measured on the child's own strokes against the matching model strokes only.
+export function scoreCharacter(strokes: Pt[][], kana: GlyphData, firstTryCount = strokes.length, filledIn: boolean[] = []): CharacterScore {
+  const own = strokes.map((_, i) => !filledIn[i]);
+  const results = strokes.map((s, i) => (own[i] ? compareStroke(s, kana.strokes[i], 3).quality : 0));
+  const shape = results.reduce((a, q) => a + q, 0) / results.length;
+  if (!own.some(Boolean)) return { score: 0, shape: 0, placement: 0, proportion: 0, stars: starsFor(0) };
+  const all = strokes.filter((_, i) => own[i]).flat();
+  const model = kana.strokes.filter((_, i) => own[i]).flatMap((s) => s.points);
   const bb = (pts: Pt[]) => {
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const [x, y] of pts) {

@@ -8,6 +8,9 @@
 //    contact size larger: see PALM_CONTACT_PX_IOS)
 //  - strokes < 2% of the cell lasting < 80 ms are dropped silently
 //  - a palm landing mid-stroke never cancels the live stroke
+//  - a contact that has rested without moving (a hand holding the phone's
+//    edge, which on phones lands inside the cell) gives way to a new touch,
+//    unless the new one is the larger contact
 //  - pointercancel discards without a miss
 //  - once a stylus is seen, touch is ignored
 
@@ -45,6 +48,8 @@ const IS_IOS =
   (/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
 const palmContactPx = IS_IOS ? PALM_CONTACT_PX_IOS : PALM_CONTACT_PX;
 const TAP_LEN = 0.02;
+/** A contact that has not strayed this far (cell units) from where it landed is resting, not drawing. */
+const RESTING_LEN = 0.04;
 const TAP_MS = 80;
 
 interface Active {
@@ -53,6 +58,8 @@ interface Active {
   t0: number;
   area: number;
   dist: number;
+  /** Furthest it has strayed from where it landed (stage px). */
+  reach: number;
   xs: number[];
   ys: number[];
 }
@@ -118,17 +125,26 @@ export class PenInput {
       t0: e.timeStamp,
       area: w * hgt,
       dist: Math.hypot(x - cx, y - cy),
+      reach: 0,
       xs: [x],
       ys: [y],
     };
 
     const cur = this.active;
     if (cur) {
-      // A second contact. Only within the palm window can it take over, and
-      // only if the current one looks more like a palm (larger, or further out).
-      if (e.timeStamp - cur.t0 > PALM_WINDOW_MS) return;
-      const curIsPalm = cur.area > 0 && cand.area > 0 && cur.area !== cand.area ? cur.area > cand.area : cur.dist > cand.dist;
-      if (!curIsPalm) return;
+      // A second contact. Within the palm window it takes over if the current one
+      // looks more like a palm (larger, or further out). Later, it takes over
+      // only from a contact that is resting rather than drawing (a hand on the
+      // edge would otherwise block every finger until it lifts), and not if the
+      // newcomer is itself the larger contact. A stroke being drawn is never cut.
+      const bothSized = cur.area > 0 && cand.area > 0 && cur.area !== cand.area;
+      if (e.timeStamp - cur.t0 <= PALM_WINDOW_MS) {
+        const curIsPalm = bothSized ? cur.area > cand.area : cur.dist > cand.dist;
+        if (!curIsPalm) return;
+      } else {
+        const resting = cur.reach < RESTING_LEN * r.size;
+        if (!resting || (bothSized && cand.area > cur.area)) return;
+      }
       this.release(cur.id);
       this.active = null;
       this.h.discard();
@@ -156,6 +172,7 @@ export class PenInput {
       const lx = a.xs[a.xs.length - 1];
       const ly = a.ys[a.ys.length - 1];
       if (Math.abs(x - lx) < 0.5 && Math.abs(y - ly) < 0.5) continue;
+      a.reach = Math.max(a.reach, Math.hypot(x - a.xs[0], y - a.ys[0]));
       a.xs.push(x);
       a.ys.push(y);
       xs.push(x);

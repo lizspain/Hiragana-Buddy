@@ -170,6 +170,66 @@ test("two touches at once (a large palm at the cell edge) still give one clean s
   await expect(stage(page)).toHaveAttribute("data-stroke", "1");
 });
 
+/**
+ * A hand resting on the screen edge, then a finger drawing stroke 1 of い.
+ * The hand lands just inside the cell's 12 px margin (where a hand holding a
+ * phone lands) and is small enough not to be caught by the contact-size rule.
+ */
+async function palmThenFinger(page: Page, palmRadius: number, fingerRadius: number) {
+  await waitReady(page, 1, 0);
+  const pts = data["い"].strokes[0].points;
+  const map = await cellToPage(page);
+  const [x, y, size] = (await stage(page).getAttribute("data-cell"))!.split(",").map(Number);
+  const box = (await stage(page).boundingBox())!;
+  const palm = { x: box.x + x - 6, y: box.y + y + size * 0.6, radiusX: palmRadius, radiusY: palmRadius, id: 2 };
+  const finger = (p: Pt) => {
+    const [px, py] = map(p);
+    return { x: px, y: py, radiusX: fingerRadius, radiusY: fingerRadius, id: 1 };
+  };
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [palm] });
+  await page.waitForTimeout(400); // resting well past the 150 ms palm window
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ ...palm, x: palm.x + 1 }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ ...palm, x: palm.x + 1 }, finger(pts[0])] });
+  for (const p of pts.slice(1)) {
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ ...palm, x: palm.x + 1 }, finger(p)] });
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [{ ...palm, x: palm.x + 1 }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
+  await expect(stage(page)).toHaveAttribute("data-stroke", "1");
+}
+
+test("a hand resting on the edge does not block the drawing finger", async ({ page }) => {
+  await openLetter(page, "い");
+  await palmThenFinger(page, 15, 4); // 30 px contact: under the 40 px palm size
+});
+
+test("a hand landing on the edge mid-stroke does not cut the stroke", async ({ page }) => {
+  await openLetter(page, "い");
+  await waitReady(page, 1, 0);
+  const pts = data["い"].strokes[0].points;
+  const map = await cellToPage(page);
+  const [x, y, size] = (await stage(page).getAttribute("data-cell"))!.split(",").map(Number);
+  const box = (await stage(page).boundingBox())!;
+  const palm = { x: box.x + x - 6, y: box.y + y + size * 0.6, radiusX: 15, radiusY: 15, id: 2 };
+  const finger = (p: Pt) => {
+    const [px, py] = map(p);
+    return { x: px, y: py, radiusX: 4, radiusY: 4, id: 1 };
+  };
+  const cdp = await page.context().newCDPSession(page);
+  const half = Math.ceil(pts.length / 2);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [finger(pts[0])] });
+  for (const p of pts.slice(1, half)) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [finger(p)] });
+  await page.waitForTimeout(250); // past the palm window, mid-stroke
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [finger(pts[half - 1]), palm] });
+  for (const p of pts.slice(half)) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [finger(p), palm] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [palm] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
+  await expect(stage(page)).toHaveAttribute("data-stroke", "1");
+});
+
 test.describe("on iPad", () => {
   // iPadOS Safari reports a fingertip as ~42 px across (2 × a ~21 pt radius).
   test.use({
@@ -204,6 +264,11 @@ test.describe("on iPad", () => {
     await touchStroke(page, data["い"].strokes[0].points, 21);
     await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
     await expect(stage(page)).toHaveAttribute("data-stroke", "1");
+  });
+
+  test("a hand resting on the edge does not block the drawing finger", async ({ page }) => {
+    await openOnIPad(page, "い");
+    await palmThenFinger(page, 26, 21); // iOS sizes: 52 px hand (under the 72 px limit), 42 px finger
   });
 
   test("a resting hand still does nothing", async ({ page }) => {
@@ -452,4 +517,25 @@ test("after three together tries that miss, the stroke is filled in and the lett
   await expect(stage(page)).toHaveAttribute("data-outcome", "moveOn");
   await expect(stage(page)).toHaveAttribute("data-stroke", "1");
   await expect(stage(page)).toHaveAttribute("data-together", "false");
+});
+
+// Bug: after "Oops" on the do-it-yourself step, the filled-in model stroke was
+// scored as the child's drawing and a one-stroke letter earned 3 stars.
+test("a letter finished by \"Oops\" on the do-it-yourself step gets 1 star, not 3", async ({ page }) => {
+  await openLetter(page, "し");
+  const stroke = data["し"].strokes[0].points;
+  for (const phase of [1, 2]) {
+    await waitReady(page, phase, 0);
+    await drawMouse(page, stroke);
+    await expect(stage(page)).toHaveAttribute("data-outcome", "accept");
+  }
+  // Phase 3: replay, pulse, three follow-me, three together, then "Oops".
+  for (let i = 0; i < 9; i++) {
+    await waitReady(page, 3, 0);
+    await drawMouse(page, [[0.85, 0.85], [0.9, 0.88], [0.86, 0.92]]);
+    await page.waitForTimeout(300);
+  }
+  const word = page.getByTestId("my-word");
+  await expect(word).toBeVisible({ timeout: 15_000 });
+  await expect(word).toHaveAttribute("data-stars", "1");
 });
