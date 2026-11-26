@@ -6,6 +6,10 @@ name in hiragana, one character at a time. Full design doc: `docs/DESIGN.md`
 (read the relevant sections before each milestone). This file is the working
 summary; if the two disagree, ask before guessing.
 
+Second mini game, Listen & Match (hear a kana, tap its tile): design in
+`docs/LISTEN-MATCH.md`, build plan and decisions in `plans/sound-match.md`.
+The non-negotiables below apply to it too.
+
 ## Non-negotiables
 
 - Never discouraging. No red, no X marks, no buzzers, no "wrong", no timers,
