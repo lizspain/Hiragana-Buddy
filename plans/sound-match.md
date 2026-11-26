@@ -19,6 +19,14 @@ Status: decisions settled 2026-11-25 (see below). Milestones 1–3 and the 3a au
 - Precached by the service worker (71 MP3s, about 296 KB). Credit "VOICEVOX:四国めたん" with
   links is on the About screen (`data-testid="kana-voice-credit"`) and in `data/ATTRIBUTION.md`.
 - Review page: `/tools/audio-review.html` on the dev server (also `/#audio-review`).
+- Liz's listen (2026-11-26): clearer and easier to tell apart than Kokoro, but "weirdly
+  breathy". **Pinned**, cause unknown. Ruled out: vowel devoicing (the engine's queries show no
+  devoiced vowels). Suspects to A/B later: the slower speed (0.75 stretches the synthesis,
+  and its noise with it), the voice's own breathy end to a lone utterance, and 64 kbps MP3
+  on noisy sounds.
+- Sounded-out words in the kana voice now play each clip whole with `MORA_GAP_S` (60 ms) of
+  extra quiet between them, about 120 ms in all. Kokoro's 50 ms crossfade ran the short new
+  clips together. Kokoro words keep the crossfade.
 - Still out of spec: sound length. Clips run 210–455 ms against the doc's 0.4–0.8 s. Short
   CV syllables (た, る, ぶ) are short by nature; slowing further mostly stretches vowels toward
   long-vowel sounds. Liz to judge by ear.

@@ -155,6 +155,13 @@ function buffer(file: string): Promise<AudioBuffer | null> {
 const GAP_MS = 280;
 /** How much of one mora's sound runs under the next one's when a word is sounded out, s. */
 const OVERLAP_S = 0.05;
+/**
+ * The kana voice (VOICEVOX) sounds a word out with space between letters
+ * instead: its clips are short and trimmed tight (30 ms of silence each side),
+ * so overlapping them ran the sounds together. Played back to back plus this
+ * gap, about 120 ms of quiet sits between two sounds.
+ */
+const MORA_GAP_S = 0.06;
 
 /** Where a clip's sound really starts and stops (seconds), past its quiet lead-in and tail. */
 const edgesOf = new WeakMap<AudioBuffer, { on: number; off: number }>();
@@ -243,8 +250,12 @@ function stopVoice() {
   synth?.cancel();
 }
 
-/** Clips back to back (null = the short pause of っ); falls back to `fallback` if any is missing. */
-function clipJob(files: (string | null)[], fallback?: Job): Job {
+/**
+ * Clips back to back (null = the short pause of っ); falls back to `fallback`
+ * if any is missing. Without `gap`, each clip's sound runs OVERLAP_S into the
+ * next (Kokoro words); with it, each clip plays whole, then `gap` s of quiet.
+ */
+function clipJob(files: (string | null)[], fallback?: Job, gap?: number): Job {
   let sources: AudioBufferSourceNode[] = [];
   let done: () => void = () => {};
   let cancelled = false;
@@ -275,7 +286,9 @@ function clipJob(files: (string | null)[], fallback?: Job): Job {
         const gain = c.createGain();
         src.connect(gain).connect(c.destination);
         const e = edges(b);
-        if (prev) {
+        if (prev && gap !== undefined) {
+          t = Math.max(c.currentTime + 0.01, prev.end + gap);
+        } else if (prev) {
           // Sounded-out words (ち・く): each clip has quiet at both ends, so line
           // up the sound itself. The next mora's sound starts OVERLAP_S before the
           // last one's sound ends, and the last one fades out across that overlap,
@@ -290,7 +303,7 @@ function clipJob(files: (string | null)[], fallback?: Job): Job {
         src.start(t);
         sources.push(src);
         prev = { gain, end: t + b.duration, heardUntil: t + e.off };
-        t += b.duration - 0.03; // clips carry a little silence at each end
+        t += gap !== undefined ? b.duration : b.duration - 0.03; // clips carry a little silence at each end
       }
       const ms = (t - c.currentTime) * 1000;
       await new Promise<void>((resolve) => {
@@ -425,7 +438,9 @@ export function sayWord(kana: string[], interrupt = true): Promise<void> {
   if (kana.length === 1) return sayKana(kana[0], interrupt);
   const speech = speechJob(kana.join(""), "ja");
   const whole = manifest.ja[kana.join("")];
-  return enqueue(clipJob(whole ? [whole] : moraFiles(kana), speech), interrupt);
+  if (whole) return enqueue(clipJob([whole], speech), interrupt);
+  const m = moraFiles(kana);
+  return enqueue(clipJob(m.files, speech, m.kanaVoice ? MORA_GAP_S : undefined), interrupt);
 }
 
 /**
@@ -433,7 +448,7 @@ export function sayWord(kana: string[], interrupt = true): Promise<void> {
  * per word: the kana voice when it has every mora (plain kana only), else the
  * older clips, so a sounded-out word never switches voice halfway.
  */
-function moraFiles(kana: string[]): (string | null)[] {
+function moraFiles(kana: string[]): { files: (string | null)[]; kanaVoice: boolean } {
   const sounded = (lookup: (text: string) => string | undefined) => {
     let prevVowel = "";
     return groupMorae(kana).map((g) => {
@@ -446,12 +461,12 @@ function moraFiles(kana: string[]): (string | null)[] {
     });
   };
   const own = sounded((t) => kanaVoice.files[t]);
-  return own.every((f) => f !== "") ? own : sounded((t) => manifest.ja[t]);
+  return own.every((f) => f !== "") ? { files: own, kanaVoice: true } : { files: sounded((t) => manifest.ja[t]), kanaVoice: false };
 }
 
 /** Fetch a word's clips ahead of time so the first tap plays without delay. */
 export function preloadWord(kana: string[]): void {
-  const files = [manifest.ja[kana.join("")], ...kana.map(kanaClipFile), ...moraFiles(kana)];
+  const files = [manifest.ja[kana.join("")], ...kana.map(kanaClipFile), ...moraFiles(kana).files];
   for (const f of new Set(files)) if (f) void buffer(f);
 }
 

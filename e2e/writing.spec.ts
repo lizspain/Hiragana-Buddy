@@ -567,3 +567,25 @@ test("the About screen credits the kana voice, as its terms require", async ({ p
   await expect(credit.getByRole("link", { name: "VOICEVOX:四国めたん" })).toHaveAttribute("href", "https://voicevox.hiroshiba.jp/");
   await expect(credit.getByRole("link", { name: "voice terms" })).toHaveAttribute("href", "https://zunko.jp/con_ongen_kiyaku.html");
 });
+
+test("a sounded-out word leaves space between the kana voice's sounds", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { starts: { when: number; dur: number }[] };
+    w.starts = [];
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (when = 0, ...rest: number[]) {
+      if ((this.buffer?.duration ?? 0) > 0.1) w.starts.push({ when, dur: this.buffer!.duration }); // voice, not the button "tok"
+      return start.call(this, when, ...rest);
+    };
+  });
+  await page.goto("/");
+  await page.getByTestId("go-word").click();
+  await page.getByTestId("word-input").fill("kasa"); // no whole-word clip: sounded out as か・さ
+  await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
+  await page.getByRole("button", { name: "Hear it" }).click();
+  const starts = () => page.evaluate(() => (window as unknown as { starts: { when: number; dur: number }[] }).starts);
+  await expect.poll(async () => (await starts()).length).toBe(2);
+  const [ka, sa] = await starts();
+  // さ starts only after the whole か clip (with its 30 ms of quiet) plus a gap: no overlap.
+  expect(sa.when - (ka.when + ka.dur)).toBeGreaterThanOrEqual(0.05);
+});
