@@ -137,6 +137,50 @@ test("with sound off, the button shows it and turns sound back on", async ({ pag
   await expect(page.getByTestId("go-listen").getByLabel("Sound is off")).toHaveCount(0);
 });
 
+const readStore = (page: Page, key: string) =>
+  page.evaluate(
+    (k) =>
+      new Promise<unknown>((res) => {
+        const r = indexedDB.open("hiragana-buddy");
+        r.onsuccess = () => {
+          const q = r.result.transaction("data").objectStore("data").get(k);
+          q.onsuccess = () => {
+            res(q.result);
+            r.result.close();
+          };
+        };
+      }),
+    key,
+  );
+
+test("a finished game is saved on the device, with its mix-ups, and goes into the backup", async ({ page }) => {
+  await startGame(page);
+  for (let r = 0; r < 8; r++) {
+    const k = await ready(page, r);
+    if (r === 0) {
+      await tile(page, await wrongTile(page, k)).click();
+      await ready(page, 0);
+    }
+    await tile(page, k).click();
+    await expect(tile(page, k)).toHaveClass(/gone/);
+  }
+  await expect(screen(page)).toHaveAttribute("data-stars", "3"); // 7 of 8 first-tap hits
+  await expect.poll(() => readStore(page, "matchResults")).toEqual([expect.objectContaining({ profileId: "p1", setId: "class-1", hits: 7, stars: 3 })]);
+  const progress = (await readStore(page, "kanaProgress")) as { kana: string; mixedUpWith: Record<string, number> }[];
+  expect(progress).toHaveLength(1);
+  expect(Object.values(progress[0].mixedUpWith)).toEqual([1]);
+
+  // Still there after a reload, and in the backup file.
+  await page.reload();
+  await page.getByRole("button", { name: /Settings/ }).focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // the hold gate's keyboard route
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save a backup" }).click()]);
+  const backup = JSON.parse(await (await download.createReadStream()).toArray().then((b) => Buffer.concat(b).toString("utf8")));
+  expect(backup.version).toBe(2);
+  expect(backup.matchResults).toEqual([expect.objectContaining({ setId: "class-1", stars: 3 })]);
+  expect(backup.kanaProgress).toHaveLength(1);
+});
+
 test("leaving mid-game asks with two pictures", async ({ page }) => {
   await startGame(page);
   await page.getByRole("button", { name: "Home" }).click();

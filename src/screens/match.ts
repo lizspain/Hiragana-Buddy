@@ -10,7 +10,8 @@ import "../match/match.css";
 import type { Nav, Screen } from "../app";
 import { HINT_AFTER_WRONG, IDLE_PULSE_MS, NEXT_ROUND_MS } from "../match/config";
 import { MatchGame } from "../match/game";
-import { CLASS_SETS, setById } from "../match/sets";
+import { PATH_SETS, pathSetById, wordSet, type KanaSet } from "../match/sets";
+import { recordMatch } from "../store";
 import { boop, onVoiceTrouble, pop, praise, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
 import { pageBurst } from "../ui/burst";
 import { dance } from "../ui/dance";
@@ -21,8 +22,14 @@ const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").match
 /** Tests read the asked-for kana from the board; a child never sees it. */
 const UNDER_TEST = typeof navigator !== "undefined" && navigator.webdriver;
 
-export function matchScreen(nav: Nav, setId = CLASS_SETS[0].id): Screen {
-  const set = setById(setId) ?? CLASS_SETS[0];
+/** A path stone by id, or a My word set (`word:きみ`, padded afresh each game). */
+function resolveSet(id: string): KanaSet {
+  if (id.startsWith("word:")) return wordSet([...id.slice(5)]);
+  return pathSetById(id) ?? PATH_SETS[0];
+}
+
+export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
+  const set = resolveSet(setId);
   const game = new MatchGame(set.kana);
   const timers = new Set<number>();
   const later = (fn: () => void, ms: number) => {
@@ -248,6 +255,7 @@ export function matchScreen(nav: Nav, setId = CLASS_SETS[0].id): Screen {
   function results() {
     setState("results");
     el.dataset.stars = String(game.stars);
+    void recordMatch(set.id, game.hits, game.stars, game.taps);
     clearTimeout(idle);
     const octo = dance("dance match-dance");
     cleanups.push(octo.stop);

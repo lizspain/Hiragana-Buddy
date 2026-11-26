@@ -3,6 +3,17 @@
 import { createStore, get, set } from "idb-keyval";
 import type { Pt, Stars } from "./engine/matcher";
 import { inkOrDefault } from "./ui/palette";
+import type { TapLog } from "./match/game";
+import {
+  addMixUps,
+  addResult,
+  bestStars as bestMatchStars,
+  hasPlayed,
+  mergeProgress,
+  mergeResults,
+  type KanaProgress,
+  type MatchResult,
+} from "./match/progress";
 
 export interface Settings {
   expandLongVowel: boolean;
@@ -66,13 +77,22 @@ const store = createStore("hiragana-buddy", "data");
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
 let items: Item[] = [];
+let matchResults: MatchResult[] = [];
+let kanaProgress: KanaProgress[] = [];
 
 export async function loadStore(): Promise<void> {
   try {
-    const [s, i] = await Promise.all([get<Partial<Settings>>("settings", store), get<Item[]>("items", store)]);
+    const [s, i, mr, kp] = await Promise.all([
+      get<Partial<Settings>>("settings", store),
+      get<Item[]>("items", store),
+      get<MatchResult[]>("matchResults", store),
+      get<KanaProgress[]>("kanaProgress", store),
+    ]);
     settings = { ...DEFAULT_SETTINGS, ...(s ?? {}) };
     settings.inkColor = inkOrDefault(settings.inkColor); // older saves used colours no longer offered
     items = i ?? [];
+    matchResults = mr ?? [];
+    kanaProgress = kp ?? [];
   } catch {
     // Private mode or storage blocked: run with defaults, in memory only.
   }
@@ -137,25 +157,52 @@ export function isMastered(kana: string): boolean {
   return items.some((i) => i.sessions.some((s) => s.perKana.some((p) => p.kana === kana && p.score >= 80)));
 }
 
+// ---------- Listen & Match ----------
+
+/** v1 has one built-in profile; every match row carries it so siblings can come later. */
+export const currentProfile = (): string => DEFAULT_PROFILE;
+
+/** Save a finished game: its result, and which kana were tapped for which. */
+export async function recordMatch(setId: string, hits: number, stars: MatchResult["stars"], taps: readonly TapLog[]): Promise<void> {
+  const profileId = currentProfile();
+  matchResults = addResult(matchResults, { profileId, setId, playedAt: new Date().toISOString(), hits, stars });
+  kanaProgress = addMixUps(kanaProgress, profileId, taps);
+  await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store)]).catch(() => undefined);
+  if (!persistAsked) {
+    persistAsked = true;
+    void navigator.storage?.persist?.().catch(() => false);
+  }
+}
+
+export const matchBestStars = (setId: string) => bestMatchStars(matchResults, currentProfile(), setId);
+export const matchPlayed = (setId: string) => hasPlayed(matchResults, currentProfile(), setId);
+export const getMatchResults = (): readonly MatchResult[] => matchResults;
+export const getKanaProgress = (): readonly KanaProgress[] => kanaProgress;
+
 // ---------- backup ----------
 
 interface Backup {
   app: "hiragana-buddy";
-  version: 1;
+  /** 2 added Listen & Match (matchResults, kanaProgress). Version 1 files still restore. */
+  version: 1 | 2;
   exportedAt: string;
   profiles: Profile[];
   items: Item[];
   settings: Settings;
+  matchResults?: MatchResult[];
+  kanaProgress?: KanaProgress[];
 }
 
 export function exportBackup(): string {
   const data: Backup = {
     app: "hiragana-buddy",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     profiles: [{ id: DEFAULT_PROFILE, name: "", inkColor: settings.inkColor, createdAt: items[0]?.createdAt ?? new Date().toISOString() }],
     items,
     settings,
+    matchResults,
+    kanaProgress,
   };
   return JSON.stringify(data);
 }
@@ -178,6 +225,9 @@ export async function importBackup(json: string): Promise<number> {
     if (incoming.lastPracticedAt > existing.lastPracticedAt) existing.lastPracticedAt = incoming.lastPracticedAt;
   }
   if (data.settings) await saveSettings({ ...data.settings, iosTipShown: settings.iosTipShown });
+  matchResults = mergeResults(matchResults, data.matchResults);
+  kanaProgress = mergeProgress(kanaProgress, data.kanaProgress);
+  await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store)]).catch(() => undefined);
   await persistItems();
   return data.items.length;
 }

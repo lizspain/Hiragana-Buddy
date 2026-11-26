@@ -2,7 +2,22 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Milestones 1–2 done; next: milestone 3.
+Status: decisions settled 2026-11-25 (see below). Milestones 1–3 done; next: milestone 4.
+
+### Milestone 3 notes (2026-11-26)
+
+- `sets.ts`: `PATH_SETS` = class 1–2, then `AUTO_SETS` 3–6, kept as fixed data exactly as
+  drafted below and pinned by tests (every basic kana except を is covered). `wordSet(word)`
+  builds a My word set, keeps the word's hard pairs, and pads with random filler that never
+  clashes. Its id is `word:<kana>`, and the padding is new each game.
+- `progress.ts` (pure, tested): `MatchResult` rows (capped at 2000, never dropping a set's
+  best), per-kana `mixedUpWith` counts, `topMixUps` for the grown-ups view, and backup
+  merges that are safe to repeat.
+- `store.ts`: `matchResults` and `kanaProgress` keys beside `items`. `recordMatch` runs when
+  results show; an unfinished game isn't saved. Every row has `profileId` `p1`. Backups are
+  `version: 2` and still read version 1 files.
+- `nav.match(id)` takes a path stone id or `word:…`. No UI reaches word sets until milestone 4.
+- The speaker button now uses the entry page's Hear it button style (`.shelf-play.hear-play`).
 
 ### Milestone 2 notes (2026-11-26)
 
