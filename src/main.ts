@@ -14,6 +14,13 @@ async function boot() {
   installPressFeedback();
   await Promise.all([loadStrokes(), loadStore(), loadVoice()]);
   setSoundEnabled(getSettings().sound);
+  // Dev-only tools; the import is dropped from production builds.
+  if (import.meta.env.DEV && location.hash === "#audio-review") {
+    const { audioReviewScreen } = await import("./dev/audio-review");
+    document.getElementById("boot")?.remove();
+    root.replaceChildren(audioReviewScreen());
+    return;
+  }
   initRouter(root);
   document.getElementById("boot")?.remove();
   nav.home();

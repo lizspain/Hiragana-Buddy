@@ -39,5 +39,16 @@ export function allOrderLines(maxStrokes = 4): Line[] {
   return out;
 }
 
+/**
+ * Kana that modern Japanese pronounces exactly like another kana. Their own
+ * clips are never played: they borrow the other kana's clip, so the voice
+ * can't teach a "wo" or a "dzu" that isn't there, and Listen & Match never
+ * puts both in one set.
+ */
+export const SOUNDS_LIKE: Readonly<Record<string, string>> = { を: "お", ぢ: "じ", づ: "ず" };
+
+/** The kana whose clip plays for `k`. */
+export const soundOf = (k: string): string => SOUNDS_LIKE[k] ?? k;
+
 /** Japanese vowel kana for ー, by the vowel of the mora before it. */
 export const VOWEL_OF: Record<string, string> = { a: "あ", i: "い", u: "う", e: "え", o: "お" };

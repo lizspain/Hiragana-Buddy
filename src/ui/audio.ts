@@ -8,7 +8,7 @@
 //
 // Sounds: tiny synthesised chimes (Web Audio), no files.
 
-import { allOrderLines, LINES, orderLine, PRAISE, VOWEL_OF, type Line, type LineId } from "../audio-lines";
+import { allOrderLines, LINES, orderLine, PRAISE, soundOf, VOWEL_OF, type Line, type LineId } from "../audio-lines";
 import { groupMorae } from "../engine/kana";
 import { romajiOf, speakText } from "../data";
 
@@ -36,6 +36,47 @@ function audio(): AudioContext | null {
 export function unlockAudio(): void {
   const c = audio();
   if (c && c.state === "suspended") void c.resume();
+}
+
+// ---------- trouble signal ----------
+//
+// Fired when a voice line could not be heard: the audio context stayed
+// suspended (iOS before a tap, Low Power Mode), or the clip failed to load and
+// there is no Japanese speech voice to fall back on. Screens that depend on
+// hearing (Listen & Match) show a picture "sound on?" hint.
+
+const troubleListeners = new Set<() => void>();
+export function onVoiceTrouble(cb: () => void): () => void {
+  troubleListeners.add(cb);
+  return () => troubleListeners.delete(cb);
+}
+function trouble() {
+  for (const cb of troubleListeners) cb();
+}
+
+/** Resume the context, but don't wait forever: iOS leaves the promise pending until a tap. */
+async function resumed(c: AudioContext): Promise<boolean> {
+  if (c.state === "running") return true;
+  await Promise.race([c.resume().catch(() => undefined), new Promise((r) => setTimeout(r, 300))]);
+  return (c.state as AudioContextState) === "running";
+}
+
+// ---------- sound-effect bus ----------
+//
+// Every synthesised sound goes through one gain so the effects always sit
+// under the voice (the kana must be the loudest thing a child hears). Voice
+// clips go straight to the output at full level.
+
+/** Level of all sound effects relative to their tuned values. */
+const SFX_LEVEL = 1;
+let sfxBus: GainNode | null = null;
+function sfxOut(c: AudioContext): AudioNode {
+  if (!sfxBus || sfxBus.context !== c) {
+    sfxBus = c.createGain();
+    sfxBus.gain.value = SFX_LEVEL;
+    sfxBus.connect(c.destination);
+  }
+  return sfxBus;
 }
 
 // ---------- clips ----------
@@ -115,17 +156,39 @@ function edges(b: AudioBuffer): { on: number; off: number } {
 interface Job {
   run(): Promise<void>;
   cancel(): void;
+  /** Speech jobs: whether this device can actually say it. */
+  canSpeak?(): boolean;
 }
 
 const queue: Job[] = [];
 let current: Job | null = null;
 let generation = 0;
 
-function enqueue(job: Job, interrupt: boolean) {
-  if (!enabled) return;
+/**
+ * Queue a line. The promise resolves when it has finished playing, or when it
+ * is dropped (sound off, interrupted, failed), never rejects, so a caller can
+ * hold input until the voice is done without risking a stuck game.
+ */
+function enqueue(job: Job, interrupt: boolean): Promise<void> {
+  if (!enabled) return Promise.resolve();
   if (interrupt) stopVoice();
-  queue.push(job);
-  void pump();
+  return new Promise<void>((settle) => {
+    let settled = false;
+    const finish = () => {
+      if (!settled) {
+        settled = true;
+        settle();
+      }
+    };
+    queue.push({
+      run: () => job.run().finally(finish),
+      cancel() {
+        job.cancel();
+        finish();
+      },
+    });
+    void pump();
+  });
 }
 
 async function pump() {
@@ -148,7 +211,7 @@ async function pump() {
 
 function stopVoice() {
   generation++;
-  queue.length = 0;
+  for (const j of queue.splice(0)) j.cancel(); // settles their promises
   current?.cancel();
   current = null;
   synth?.cancel();
@@ -164,8 +227,15 @@ function clipJob(files: (string | null)[], fallback?: Job): Job {
       const c = audio();
       const bufs = c && !files.some((f) => f === "") ? await Promise.all(files.map((f) => (f ? buffer(f) : Promise.resolve(null)))) : null;
       if (cancelled) return;
-      if (!c || !bufs || bufs.some((b, i) => files[i] && !b)) return fallback?.run();
-      if (c.state === "suspended") await c.resume().catch(() => undefined);
+      if (!c || !bufs || bufs.some((b, i) => files[i] && !b)) {
+        if (!fallback?.canSpeak?.()) trouble();
+        return fallback?.run();
+      }
+      if (!(await resumed(c))) {
+        if (!cancelled) trouble();
+        return;
+      }
+      if (cancelled) return;
       let t = c.currentTime + 0.02;
       let prev: { gain: GainNode; end: number; heardUntil: number } | null = null;
       for (const b of bufs) {
@@ -252,6 +322,7 @@ export const hasJapaneseVoice = () => !!pickVoice("ja");
 function speechJob(text: string, lang: "ja" | "en"): Job {
   let done: () => void = () => {};
   return {
+    canSpeak: () => !!synth && (lang !== "ja" || !!pickVoice("ja")),
     run() {
       const v = pickVoice(lang);
       // Without a Japanese voice the engine reads kana as silence; don't pretend.
@@ -284,27 +355,49 @@ const keep = new Set<SpeechSynthesisUtterance>();
 
 // ---------- what the app calls ----------
 
-export function sayLine(line: Line, interrupt = true): void {
+/** Say a line. Resolves when it has been heard (or dropped). */
+export function sayLine(line: Line, interrupt = true): Promise<void> {
   const f = clipFor(line);
   const speech = speechJob(line.text, line.lang);
-  enqueue(f ? clipJob([f], speech) : speech, interrupt);
+  if (enabled && !f && !speech.canSpeak!()) trouble();
+  return enqueue(f ? clipJob([f], speech) : speech, interrupt);
 }
 
 export const line = (id: LineId, interrupt = true) => sayLine(LINES[id], interrupt);
 export const sayOrderSlip = (drawn: number, expected: number) => sayLine(orderLine(drawn, expected));
 
-/** One kana's name as shown on a tile ("ちいさい や" for ゃ). */
-export function sayKana(k: string, interrupt = true): void {
-  sayLine({ text: speakText(k), lang: "ja" }, interrupt);
+/** What is said for one kana: its tile name ("ちいさい や" for ゃ), homophones as their twin (を → お). */
+const kanaText = (k: string) => speakText(soundOf(k));
+
+/** The clip file that plays for one kana, if there is one. */
+export const kanaClipFile = (k: string): string | undefined => manifest.ja[kanaText(k)];
+
+/** One kana's sound. Resolves when it has finished playing (or was dropped). */
+export function sayKana(k: string, interrupt = true): Promise<void> {
+  return sayLine({ text: kanaText(k), lang: "ja" }, interrupt);
+}
+
+/** Fetch and decode these kana's clips ahead of time so each plays the instant it's asked for. */
+export function preloadKana(kana: Iterable<string>): void {
+  for (const k of kana) {
+    const f = kanaClipFile(k);
+    if (f) void buffer(f);
+  }
+}
+
+/** The decoded clip for one kana (for the dev audio review page). */
+export function kanaClipBuffer(k: string): Promise<AudioBuffer | null> {
+  const f = kanaClipFile(k);
+  return f && audio() ? buffer(f) : Promise.resolve(null);
 }
 
 /** A whole word: its own clip, else sounded out from mora clips, else speech. */
-export function sayWord(kana: string[], interrupt = true): void {
-  if (!kana.length) return;
+export function sayWord(kana: string[], interrupt = true): Promise<void> {
+  if (!kana.length) return Promise.resolve();
   if (kana.length === 1) return sayKana(kana[0], interrupt);
   const speech = speechJob(kana.join(""), "ja");
   const whole = manifest.ja[kana.join("")];
-  enqueue(clipJob(whole ? [whole] : moraFiles(kana), speech), interrupt);
+  return enqueue(clipJob(whole ? [whole] : moraFiles(kana), speech), interrupt);
 }
 
 /** Clip per mora: きゃ as one, っ as a pause, ー as the previous vowel. */
@@ -316,13 +409,13 @@ function moraFiles(kana: string[]): (string | null)[] {
     if (text === "ー") return prevVowel ? manifest.ja[VOWEL_OF[prevVowel]] ?? "" : null;
     const r = g.map((k) => romajiOf(k) ?? "").join("");
     prevVowel = r.match(/[aiueo](?=[^aiueo]*$)/)?.[0] ?? prevVowel;
-    return manifest.ja[text] ?? "";
+    return manifest.ja[soundOf(text)] ?? "";
   });
 }
 
 /** Fetch a word's clips ahead of time so the first tap plays without delay. */
 export function preloadWord(kana: string[]): void {
-  const files = [manifest.ja[kana.join("")], ...kana.map((k) => manifest.ja[speakText(k)]), ...moraFiles(kana)];
+  const files = [manifest.ja[kana.join("")], ...kana.map(kanaClipFile), ...moraFiles(kana)];
   for (const f of new Set(files)) if (f) void buffer(f);
 }
 
@@ -351,7 +444,7 @@ function tone(freq: number, start: number, dur: number, gain: number, type: Osci
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(gain, t + 0.015);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(c.destination);
+  o.connect(g).connect(sfxOut(c));
   o.start(t);
   o.stop(t + dur + 0.05);
 }
@@ -401,7 +494,7 @@ function sandNodes() {
   soft.frequency.value = 3200 * SAND_PITCH;
   const gain = c.createGain();
   gain.gain.value = 0;
-  src.connect(band).connect(soft).connect(gain).connect(c.destination);
+  src.connect(band).connect(soft).connect(gain).connect(sfxOut(c));
   src.start();
   sand = { gain, band };
   return sand;
@@ -443,7 +536,7 @@ export function thunk(): void {
   const soft = c.createBiquadFilter();
   soft.type = "lowpass";
   soft.frequency.value = 2600;
-  soft.connect(c.destination);
+  soft.connect(sfxOut(c));
 
   const env = (peak: number, attack: number, decay: number) => {
     const g = c.createGain();
@@ -504,7 +597,7 @@ export function splash(): void {
   const v = 0.95 + Math.random() * 0.1;
   const out = c.createGain();
   out.gain.value = 0.7; // same overall level as the thunk
-  out.connect(c.destination);
+  out.connect(sfxOut(c));
 
   // Swish: 120 ms of decaying noise, band-pass sweeping 2.4 kHz → 900 Hz.
   if (!splashNoise) {

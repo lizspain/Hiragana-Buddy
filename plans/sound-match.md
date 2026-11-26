@@ -2,7 +2,23 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Next: milestone 1.
+Status: decisions settled 2026-11-25 (see below). Milestone 1 done; next: milestone 2.
+
+### Milestone 1 notes (2026-11-25)
+
+- `ui/audio.ts`: every voice line returns a promise that resolves when it has been heard,
+  interrupted or dropped (it never rejects, so the game's input lock can't stick). Added
+  `preloadKana`, `kanaClipFile`/`kanaClipBuffer`, `onVoiceTrouble`, and an SFX bus
+  (`SFX_LEVEL`, now 1: TTS clips peak at about −1.5 dBFS, well above the chimes).
+- Homophones `を→お`, `ぢ→じ`, `づ→ず` play their twin's clip (`SOUNDS_LIKE` in
+  `audio-lines.ts`), in both games.
+- Review page: `npm run dev`, open `/#audio-review`. Dev build only (checked: not in `dist`).
+- Automated audit of the current Kokoro `jf_alpha` clips: all 71 present; sound lengths
+  260–655 ms (median 385), so 42 fall under the spec's 0.4 s. That's expected of TTS, and the
+  slower recorded voice should fix it. は and わ peak at −1.0 dBFS (right at the limit).
+  Loudness is even (within ±3 dB). Silence at each end is 70–100 ms, more than the
+  30 ms spec but not flagged. Listening checks (ふ, ら行, し/ち/つ, ん, う) are Liz's
+  to do on the page.
 
 ## How the doc maps onto this codebase
 
