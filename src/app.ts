@@ -7,6 +7,7 @@ import { chartScreen } from "./screens/chart";
 import { doneScreen } from "./screens/done";
 import { entryScreen } from "./screens/entry";
 import { homeScreen } from "./screens/home";
+import { matchScreen } from "./screens/match";
 import { parentScreen } from "./screens/parent";
 import { writeScreen } from "./screens/write";
 
@@ -38,6 +39,8 @@ export interface Nav {
   write(plan: PracticePlan): void;
   done(result: WordResult): void;
   parent(): void;
+  /** Listen & Match, one game on a set. */
+  match(setId?: string): void;
 }
 
 let current: Screen | null = null;
@@ -71,4 +74,5 @@ export const nav: Nav = {
   write: (plan) => show(writeScreen(nav, plan), "write"),
   done: (result) => show(doneScreen(nav, result), "done"),
   parent: () => show(parentScreen(nav), "parent"),
+  match: (setId) => show(matchScreen(nav, setId), "match"),
 };

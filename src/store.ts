@@ -10,6 +10,8 @@ export interface Settings {
   sound: boolean;
   inkColor: string;
   iosTipShown: boolean;
+  /** Grown-ups switch: show Listen & Match on the home screen (until the recorded voice passes review). */
+  matchGame: boolean;
 }
 
 export interface Profile {
@@ -57,6 +59,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sound: true,
   inkColor: "#d97706",
   iosTipShown: false,
+  matchGame: false,
 };
 
 const store = createStore("hiragana-buddy", "data");

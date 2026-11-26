@@ -649,6 +649,18 @@ export function chime(step = 0): void {
   tone(b, 0.08, 0.5, 0.14, "sine");
 }
 
+// One octave of the major scale: eight steps up from C5, so the eighth lands
+// back home on C6 and the climb sounds finished.
+const OCTAVE = [523.25, 587.33, 659.25, 698.46, 783.99, 880, 987.77, 1046.5];
+
+/** Listen & Match: each find one note higher than the last (step 0–7). */
+export function stepChime(step: number): void {
+  if (!enabled) return;
+  const f = OCTAVE[Math.max(0, Math.min(OCTAVE.length - 1, step))];
+  tone(f, 0, 0.4, 0.16, "triangle");
+  tone(f * 2, 0.03, 0.3, 0.05, "sine");
+}
+
 /** Character finished: a little arpeggio. */
 export function fanfare(): void {
   if (!enabled) return;

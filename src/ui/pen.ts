@@ -47,6 +47,10 @@ const IS_IOS =
   typeof navigator !== "undefined" &&
   (/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
 const palmContactPx = IS_IOS ? PALM_CONTACT_PX_IOS : PALM_CONTACT_PX;
+
+/** A touch this wide is a palm or resting hand, not a fingertip (shared with Listen & Match's tiles). */
+export const isPalmContact = (e: PointerEvent): boolean =>
+  e.pointerType === "touch" && Math.max(e.width || 0, e.height || 0) > palmContactPx;
 const TAP_LEN = 0.02;
 /** A contact that has not strayed this far (cell units) from where it landed is resting, not drawing. */
 const RESTING_LEN = 0.04;

@@ -1,0 +1,400 @@
+/* Listen & Match. Sizes from the design doc: tiles at least 2 cm square with
+   at least 1 cm between them; phones in portrait 2 × 4, tablets and landscape 4 × 2. */
+
+.screen.match {
+  --tile-gap: 1cm;
+  --cols: 2;
+  --rows: 4;
+  /* Room left for the board after the top bar, tray, mascot and padding. */
+  --tile: clamp(2cm, min((100vw - 32px - var(--tile-gap)) / 2, (100dvh - 300px - 3 * var(--tile-gap)) / 4), 170px);
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (min-width: 600px), (orientation: landscape) {
+  .screen.match {
+    --cols: 4;
+    --rows: 2;
+    --tile: clamp(2cm, min((100vw - 32px - 3 * var(--tile-gap)) / 4, (100dvh - 320px - var(--tile-gap)) / 2), 170px);
+  }
+}
+
+@media (orientation: landscape) {
+  .screen.match {
+    /* Mascot beside the board. */
+    --tile: clamp(2cm, min((100vw - 32px - 200px - 3 * var(--tile-gap)) / 4, (100dvh - 150px - var(--tile-gap)) / 2), 170px);
+  }
+}
+
+.match-top {
+  gap: 12px;
+}
+
+/* ---------- pebble tray ---------- */
+
+.match-tray {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: clamp(4px, 1.4vw, 10px);
+  padding: 8px clamp(8px, 2vw, 16px);
+  border-radius: 999px;
+  background: #ead2ad;
+  box-shadow: inset 0 3px 0 rgb(101 71 49 / 22%);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.slot {
+  --slot: clamp(26px, 8.2vw, 52px);
+  width: var(--slot);
+  height: var(--slot);
+  flex: none;
+  border-radius: 50%;
+  background: rgb(101 71 49 / 14%);
+  box-shadow: inset 0 2px 3px rgb(67 43 28 / 22%);
+  display: grid;
+  place-items: center;
+}
+
+.pebble {
+  width: 100%;
+  height: 100%;
+  /* A smooth, slightly lopsided stone. */
+  border-radius: 52% 48% 46% 54% / 55% 50% 50% 45%;
+  background: radial-gradient(circle at 35% 30%, #f3e6d1, #c9b39a 75%);
+  border: 2px solid #7e5a3b;
+  box-shadow: 0 2px 0 #7e5a3b;
+  display: grid;
+  place-items: center;
+  padding: 18%;
+  color: #4b3026;
+  animation: pebble-land 360ms var(--ease-bounce);
+}
+
+.pebble svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pebble .kana,
+.pebble svg path {
+  stroke-width: 9;
+}
+
+@keyframes pebble-land {
+  from {
+    transform: scale(1.35);
+  }
+}
+
+/* ---------- stage: mascot + board ---------- */
+
+.match-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 0;
+}
+
+@media (orientation: landscape) {
+  .match-stage {
+    flex-direction: row;
+    gap: clamp(16px, 4vw, 48px);
+  }
+}
+
+.match-speaker {
+  position: relative;
+  flex: none;
+  width: clamp(96px, 22vmin, 170px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: transform 300ms var(--ease-bounce);
+}
+
+.match-mascot {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.speaker-badge {
+  position: absolute;
+  right: -2%;
+  bottom: 4%;
+  width: 36%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--outline);
+  box-shadow: 0 4px 0 var(--tan-edge);
+  padding: 9px;
+  color: var(--brand);
+  display: grid;
+}
+
+.speaker-badge svg {
+  width: 100%;
+  height: 100%;
+}
+
+.match-speaker.talking .speaker-badge {
+  animation: badge-talk 0.5s ease-in-out infinite;
+}
+
+@keyframes badge-talk {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* No tap for a while: a gentle pulse. The sound never replays by itself. */
+.match-speaker.nudge .speaker-badge {
+  animation: badge-nudge 1.6s ease-in-out infinite;
+}
+
+@keyframes badge-nudge {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 4px 0 var(--tan-edge),
+      0 0 0 0 rgb(243 167 19 / 0%);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow:
+      0 4px 0 var(--tan-edge),
+      0 0 0 12px rgb(243 167 19 / 35%);
+  }
+}
+
+/* Third wrong tap: the mascot leans toward the right tile. */
+.match-speaker.look {
+  transform: translate(calc(var(--look-x, 0) * 14px), calc(var(--look-y, 0) * 10px)) rotate(calc(var(--look-x, 0) * 10deg));
+}
+
+/* Sound didn't play: a picture hint, no words. */
+.sound-hint {
+  position: absolute;
+  left: -6%;
+  top: -4%;
+  width: 38%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--outline);
+  padding: 8px;
+  color: var(--peach-edge);
+  display: none;
+}
+
+.sound-hint.show {
+  display: grid;
+  animation: badge-nudge 1.6s ease-in-out infinite;
+}
+
+.sound-hint svg {
+  width: 100%;
+  height: 100%;
+}
+
+.match-board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--tile));
+  grid-auto-rows: var(--tile);
+  gap: var(--tile-gap);
+  touch-action: manipulation;
+}
+
+.match-tile {
+  --lift: 6px;
+  --edge: var(--card-edge);
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: 22%;
+  background: var(--surface);
+  padding: 14%;
+  color: var(--ink);
+  cursor: pointer;
+  /* The shared raised look (styles.css), which lists its controls by class. */
+  border: 3px solid var(--outline);
+  box-shadow:
+    0 var(--lift) 0 var(--edge),
+    0 calc(var(--lift) + 4px) 0 var(--cast);
+  transition:
+    transform 260ms var(--ease-bounce),
+    box-shadow 260ms var(--ease-bounce),
+    filter 160ms ease,
+    outline-offset 260ms var(--ease-bounce);
+  display: grid;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.match-tile svg {
+  width: 100%;
+  height: 100%;
+}
+
+.match-tile.wiggle {
+  animation: tile-wiggle 420ms ease-in-out;
+}
+
+@keyframes tile-wiggle {
+  20% {
+    transform: rotate(-7deg);
+  }
+  45% {
+    transform: rotate(6deg);
+  }
+  70% {
+    transform: rotate(-3deg);
+  }
+}
+
+.match-tile.glow {
+  outline: 6px solid rgb(243 167 19 / 75%);
+  outline-offset: 4px;
+  animation: tile-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes tile-glow {
+  50% {
+    outline-color: rgb(243 167 19 / 25%);
+    outline-offset: 9px;
+  }
+}
+
+.match-tile.pop {
+  animation: tile-pop 180ms ease-out;
+}
+
+@keyframes tile-pop {
+  60% {
+    transform: scale(1.12);
+  }
+}
+
+/* A found tile leaves its gap: the others never move. */
+.match-tile.gone {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.flyer {
+  position: fixed;
+  z-index: 40;
+  border-radius: 22%;
+  background: var(--surface);
+  border: 3px solid var(--outline);
+  color: var(--ink);
+  pointer-events: none;
+  display: grid;
+}
+
+.flyer svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- results ---------- */
+
+.match-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.match-results .match-tray {
+  flex: none;
+  max-width: 100%;
+  transition: none;
+}
+
+.match-results .match-dance,
+.match-results .match-stars {
+  animation: pop-in 400ms var(--ease-bounce) backwards;
+}
+
+.match-stars .star.on {
+  animation: star-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.match-actions {
+  display: flex;
+  gap: 28px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.match-actions.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.match-actions .go-on {
+  --edge: var(--brand-edge);
+  background: var(--brand);
+  border-color: var(--brand-edge);
+  color: #fff;
+}
+
+.leave-ask {
+  display: flex;
+  gap: 28px;
+  padding: 12px 8px;
+}
+
+/* ---------- home button ---------- */
+
+.big-btn.listen {
+  --edge: #5b7a1f;
+  grid-column: 1 / -1;
+  min-height: 0;
+  flex-direction: row;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #a7d36b;
+  color: #213b08;
+}
+
+.big-btn.listen .big-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.big-btn.listen .big-label small {
+  display: block;
+  font-size: 0.8em;
+  font-family: "Klee One", serif;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.big-btn.listen .muted-badge {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  color: var(--peach-edge);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-speaker,
+  .match-speaker.look {
+    transform: none;
+  }
+}

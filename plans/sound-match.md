@@ -2,7 +2,26 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Milestone 1 done; next: milestone 2.
+Status: decisions settled 2026-11-25 (see below). Milestones 1–2 done; next: milestone 3.
+
+### Milestone 2 notes (2026-11-26)
+
+- Playable on class set 1. Turn on Settings → "Try Listen & Match" (grown-ups gate) and a
+  green Listen & Match button appears on home. The launch gate came forward from
+  milestone 5 so the prototype can be tried on devices after deploy; the mute → crossed
+  speaker → sound back on behaviour came with it.
+- `src/match/` has `config.ts`, `sets.ts` (class sets 1–2 and the rule checker),
+  `scoring.ts`, `game.ts` (the state machine) and `match.css`. The screen is
+  `src/screens/match.ts`.
+- Tile taps land on release over the same tile. The first touch wins, and a palm-sized
+  contact is ignored (`isPalmContact`, shared with the writing stage).
+- Found tiles fly to the tray (the Web Animations API, about 0.56 s) and become pebbles with
+  the kana on them. Finds climb a C-major octave (`stepChime`), ending on C.
+- Results: the tray slides into the centre, the octopus dances, a praise line plays, stars
+  fill one by one, then Play again / Go on. A tap skips ahead. "Go on" goes home until the
+  path exists (milestone 4).
+- Not yet: saving results, the tile preview, the path, the spoken intro.
+- Tests: `src/match/game.test.ts` (14) and `e2e/match.spec.ts` (7 × phone/tablet).
 
 ### Milestone 1 notes (2026-11-25)
 

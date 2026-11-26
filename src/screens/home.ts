@@ -1,6 +1,6 @@
 import type { Nav, Screen } from "../app";
 import { romajiOf } from "../data";
-import { sayWord, unlockAudio } from "../ui/audio";
+import { sayWord, setSoundEnabled, unlockAudio } from "../ui/audio";
 import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
 import { bestStars, getItems, getSettings, saveSettings } from "../store";
 
@@ -105,6 +105,7 @@ export function homeScreen(nav: Nav): Screen {
         h("span", { class: "big-icon tile" }, kanaSvg("あ")),
         h("span", { class: "big-label" }, "One letter"),
       ),
+      getSettings().matchGame ? listenButton(nav) : null,
     ),
     shelf,
   );
@@ -117,6 +118,32 @@ export function homeScreen(nav: Nav): Screen {
         void import("wanakana").then(({ toRomaji }) => romajiLater.forEach(({ el, kana }) => (el.textContent = toRomaji(kana))));
     },
   };
+}
+
+/**
+ * Listen & Match can't be played silent: with sound off the button wears a
+ * crossed-out speaker, and tapping it turns sound back on before the game opens.
+ */
+function listenButton(nav: Nav): HTMLButtonElement {
+  const muted = !getSettings().sound;
+  return h(
+    "button",
+    {
+      class: "big-btn listen",
+      "data-testid": "go-listen",
+      onclick: () => {
+        if (!getSettings().sound) {
+          setSoundEnabled(true);
+          void saveSettings({ sound: true });
+        }
+        unlockAudio();
+        nav.match();
+      },
+    },
+    html(`<span class="big-icon">${ICON.ear}</span>`),
+    h("span", { class: "big-label" }, "Listen & Match", h("small", { lang: "ja" }, "きいて えらぼう")),
+    muted ? html(`<span class="muted-badge" aria-label="Sound is off">${ICON.soundOff}</span>`) : null,
+  );
 }
 
 /** One-time "Add to Home Screen" tip for iPhone/iPad Safari (keeps history safe). */
