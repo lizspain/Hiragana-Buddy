@@ -36,3 +36,15 @@ subtitle's characters by scripts/art/fonts.py.
 ## public/art, art-source — octopus mascot, dance, stone frame
 Provided by the app's author. White backgrounds removed by
 scripts/art/cutout.py.
+
+## public/audio/kana — kana sounds (interim)
+Synthesized locally with VOICEVOX (https://voicevox.hiroshiba.jp/), voice
+四国めたん (ノーマル), by scripts/gen-kana-audio.ts. Use follows the 四国めたん
+voice terms: https://zunko.jp/con_ongen_kiyaku.html. Nothing was downloaded;
+every clip was rendered by the engine on the developer's machine.
+
+Credit line for the app's About screen (required while these clips ship; do
+not remove): "VOICEVOX:四国めたん".
+
+These clips are interim. A native-speaker recording will replace them under the
+same file names; this credit can only go once none of these clips ship.

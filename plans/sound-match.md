@@ -2,7 +2,26 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Milestones 1–3 done; next: milestone 4.
+Status: decisions settled 2026-11-25 (see below). Milestones 1–3 and the 3a audio add-on are done; next: Liz listens on the review page, then milestone 4.
+
+### Milestone 3a: interim kana audio with VOICEVOX 四国めたん (2026-11-26)
+
+- `scripts/gen-kana-audio.ts` (`npm run audio:kana`) writes 71 clips to `public/audio/kana/`
+  plus `manifest.json`. The engine and ffmpeg live in `.voicegen/`, raw WAVs in `audio-src/`
+  (both git-ignored). Setup is in `scripts/voice/README.md`.
+- Parameters moved off the brief's starting values: speed 0.9 → 0.75 (clips were 120–360 ms),
+  pre/post 0.05 → 0.15 s (0.05 clipped eight endings). Asking in katakana fixed
+  は = "wa" and へ = "e".
+- Single kana play the new clips everywhere (`sayKana`, preload, review page). A sounded-out
+  word uses them only when every mora has one, otherwise it stays on Kokoro, so a word never
+  switches voice partway. Whole-word clips, small-kana names and Japanese praise stay
+  on Kokoro; English lines stay on the device's speech voice.
+- Precached by the service worker (71 MP3s, about 296 KB). Credit "VOICEVOX:四国めたん" with
+  links is on the About screen (`data-testid="kana-voice-credit"`) and in `data/ATTRIBUTION.md`.
+- Review page: `/tools/audio-review.html` on the dev server (also `/#audio-review`).
+- Still out of spec: sound length. Clips run 210–455 ms against the doc's 0.4–0.8 s. Short
+  CV syllables (た, る, ぶ) are short by nature; slowing further mostly stretches vowels toward
+  long-vowel sounds. Liz to judge by ear.
 
 ### Milestone 3 notes (2026-11-26)
 

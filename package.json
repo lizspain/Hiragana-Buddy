@@ -12,7 +12,8 @@
     "icons": "node scripts/make-icons.mjs",
     "design-export": "node scripts/design/export.mjs",
     "serve": "npm run build && vite preview --port 4173 --strictPort",
-    "serve:lan": "npm run build && vite preview --port 4173 --strictPort --host"
+    "serve:lan": "npm run build && vite preview --port 4173 --strictPort --host",
+    "audio:kana": "node scripts/gen-kana-audio.ts --fresh"
   },
   "dependencies": {
     "idb-keyval": "^6.3.0",

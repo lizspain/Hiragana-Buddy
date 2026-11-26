@@ -40,3 +40,38 @@ into `voice-samples/` (git-ignored) for choosing by ear.
 Pronunciation uses misaki's default "cutlet" front end, which is what Kokoro
 was trained on. (Its other "pyopenjtalk" mode emits symbols Kokoro does not
 know, e.g. きゃ comes out as just "a".)
+
+## Kana sounds: VOICEVOX 四国めたん (interim, Nov 2026)
+
+Single-kana sounds (the 46 basic + 25 voiced kana) come from VOICEVOX, voice
+四国めたん (ノーマル), not Kokoro. They live in `public/audio/kana/`, one MP3 per
+kana named by romaji (ぢ `di`, づ `du`, を `wo`), with `manifest.json`
+(`{"あ": "a.mp3", …, "voice": "VOICEVOX:四国めたん", "interim": true}`). A
+native-speaker recording will replace the files under the same names. Kokoro
+still voices words, small-kana names and Japanese praise.
+
+Setup (once; ~2 GB, all git-ignored under `.voicegen/`):
+
+- Engine: the Windows CPU build from https://github.com/VOICEVOX/voicevox_engine/releases
+  (`voicevox_engine-windows-cpu-<ver>.7z.001`), unpacked with Windows' `tar -xf`
+  into `.voicegen/voicevox/`. Or keep the VOICEVOX desktop app open (same port).
+- ffmpeg: a static build, e.g. BtbN `ffmpeg-n8.1-latest-win64-lgpl-8.1.zip`,
+  unpacked into `.voicegen/ffmpeg/`.
+
+Rebuild every clip from scratch (starts the engine if it isn't running):
+
+```bash
+npm run audio:kana                                  # = node scripts/gen-kana-audio.ts --fresh
+node scripts/gen-kana-audio.ts --only し,ち,つ       # just these
+node scripts/gen-kana-audio.ts --speed 0.75 --pre 0.15 --post 0.15 --target -20
+```
+
+Raw engine WAVs and `report.json` go to the git-ignored `audio-src/kana/`. Each kana
+is asked for as katakana (alone, は and へ are otherwise read as the particles
+"wa" and "e"). Clips are cut at −24 dB from the peak, keep soft edges down to
+−32 dB (≤150 ms before, ≤60 ms after, which drops the engine's inhale and
+trailing breath), get 30 ms of silence each side, are set to −20 dBFS RMS with
+peaks ≤ −1.5 dBFS, and are encoded as 64 kbps mono 48 kHz MP3.
+
+Review them on the dev server at `/tools/audio-review.html`. The About screen must
+keep the credit "VOICEVOX:四国めたん" while these clips ship.

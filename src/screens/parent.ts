@@ -2,7 +2,7 @@
 // letters to revisit, backup/restore, credits.
 
 import type { Nav, Screen } from "../app";
-import { clipCount, hasJapaneseVoice, setSoundEnabled, voiceCredit } from "../ui/audio";
+import { clipCount, hasJapaneseVoice, kanaVoiceCredit, setSoundEnabled, voiceCredit } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg } from "../ui/dom";
 import { deleteItem, exportBackup, getItems, getSettings, importBackup, saveSettings, type Item, type Settings } from "../store";
 import { drawingCanvas } from "./done";
@@ -62,6 +62,18 @@ export function parentScreen(nav: Nav): Screen {
         h("h3", null, "About"),
         h("p", null, "Hiragana Buddy. Free, no ads, no accounts. Nothing is sent anywhere."),
         h("p", null, "Stroke order data: KanjiVG, © Ulrich Apel, CC BY-SA 3.0."),
+        // Required by the voice's terms while these clips ship. Don't remove.
+        kanaVoiceCredit()
+          ? h(
+              "p",
+              { "data-testid": "kana-voice-credit" },
+              "Letter sounds: ",
+              h("a", { href: "https://voicevox.hiroshiba.jp/", target: "_blank", rel: "noopener" }, kanaVoiceCredit()!),
+              " (",
+              h("a", { href: "https://zunko.jp/con_ongen_kiyaku.html", target: "_blank", rel: "noopener" }, "voice terms"),
+              ").",
+            )
+          : null,
         h("p", null, "Romaji conversion: WanaKana (MIT)."),
         h("p", null, "Fonts: Nunito and Klee One, SIL Open Font License 1.1."),
         voiceCredit() ? h("p", null, voiceCredit()!) : null,

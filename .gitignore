@@ -14,3 +14,6 @@ Thumbs.db
 .voicegen/
 voice-samples/
 hiragana-buddy-figma-export.zip
+
+# Interim VOICEVOX kana audio: raw engine WAVs (the engine and ffmpeg live in .voicegen/)
+audio-src/

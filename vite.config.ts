@@ -38,7 +38,10 @@ export default defineConfig({
       workbox: {
         // Voice clips are not precached: each one downloads the first time it
         // is needed (a few KB) and is then kept for offline use.
-        globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2,json,webmanifest}"],
+        // The 71 kana clips (≈300 KB) are precached so Listen & Match works
+        // offline from the first visit; they install after the page loads, so
+        // they don't count against the first-load budget.
+        globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2,json,webmanifest}", "audio/kana/*.mp3"],
         navigateFallback: "index.html",
         runtimeCaching: [
           {

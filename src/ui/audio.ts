@@ -91,18 +91,44 @@ let manifest: Manifest = { ja: {}, en: {} };
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
 const base = new URL("audio/", document.baseURI);
 
-/** Load the clip list (same-origin static file). Missing → speech only. */
-export async function loadVoice(): Promise<void> {
+/**
+ * The kana voice (public/audio/kana/manifest.json): one clip per kana, made
+ * by scripts/gen-kana-audio.ts with VOICEVOX:四国めたん for now. A recorded
+ * voice will replace the files under the same names. Single kana play from
+ * here first; the older Kokoro clips (manifest.json) stay for words, small
+ * kana names and praise.
+ */
+interface KanaManifest {
+  voice?: string;
+  interim?: boolean;
+  [kana: string]: string | boolean | undefined;
+}
+let kanaVoice: { files: Record<string, string>; voice?: string; interim: boolean } = { files: {}, interim: false };
+
+async function loadJson<T>(path: string): Promise<T | null> {
   try {
-    const r = await fetch(new URL("manifest.json", base));
-    if (r.ok && r.headers.get("content-type")?.includes("json")) manifest = { ja: {}, en: {}, ...(await r.json()) };
+    const r = await fetch(new URL(path, base));
+    return r.ok && r.headers.get("content-type")?.includes("json") ? ((await r.json()) as T) : null;
   } catch {
-    /* no clips */
+    return null;
+  }
+}
+
+/** Load the clip lists (same-origin static files). Missing → speech only. */
+export async function loadVoice(): Promise<void> {
+  const [m, k] = await Promise.all([loadJson<Manifest>("manifest.json"), loadJson<KanaManifest>("kana/manifest.json")]);
+  if (m) manifest = { ...m, ja: m.ja ?? {}, en: m.en ?? {} };
+  if (k) {
+    const files: Record<string, string> = {};
+    for (const [kana, f] of Object.entries(k)) if (typeof f === "string" && kana !== "voice") files[kana] = `kana/${f}`;
+    kanaVoice = { files, voice: k.voice, interim: !!k.interim };
   }
 }
 
 export const voiceCredit = () => manifest.credit;
-export const clipCount = () => Object.keys(manifest.ja).length + Object.keys(manifest.en).length;
+/** "VOICEVOX:四国めたん" while the interim kana clips ship (the voice's terms require it shown). */
+export const kanaVoiceCredit = () => kanaVoice.voice;
+export const clipCount = () => Object.keys(manifest.ja).length + Object.keys(manifest.en).length + Object.keys(kanaVoice.files).length;
 
 function clipFor(line: Line): string | undefined {
   return manifest[line.lang][line.text];
@@ -370,11 +396,13 @@ export const sayOrderSlip = (drawn: number, expected: number) => sayLine(orderLi
 const kanaText = (k: string) => speakText(soundOf(k));
 
 /** The clip file that plays for one kana, if there is one. */
-export const kanaClipFile = (k: string): string | undefined => manifest.ja[kanaText(k)];
+export const kanaClipFile = (k: string): string | undefined => kanaVoice.files[soundOf(k)] ?? manifest.ja[kanaText(k)];
 
-/** One kana's sound. Resolves when it has finished playing (or was dropped). */
+/** One kana's sound: the kana voice's clip, else an older clip, else speech. Resolves when it has finished (or was dropped). */
 export function sayKana(k: string, interrupt = true): Promise<void> {
-  return sayLine({ text: kanaText(k), lang: "ja" }, interrupt);
+  const f = kanaVoice.files[soundOf(k)];
+  if (!f) return sayLine({ text: kanaText(k), lang: "ja" }, interrupt);
+  return enqueue(clipJob([f], speechJob(kanaText(k), "ja")), interrupt);
 }
 
 /** Fetch and decode these kana's clips ahead of time so each plays the instant it's asked for. */
@@ -400,17 +428,25 @@ export function sayWord(kana: string[], interrupt = true): Promise<void> {
   return enqueue(clipJob(whole ? [whole] : moraFiles(kana), speech), interrupt);
 }
 
-/** Clip per mora: きゃ as one, っ as a pause, ー as the previous vowel. */
+/**
+ * Clip per mora: きゃ as one, っ as a pause, ー as the previous vowel. One voice
+ * per word: the kana voice when it has every mora (plain kana only), else the
+ * older clips, so a sounded-out word never switches voice halfway.
+ */
 function moraFiles(kana: string[]): (string | null)[] {
-  let prevVowel = "";
-  return groupMorae(kana).map((g) => {
-    const text = g.join("");
-    if (text === "っ") return null;
-    if (text === "ー") return prevVowel ? manifest.ja[VOWEL_OF[prevVowel]] ?? "" : null;
-    const r = g.map((k) => romajiOf(k) ?? "").join("");
-    prevVowel = r.match(/[aiueo](?=[^aiueo]*$)/)?.[0] ?? prevVowel;
-    return manifest.ja[soundOf(text)] ?? "";
-  });
+  const sounded = (lookup: (text: string) => string | undefined) => {
+    let prevVowel = "";
+    return groupMorae(kana).map((g) => {
+      const text = g.join("");
+      if (text === "っ") return null;
+      if (text === "ー") return prevVowel ? lookup(VOWEL_OF[prevVowel]) ?? "" : null;
+      const r = g.map((k) => romajiOf(k) ?? "").join("");
+      prevVowel = r.match(/[aiueo](?=[^aiueo]*$)/)?.[0] ?? prevVowel;
+      return lookup(soundOf(text)) ?? "";
+    });
+  };
+  const own = sounded((t) => kanaVoice.files[t]);
+  return own.every((f) => f !== "") ? own : sounded((t) => manifest.ja[t]);
 }
 
 /** Fetch a word's clips ahead of time so the first tap plays without delay. */

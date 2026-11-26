@@ -542,3 +542,28 @@ test("a letter finished by \"Oops\" on the do-it-yourself step gets 0 stars, not
   await expect(page.locator(".stars.big .star")).toHaveCount(3); // three grey stars
   await expect(page.locator(".stars.big .star.on")).toHaveCount(0);
 });
+
+test("tapping a tile in the tile editor plays that kana's VOICEVOX clip", async ({ page }) => {
+  const played: string[] = [];
+  page.on("request", (r) => {
+    if (r.url().includes("/audio/kana/") && r.url().endsWith(".mp3")) played.push(new URL(r.url()).pathname.split("/").pop()!);
+  });
+  await page.goto("/");
+  await page.getByTestId("go-word").click();
+  await page.getByTestId("word-input").fill("neko");
+  await expect(page.getByTestId("tiles").locator(".tile:not(.add)")).toHaveCount(2);
+  await page.getByTestId("tiles").locator(".tile").first().click(); // ね
+  await expect.poll(() => played).toContain("ne.mp3");
+  await page.getByTestId("tiles").locator(".tile").nth(1).click(); // こ
+  await expect.poll(() => played).toContain("ko.mp3");
+});
+
+test("the About screen credits the kana voice, as its terms require", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Settings/ }).focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // the hold gate's keyboard route
+  const credit = page.getByTestId("kana-voice-credit");
+  await expect(credit).toContainText("VOICEVOX:四国めたん");
+  await expect(credit.getByRole("link", { name: "VOICEVOX:四国めたん" })).toHaveAttribute("href", "https://voicevox.hiroshiba.jp/");
+  await expect(credit.getByRole("link", { name: "voice terms" })).toHaveAttribute("href", "https://zunko.jp/con_ongen_kiyaku.html");
+});
