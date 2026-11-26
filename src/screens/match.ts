@@ -49,7 +49,8 @@ export function matchScreen(nav: Nav, setId = CLASS_SETS[0].id): Screen {
     "button",
     { class: "match-speaker", "data-quiet": "", "data-testid": "speaker", "aria-label": "Hear it again" },
     mascot("match-mascot"),
-    h("span", { class: "speaker-badge", html: ICON.speaker }),
+    // Same look as "Hear it" on the entry page and the play button on word cards.
+    h("span", { class: "shelf-play hear-play speaker-badge" }, h("span", { class: "shelf-play-icon", html: ICON.speaker })),
     soundHint,
   );
 
