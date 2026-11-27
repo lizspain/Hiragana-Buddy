@@ -7,6 +7,7 @@ import { h, ICON, iconButton, kanaSvg } from "../ui/dom";
 import { currentProfile, deleteItem, exportBackup, getItems, getKanaProgress, getMatchResults, getSettings, importBackup, resetMatchProgress, saveSettings, type Item, type Settings } from "../store";
 import { topMixUps } from "../match/progress";
 import { drawingCanvas } from "./done";
+import { VOCAB_NAME } from "../vocab/config";
 
 export function parentScreen(nav: Nav): Screen {
   const body = h("main", { class: "parent-body" });
@@ -45,6 +46,7 @@ export function parentScreen(nav: Nav): Screen {
         voiceStatus(),
       ),
       ...(getSettings().matchGame ? [matchCard()] : []),
+      ...(getSettings().vocabGame ? [vocabCard()] : []),
       h("section", { class: "card" }, h("h3", null, "Practice history"), items.length ? historyList(items) : h("p", null, "Nothing practised yet.")),
       ...weakest(items),
       h(
@@ -75,6 +77,15 @@ export function parentScreen(nav: Nav): Screen {
   }
 
   /** Listen & Match: open the whole path, the sounds most often mixed up, start over. */
+  function vocabCard() {
+    return h(
+      "section",
+      { class: "card", "data-testid": "vocab-card" },
+      h("h3", null, VOCAB_NAME.en),
+      toggle("vocabUnlockPath", "Unlock whole path", "Open every stage now, for a child who is stuck or already knows these words. Turning it off closes stages not yet earned; stars are kept."),
+    );
+  }
+
   function matchCard() {
     const mix = topMixUps([...getKanaProgress()], currentProfile());
     const games = getMatchResults().filter((r) => r.profileId === currentProfile()).length;

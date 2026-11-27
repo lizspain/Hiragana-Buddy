@@ -65,3 +65,11 @@ the engine got backwards for standard Tokyo pitch: かみ (it said "god"), み�
   finish. All four stages play (unit test per stage; e2e plays 2B). Until the
   path lands, tests open a stage through `window.hbNav` (only when
   `navigator.webdriver`).
+- 4 (Nov 27): the stone path is shared (`screens/stone-path.ts`); Listen &
+  Match passes its kana faces and My word row, Make a Word its pictures. Home
+  opens the Make a Word path. Grown-ups card: Unlock whole path. First-visit
+  practice word: つき, unscored, no pebble; a hand taps the tile for the
+  first letter, then loops a drag of the next tile to its slot until the child
+  does it (it never moves a tile itself). Picture stones are larger than
+  Listen & Match stones; the picture is about 90 px, a little short of the
+  spec's 3 cm.

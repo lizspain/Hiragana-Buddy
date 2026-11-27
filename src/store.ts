@@ -30,6 +30,10 @@ export interface Settings {
   matchIntroDone: boolean;
   /** Grown-ups switch: show Make a Word on the home screen (while it is being built and reviewed). */
   vocabGame: boolean;
+  /** Grown-ups switch: every Make a Word stage open (turning it off closes unearned stages; stars are kept). */
+  vocabUnlockPath: boolean;
+  /** Make a Word's practice word has been played (it plays on the very first game only). */
+  vocabPracticeDone: boolean;
 }
 
 export interface Profile {
@@ -81,6 +85,8 @@ export const DEFAULT_SETTINGS: Settings = {
   unlockPath: false,
   matchIntroDone: false,
   vocabGame: false,
+  vocabUnlockPath: false,
+  vocabPracticeDone: false,
 };
 
 const store = createStore("hiragana-buddy", "data");

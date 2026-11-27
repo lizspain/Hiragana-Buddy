@@ -4,10 +4,19 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
-/** Turn on the grown-ups switch, then open the game from home. */
-async function startGame(page: Page) {
+/** Turn on the grown-ups switch (practice word already played unless asked), then open stage 1A from the path. */
+async function startGame(page: Page, settings: Record<string, unknown> = {}, results?: unknown[]) {
+  await home(page, { vocabPracticeDone: true, ...settings }, results);
+  await page.getByTestId("go-vocab").click();
+  await stone(page, "1A").click({ force: true }); // it bobs, so never "stable"
+  await expect(game(page)).toBeVisible();
+}
+
+const stone = (page: Page, id: string) => page.locator(`[data-testid=stone][data-set="${id}"]`);
+
+async function home(page: Page, settings: Record<string, unknown>, results?: unknown[]) {
   await page.goto("/");
-  await page.evaluate(async () => {
+  await page.evaluate(async ({ patch, results }) => {
     const db = await new Promise<IDBDatabase>((res, rej) => {
       const r = indexedDB.open("hiragana-buddy");
       r.onupgradeneeded = () => r.result.createObjectStore("data");
@@ -20,13 +29,12 @@ async function startGame(page: Page) {
       const q = st.get("settings");
       q.onsuccess = () => r(q.result);
     });
-    st.put({ ...(cur as object), vocabGame: true }, "settings");
+    st.put({ ...(cur as object), vocabGame: true, ...patch }, "settings");
+    if (results) st.put(results, "vocabResults");
     await new Promise((r) => (tx.oncomplete = r));
     db.close();
-  });
+  }, { patch: settings, results });
   await page.reload();
-  await page.getByTestId("go-vocab").click();
-  await expect(game(page)).toBeVisible();
 }
 
 const game = (page: Page) => page.getByTestId("vocab");
@@ -220,4 +228,86 @@ test("a game left unfinished is not saved", async ({ page }) => {
   await page.getByRole("button", { name: "Leave" }).click();
   await expect(page.getByTestId("go-vocab")).toBeVisible();
   expect(await readStore(page, "vocabResults")).toBeUndefined();
+});
+
+// ---------- the stage path ----------
+
+const result = (stageId: string, stars: 1 | 2 | 3) => ({ profileId: "p1", stageId, playedAt: `2026-11-2${stars}T00:00:00.000Z`, cleanWords: stars === 3 ? 8 : 4, stars });
+
+test("the path: 1A open from the start, each stone shows its first picture, the rest closed", async ({ page }) => {
+  await home(page, { vocabPracticeDone: true });
+  await page.getByTestId("go-vocab").click();
+  await expect(page.getByTestId("vocab-path")).toBeVisible();
+  await expect(stone(page, "1A")).toHaveAttribute("data-open", "true");
+  for (const id of ["1B", "2A", "2B"]) await expect(stone(page, id)).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "1A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/te.svg");
+  await expect(stone(page, "2A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/ha.svg");
+  await expect(stone(page, "1A").locator(".star:not(.ghost)")).toHaveCount(0); // no stars yet, no outlines
+});
+
+test("a game of 8 clean words opens 1B: Go on, its stars fly onto 1A, 1B flips open", async ({ page }) => {
+  test.setTimeout(120_000);
+  await startGame(page);
+  for (let i = 0; i < 8; i++) await spellByTap(page, i);
+  await expect(game(page)).toHaveAttribute("data-stars", "3", { timeout: 20_000 });
+  await page.getByRole("button", { name: "Go on" }).click({ timeout: 10_000 });
+  const path = page.getByTestId("vocab-path");
+  await expect(path).toHaveAttribute("data-ready", "true", { timeout: 20_000 });
+  await expect(stone(page, "1A")).toHaveAttribute("data-best", "3");
+  await expect(stone(page, "1A").locator(".stone-stars .star.on")).toHaveCount(3);
+  await expect(stone(page, "1B")).toHaveAttribute("data-open", "true");
+  await expect(stone(page, "1B")).toHaveClass(/current/);
+  await expect(stone(page, "2A")).toHaveAttribute("data-open", "false");
+});
+
+test("a best below 3 stars keeps the next stage closed, and shows only the stars earned", async ({ page }) => {
+  await home(page, { vocabPracticeDone: true }, [result("1A", 2)]);
+  await page.getByTestId("go-vocab").click();
+  await expect(stone(page, "1A").locator(".stone-stars .star")).toHaveCount(2);
+  await expect(stone(page, "1B")).toHaveAttribute("data-open", "false");
+});
+
+test("grown-ups: Unlock whole path opens every stage; off again closes the unearned ones and keeps stars", async ({ page }) => {
+  await home(page, { vocabPracticeDone: true }, [result("1A", 3), result("2A", 2)]);
+  await page.getByRole("button", { name: /Settings/ }).focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // the hold gate's keyboard route
+  const card = page.getByTestId("vocab-card");
+  await card.getByRole("checkbox", { name: /Unlock whole path/ }).check();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByTestId("go-vocab").click();
+  for (const id of ["1A", "1B", "2A", "2B"]) await expect(stone(page, id)).toHaveAttribute("data-open", "true");
+  await page.getByRole("button", { name: "Home" }).click();
+
+  await page.getByRole("button", { name: /Settings/ }).focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Enter");
+  await page.getByTestId("vocab-card").getByRole("checkbox", { name: /Unlock whole path/ }).uncheck();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByTestId("go-vocab").click();
+  await expect(stone(page, "1B")).toHaveAttribute("data-open", "true"); // earned: 1A has 3 stars
+  await expect(stone(page, "2A")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "2B")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "2A")).toHaveAttribute("data-best", "2"); // stars kept
+});
+
+test("first visit: the practice word つき, with a hand showing tap then drag; unscored; then the game", async ({ page }) => {
+  test.setTimeout(90_000);
+  await startGame(page, { vocabPracticeDone: false });
+  await expect(game(page)).toHaveAttribute("data-practice", "true");
+  await expect(game(page)).toHaveAttribute("data-word", "つき");
+  await expect(game(page)).toHaveAttribute("data-state", "await", { timeout: 15_000 });
+  await expect(game(page)).toHaveAttribute("data-hand", "tap");
+  await expect(page.locator(".vocab-hand.show")).toBeVisible();
+  await tile(page, "つ").click();
+  await expect(game(page)).toHaveAttribute("data-hand", "drag", { timeout: 5_000 });
+  await expect(page.locator(".vocab-hand.show")).toBeVisible();
+  await drag(page, "き", 1);
+  await expect(game(page)).toHaveAttribute("data-practice", "false", { timeout: 20_000 });
+  await expect(page.locator(".match-tray .pebble")).toHaveCount(0); // the practice word earns no pebble
+  await ready(page, 0); // the real game's first word
+  // Only once.
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "Leave" }).click();
+  await page.getByTestId("go-vocab").click();
+  await stone(page, "1A").click({ force: true });
+  await expect(game(page)).toHaveAttribute("data-practice", "false");
 });

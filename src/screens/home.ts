@@ -95,7 +95,7 @@ function listenButton(nav: Nav): HTMLButtonElement {
   );
 }
 
-/** Make a Word (its path comes in milestone 4; for now, straight into stage 1A). */
+/** Make a Word: opens its stage path. */
 function vocabButton(nav: Nav): HTMLButtonElement {
   return h(
     "button",
@@ -104,7 +104,7 @@ function vocabButton(nav: Nav): HTMLButtonElement {
       "data-testid": "go-vocab",
       onclick: () => {
         unlockAudio();
-        nav.vocab();
+        nav.vocabPath();
       },
     },
     html(`<span class="big-icon">${ICON.picture}</span>`),

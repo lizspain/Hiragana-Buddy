@@ -19,9 +19,9 @@ import { pageBurst } from "../ui/burst";
 import { preloadDance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
 import { isPalmContact } from "../ui/pen";
-import { recordVocab } from "../store";
+import { getSettings, recordVocab, saveSettings, vocabBestStars } from "../store";
 import { VocabGame, type PlaceResult } from "../vocab/game";
-import { stageById, VOCAB_STAGES, type VocabSense, type VocabWord } from "../vocab/stages";
+import { setKana, stageById, VOCAB_STAGES, VOCAB_WORDS, type VocabSense, type VocabStage, type VocabWord } from "../vocab/stages";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const UNDER_TEST = typeof navigator !== "undefined" && navigator.webdriver;
@@ -34,6 +34,13 @@ const NEXT_WORD_MS = 500;
 
 export const pictureUrl = (s: VocabSense) => `vocab/${s.picture}`;
 
+/**
+ * The first-visit practice word (つき, moon): not scored, no pebble. A hand
+ * shows the two moves on it: tap a tile, then drag one to its slot. Its extra
+ * tile comes from class set 1 like any 1A word.
+ */
+const PRACTICE: VocabStage = { id: "practice", set: 1, words: VOCAB_WORDS.filter((w) => w.id === "tsuki"), setKana: setKana(1) };
+
 /** Tests read what was said, in order, from here; a child never sees it. */
 function logSaid(what: string) {
   if (!UNDER_TEST) return;
@@ -43,7 +50,12 @@ function logSaid(what: string) {
 
 export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
   const stage = stageById(stageId) ?? VOCAB_STAGES[0];
-  const game = new VocabGame(stage);
+  /** For the path: this stage's best before this game, so new stars can fly onto its stone. */
+  const bestBefore = vocabBestStars(stage.id);
+  const realGame = new VocabGame(stage);
+  /** The very first game opens with the practice word. */
+  let practicing = !getSettings().vocabPracticeDone && PRACTICE.words.length === 1;
+  let game = practicing ? new VocabGame(PRACTICE) : realGame;
   const timers = new Set<number>();
   const later = (fn: () => void, ms: number) => {
     const t = window.setTimeout(() => {
@@ -60,7 +72,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
 
   // ---------- elements ----------
 
-  const traySlots = game.words.map((_, i) => h("span", { class: "slot", style: `--i:${i}` }));
+  const traySlots = realGame.words.map((_, i) => h("span", { class: "slot", style: `--i:${i}` }));
   const tray = h("div", { class: "match-tray", "data-testid": "tray", role: "img", "aria-label": "Pebble tray" }, traySlots);
 
   const soundHint = h("span", { class: "sound-hint", html: ICON.soundOff, "aria-hidden": "true" });
@@ -79,7 +91,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
 
   const el = h(
     "div",
-    { class: "screen vocab", "data-testid": "vocab", "data-state": "prompt", "data-stage": stage.id, "data-index": "0" },
+    { class: "screen vocab", "data-testid": "vocab", "data-state": "prompt", "data-stage": stage.id, "data-index": "0", "data-practice": String(practicing) },
     h("header", { class: "topbar vocab-top" }, speaker, tray, iconButton(ICON.home, "Home", askLeave, "home small")),
     stageEl,
   );
@@ -149,6 +161,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     speaker.classList.remove("talking");
     game.unlock();
     setState("await");
+    if (practicing) guide();
   }
 
   const replay = () => {
@@ -176,6 +189,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     if (!tile || held || isPalmContact(e) || (e.pointerType === "mouse" && e.button !== 0)) return;
     if (game.isLocked) return; // touches during a lock are ignored, not counted
     held = { id: e.pointerId, tile, x0: e.clientX, y0: e.clientY, dragging: false, over: null };
+    hideHand();
     try {
       tile.setPointerCapture(e.pointerId);
     } catch {
@@ -253,6 +267,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
 
   function slideBack(tile: HTMLButtonElement) {
     tile.classList.remove("dragging");
+    if (practicing && !game.isLocked) later(guide, 400);
     if (reducedMotion() || !tile.style.transform) {
       tile.style.transform = "";
       return;
@@ -309,8 +324,10 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
       seq++; // a replay still running stops; the tile's sound cuts in
       speaker.classList.remove("talking");
       void sayKana(k);
+      if (practicing) later(guide, 500);
       return;
     }
+    hideHand();
     void finish();
   }
 
@@ -340,6 +357,17 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     if (!alive || my !== seq) return;
     restart(pictures, "bounce");
     cleanups.push(pageBurst(pictures, 1100));
+    if (practicing) {
+      await wait(900);
+      if (!alive || my !== seq) return;
+      practicing = false;
+      el.dataset.practice = "false";
+      void saveSettings({ vocabPracticeDone: true });
+      game = realGame;
+      deal(game.word!);
+      later(() => void prompt(), 450);
+      return;
+    }
     await dropPebble(i, word, clean);
     await wait(NEXT_WORD_MS);
     if (!alive || my !== seq) return;
@@ -380,6 +408,67 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     put();
   }
 
+  // ---------- the practice word's hand ----------
+  //
+  // First letter: the hand taps the tile that fits the leftmost empty slot.
+  // After that: it drags the next fitting tile to its slot, over and over,
+  // until the child does it. It never moves a tile itself.
+
+  const hand = h("div", { class: "vocab-hand", "aria-hidden": "true", html: ICON.hand });
+  let handAnim: Animation | null = null;
+
+  function hideHand() {
+    handAnim?.cancel();
+    handAnim = null;
+    hand.classList.remove("show", "tap");
+  }
+
+  /** Where the hand's box goes so its fingertip sits on a point. */
+  const fingertipAt = (x: number, y: number) => {
+    const size = hand.offsetWidth || 90;
+    return { left: x - size * 0.42, top: y - size * 0.1 };
+  };
+  /** Where the fingertip touches a tile or slot: low and right of centre, so the kana stays in view. */
+  const centre = (e: Element) => {
+    const r = e.getBoundingClientRect();
+    return { x: r.left + r.width * 0.72, y: r.top + r.height * 0.74 };
+  };
+
+  function guide() {
+    if (!alive || !practicing || game.isLocked || held) return;
+    hideHand();
+    const slot = game.leftmostEmpty;
+    if (slot < 0) return;
+    const fits = game.tiles.find((t) => t.slot === null && t.kana === game.word!.kana[slot]);
+    const tile = fits && tileEls.get(fits.id);
+    if (!tile) return;
+    if (!hand.isConnected) el.appendChild(hand);
+    const from = centre(tile);
+    const p = fingertipAt(from.x, from.y);
+    Object.assign(hand.style, { left: `${p.left}px`, top: `${p.top}px` });
+    hand.classList.add("show");
+    el.dataset.hand = slot === 0 ? "tap" : "drag";
+    if (slot === 0 || reducedMotion()) {
+      hand.classList.add("tap");
+      return;
+    }
+    const to = centre(slotEls[slot]);
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    handAnim = hand.animate(
+      [
+        { transform: "translate(0, 0)", opacity: 0, offset: 0 },
+        { transform: "translate(0, 0)", opacity: 1, offset: 0.12 },
+        { transform: "translate(0, 0) scale(0.9)", opacity: 1, offset: 0.25 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.9)`, opacity: 1, offset: 0.7 },
+        { transform: `translate(${dx}px, ${dy}px)`, opacity: 1, offset: 0.82 },
+        { transform: `translate(${dx}px, ${dy}px)`, opacity: 0, offset: 1 },
+      ],
+      { duration: 2200, iterations: Infinity, easing: "ease-in-out" },
+    );
+  }
+  cleanups.push(() => hand.remove());
+
   // ---------- results ----------
 
   function results() {
@@ -393,7 +482,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
       tray,
       stars: game.stars,
       playAgain: () => nav.vocab(stage.id),
-      goOn: () => nav.home(),
+      goOn: () => nav.vocabPath({ setId: stage.id, before: bestBefore }),
       later,
       cleanups,
     });

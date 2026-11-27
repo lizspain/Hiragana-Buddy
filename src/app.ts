@@ -10,6 +10,7 @@ import { homeScreen } from "./screens/home";
 import { matchScreen } from "./screens/match";
 import { pathScreen, type PathArrival } from "./screens/path";
 import { vocabScreen } from "./screens/vocab";
+import { vocabPathScreen } from "./screens/vocab-path";
 import { parentScreen } from "./screens/parent";
 import { writeScreen } from "./screens/write";
 
@@ -47,6 +48,8 @@ export interface Nav {
   path(arrival?: PathArrival): void;
   /** Make a Word, one game on a stage. */
   vocab(stageId?: string): void;
+  /** The Make a Word stage path; `arrival` animates a just-finished game's stars onto its stone. */
+  vocabPath(arrival?: PathArrival): void;
 }
 
 let current: Screen | null = null;
@@ -83,4 +86,5 @@ export const nav: Nav = {
   match: (setId) => show(matchScreen(nav, setId), "match"),
   path: (arrival) => show(pathScreen(nav, arrival), "path"),
   vocab: (stageId) => show(vocabScreen(nav, stageId), "vocab"),
+  vocabPath: (arrival) => show(vocabPathScreen(nav, arrival), "vocab-path"),
 };
