@@ -1,13 +1,14 @@
 import type { Nav, Screen } from "../app";
 import { charts } from "../data";
 import { sayKana, unlockAudio } from "../ui/audio";
-import { h, ICON, iconButton, kanaSvg } from "../ui/dom";
+import { h, ICON, iconButton, kanaSvg, stars } from "../ui/dom";
+import { bestStars, findItem } from "../store";
 
 type Page = "basic" | "voiced" | "small";
 const PAGE_ICON: Record<Page, string> = { basic: "あ", voiced: "が", small: "ゃ" };
 
 /** The tappable kana chart, used for single-letter practice and the tile editor. */
-export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: boolean; start?: Page } = {}): HTMLElement {
+export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: boolean; start?: Page; showStars?: boolean } = {}): HTMLElement {
   let page: Page = opts.start ?? "basic";
   const grid = h("div", { class: "chart-grid" });
   const tabs = h("div", { class: "chart-tabs", role: "tablist" });
@@ -41,12 +42,14 @@ export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: bo
     const rows = charts[page].map((r) => [...r]);
     if (page === "small" && opts.withLongMark !== false) rows.push(["ー", null, null, null, null]);
     grid.replaceChildren(
-      ...rows.flat().map((k) =>
-        k
+      ...rows.flat().map((k) => {
+        // One letter: a letter practised before wears its best stars.
+        const done = k && opts.showStars ? findItem("kana", [k]) : undefined;
+        return k
           ? h(
               "button",
               {
-                class: "chart-cell",
+                class: done ? "chart-cell done" : "chart-cell",
                 "data-quiet": "", // it says its kana
                 "aria-label": k,
                 "data-kana": k,
@@ -57,9 +60,10 @@ export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: bo
                 },
               },
               kanaSvg(k),
+              done ? stars(bestStars(done), "stars tiny") : null,
             )
-          : h("span", { class: "chart-cell empty" }),
-      ),
+          : h("span", { class: "chart-cell empty" });
+      }),
     );
   }
   render();
@@ -79,7 +83,7 @@ export function chartScreen(nav: Nav): Screen {
         // Let the sound play a beat before the writing screen starts talking.
         setTimeout(() => nav.write({ kind: "kana", kana: [k], input: k, mode: "chart" }), 450);
       },
-      { withLongMark: false },
+      { withLongMark: false, showStars: true },
     ),
   );
   return { el };

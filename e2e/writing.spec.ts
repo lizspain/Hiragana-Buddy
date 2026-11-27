@@ -71,14 +71,18 @@ test("draw あ correctly with a mouse in all three phases → 3 stars", async ({
   await page.waitForTimeout(350);
   expect(await frame()).not.toBe(a);
 
-  // Saved to history: the big blue Home goes back; the shelf on the word page shows it with a Play it button.
+  // Saved to history: the big blue Home goes back; the One letter chart shows あ's stars on its card.
   await page.getByTestId("done-home").click();
-  await expect(page.getByTestId("shelf-card")).toHaveCount(0); // not on home any more
+  await page.getByTestId("go-letter").click();
+  const cell = page.locator('.chart-cell[data-kana="あ"]');
+  await expect(cell.locator(".star.on")).toHaveCount(3);
+  await expect(page.locator(".chart-cell .stars")).toHaveCount(1); // only the letter practised
+  await page.screenshot({ path: `test-results/chart-stars-${test.info().project.name}.png` });
+  // Letters get no card on the word page; that shelf is for words.
+  await page.getByRole("button", { name: "Home" }).click();
   await page.getByTestId("go-word").click();
-  await expect(page.getByTestId("shelf-card")).toHaveCount(1);
-  await expect(page.getByTestId("shelf-card").getByRole("button", { name: "Play it" })).toBeVisible();
-  await expect(page.getByTestId("shelf-card")).toContainText("a");
-  await page.screenshot({ path: `test-results/shelf-letter-${test.info().project.name}.png` });
+  await expect(page.locator("body")).toHaveAttribute("data-screen", "entry");
+  await expect(page.getByTestId("shelf-card")).toHaveCount(0);
 });
 
 test("a practised word's card shows what was typed and plays it", async ({ page }) => {

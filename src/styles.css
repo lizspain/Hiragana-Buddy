@@ -890,6 +890,27 @@ input:focus-visible {
   stroke-width: 7;
 }
 
+/* A letter practised before (One letter): the kana moves up a little and its
+   best stars sit along the bottom of the card. */
+.chart-cell.done {
+  position: relative;
+  padding: 3% 12% 23%;
+}
+
+.chart-cell .stars.tiny {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6%;
+  gap: 1px;
+}
+
+.chart-cell .stars.tiny .star {
+  width: 29%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
 .chart-cell.empty {
   background: none;
   border: none;

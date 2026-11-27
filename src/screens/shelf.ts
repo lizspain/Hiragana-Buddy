@@ -1,15 +1,15 @@
-// The practised-words shelf: one card per saved word or letter, newest first,
-// with its best stars. Tapping a card practises it again; its play button only
-// says it. Shown on the word entry page (moved from home, Nov 2026).
+// The practised-words shelf: one card per saved word, newest first, with its
+// best stars. Tapping a card practises it again; its play button only says it.
+// Shown on the word entry page (moved from home, Nov 2026). Single letters have
+// no card: their stars show on the One letter chart instead.
 
 import type { Nav } from "../app";
-import { romajiOf } from "../data";
 import { sayWord, unlockAudio } from "../ui/audio";
 import { h, ICON, kanaSvg, stars } from "../ui/dom";
 import { bestStars, getItems } from "../store";
 
 export function wordShelf(nav: Nav): { el: HTMLElement | null; mounted: () => void } {
-  const items = getItems();
+  const items = getItems().filter((it) => it.kind === "word");
   // Word cards built from letters picked one by one (nothing typed, or only the
   // kana themselves) show their romaji instead, filled in once WanaKana loads.
   const romajiLater: { el: HTMLElement; kana: string }[] = [];
@@ -19,9 +19,8 @@ export function wordShelf(nav: Nav): { el: HTMLElement | null; mounted: () => vo
         "section",
         { class: "shelf", "aria-label": "Words you practised" },
         items.slice(0, 30).map((it) => {
-          // Words show what the grown-up typed (English or romaji); letters show their sound (shi).
-          const label =
-            it.kind === "word" ? (it.input && it.input !== it.kana.join("") ? it.input : "") : romajiOf(it.kana[0]) ?? "";
+          // What the grown-up typed (English or romaji).
+          const label = it.input && it.input !== it.kana.join("") ? it.input : "";
           return h(
             "div",
             { class: "shelf-card", "data-testid": "shelf-card" },
@@ -38,7 +37,7 @@ export function wordShelf(nav: Nav): { el: HTMLElement | null; mounted: () => vo
               h("div", { class: "shelf-kana" }, it.kana.map((k) => kanaSvg(k))),
               (() => {
                 const span = h("span", { class: "shelf-label" }, label || " ");
-                if (!label && it.kind === "word") romajiLater.push({ el: span, kana: it.kana.join("") });
+                if (!label) romajiLater.push({ el: span, kana: it.kana.join("") });
                 return span;
               })(),
               stars(bestStars(it), "stars small"),
