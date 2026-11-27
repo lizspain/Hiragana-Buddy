@@ -1,0 +1,134 @@
+{
+ "te.mp3": {
+  "pitch": "H",
+  "handSet": false
+ },
+ "ki.mp3": {
+  "pitch": "H",
+  "handSet": false
+ },
+ "me.mp3": {
+  "pitch": "H",
+  "handSet": false
+ },
+ "ka.mp3": {
+  "pitch": "H",
+  "handSet": false
+ },
+ "kutsu.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "tsuki.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "kata.mp3": {
+  "pitch": "HL",
+  "handSet": true
+ },
+ "tatsu.mp3": {
+  "pitch": "HL",
+  "handSet": false
+ },
+ "mimi.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ },
+ "tsumiki.mp3": {
+  "pitch": "LHH",
+  "handSet": false
+ },
+ "kami.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ },
+ "kaki.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ },
+ "kame.mp3": {
+  "pitch": "HL",
+  "handSet": false
+ },
+ "mite.mp3": {
+  "pitch": "HL",
+  "handSet": true
+ },
+ "tsukimi.mp3": {
+  "pitch": "LHH",
+  "handSet": false
+ },
+ "tsume.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "ha.mp3": {
+  "pitch": "H",
+  "handSet": false
+ },
+ "ashi.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ },
+ "same.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "ushi.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "uma.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "kuma.mp3": {
+  "pitch": "HL",
+  "handSet": false
+ },
+ "uta.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ },
+ "ame.mp3": {
+  "pitch": "HL",
+  "handSet": true
+ },
+ "umi.mp3": {
+  "pitch": "HL",
+  "handSet": false
+ },
+ "shika.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "tomato.mp3": {
+  "pitch": "HLL",
+  "handSet": false
+ },
+ "koma.mp3": {
+  "pitch": "LH",
+  "handSet": false
+ },
+ "hashi-bridge.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ },
+ "hashi-chopsticks.mp3": {
+  "pitch": "HL",
+  "handSet": true
+ },
+ "hasami.mp3": {
+  "pitch": "LHH",
+  "handSet": false
+ },
+ "kasa.mp3": {
+  "pitch": "HL",
+  "handSet": false
+ },
+ "shita.mp3": {
+  "pitch": "LH",
+  "handSet": true
+ }
+}

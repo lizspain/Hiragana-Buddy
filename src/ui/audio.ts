@@ -127,6 +127,12 @@ interface KanaManifest {
 }
 let kanaVoice: { files: Record<string, string>; voice?: string; interim: boolean } = { files: {}, interim: false };
 
+/**
+ * Make a Word's word clips (public/audio/words/manifest.json): one per picture,
+ * by clip name ("tsuki", "hashi-bridge"), same voice as the kana clips.
+ */
+let wordClips: Record<string, string> = {};
+
 async function loadJson<T>(path: string): Promise<T | null> {
   try {
     const r = await fetch(new URL(path, base));
@@ -138,7 +144,12 @@ async function loadJson<T>(path: string): Promise<T | null> {
 
 /** Load the clip lists (same-origin static files). Missing → speech only. */
 export async function loadVoice(): Promise<void> {
-  const [m, k] = await Promise.all([loadJson<Manifest>("manifest.json"), loadJson<KanaManifest>("kana/manifest.json")]);
+  const [m, k, w] = await Promise.all([
+    loadJson<Manifest>("manifest.json"),
+    loadJson<KanaManifest>("kana/manifest.json"),
+    loadJson<KanaManifest>("words/manifest.json"),
+  ]);
+  if (w) wordClips = Object.fromEntries(Object.entries(w).flatMap(([id, file]) => (typeof file === "string" && id !== "voice" ? [[id, `words/${file}`]] : [])));
   if (m) manifest = { ...m, ja: m.ja ?? {}, en: m.en ?? {} };
   if (k) {
     const files: Record<string, string> = {};
@@ -486,6 +497,30 @@ function moraFiles(kana: string[]): { files: (string | null)[]; kanaVoice: boole
   };
   const own = sounded((t) => kanaVoice.files[t]);
   return own.every((f) => f !== "") ? { files: own, kanaVoice: true } : { files: sounded((t) => manifest.ja[t]), kanaVoice: false };
+}
+
+/** The file for one Make a Word clip ("tsuki.mp3" → "words/tsuki.mp3"), if it shipped. */
+export const vocabClipFile = (clip: string): string | undefined => wordClips[clip.replace(/.mp3$/, "")];
+
+/** A Make a Word word, said for one of its pictures: its own clip, else sounded out like any word. */
+export function sayVocab(clip: string, kana: string[], interrupt = true): Promise<void> {
+  const f = vocabClipFile(clip);
+  if (!f) return kana.length === 1 ? sayLine({ text: kana[0], lang: "ja" }, interrupt) : sayWord(kana, interrupt);
+  return enqueue(clipJob([f], speechJob(kana.join(""), "ja")), interrupt);
+}
+
+/** Fetch and decode Make a Word clips ahead of time. */
+export function preloadVocab(clips: Iterable<string>): void {
+  for (const c of clips) {
+    const f = vocabClipFile(c);
+    if (f) void buffer(f);
+  }
+}
+
+/** The decoded clip for one Make a Word picture (for the dev audio review page). */
+export function vocabClipBuffer(clip: string): Promise<AudioBuffer | null> {
+  const f = vocabClipFile(clip);
+  return f && audio() ? buffer(f) : Promise.resolve(null);
 }
 
 /** Fetch a word's clips ahead of time so the first tap plays without delay. */

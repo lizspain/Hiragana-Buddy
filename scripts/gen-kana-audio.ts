@@ -15,6 +15,11 @@
 //     <file>-<take>.wav, picks in takes.json, same processing, same file names.
 //     --allow-missing keeps the current clip for any kana not recorded; --out <dir> writes elsewhere.
 //
+//   node scripts/gen-kana-audio.ts --words     # Make a Word's word clips (data/vocab-words.json)
+//     → public/audio/words/, one per picture (はし has two), the pitch set by hand
+//     where the list gives an accent. Same processing; --only takes word ids
+//     (--only hashi,ame). Default speed for words is 0.85.
+//
 // Never downloads audio: every clip is synthesized locally or recorded by us.
 
 import { spawn, spawnSync } from "node:child_process";
@@ -47,7 +52,7 @@ function opt(name: string, fallback: string): string {
 const FRESH = process.argv.includes("--fresh");
 const ONLY = new Set(opt("only", "").split(/[,\s]+/).filter(Boolean));
 const ENGINE = opt("engine", "http://127.0.0.1:50021");
-const SPEED = Number(opt("speed", "0.75"));
+const SPEED = Number(opt("speed", process.argv.includes("--words") ? "0.85" : "0.75"));
 const PRE = Number(opt("pre", "0.15"));
 const POST = Number(opt("post", "0.15"));
 /** RMS of the sounding part, dBFS. Clips that would peak over the ceiling at this level are held lower and flagged. */
@@ -57,7 +62,8 @@ if (SOURCE !== "voicevox" && SOURCE !== "recorded") throw new Error(`--source mu
 /** The About screen's credit for a recorded voice. */
 const VOICE = opt("voice", "");
 const ALLOW_MISSING = process.argv.includes("--allow-missing");
-const OUT_DIR = resolve(ROOT, opt("out", join("public", "audio", "kana")));
+const WORDS = process.argv.includes("--words");
+const OUT_DIR = resolve(ROOT, opt("out", join("public", "audio", WORDS ? "words" : "kana")));
 
 // ---------- the kana list, from the app's own table ----------
 
@@ -154,7 +160,7 @@ interface Mora {
   vowel: string;
 }
 interface Query {
-  accent_phrases: { moras: Mora[] }[];
+  accent_phrases: { moras: Mora[]; accent: number }[];
   kana: string;
   speedScale: number;
   prePhonemeLength: number;
@@ -249,6 +255,120 @@ function processClip(d: Float32Array, warn: (w: string) => void): { pcm: Float32
 function encodeMp3(pcm: Float32Array, out: string) {
   const buf = Buffer.from(pcm.buffer, pcm.byteOffset, pcm.byteLength);
   ffmpeg(["-y", "-f", "f32le", "-ar", String(RATE), "-ac", "1", "-i", "-", "-c:a", "libmp3lame", "-b:a", `${MP3_KBPS}k`, "-ar", String(RATE), out], buf);
+}
+
+// ---------- Make a Word: word clips ----------
+
+interface VocabSense {
+  meaning?: string;
+  clip: string;
+  accent?: number;
+  pitch?: string;
+}
+interface VocabWord {
+  id: string;
+  kana: string[];
+  meaning: string;
+  senses: VocabSense[];
+}
+
+/** Low/high per mora for a VOICEVOX accent position (1..n), the word said alone (Tokyo pattern). */
+function pitchOf(n: number, accent: number): string {
+  return Array.from({ length: n }, (_, i) => {
+    if (accent === 1) return i === 0 ? "H" : "L";
+    if (n === 1) return "H";
+    if (i === 0) return "L";
+    return i < accent ? "H" : "L";
+  }).join("");
+}
+
+/** One word, one picture: the whole word as one accent phrase, its accent set by hand when given. */
+async function synthesizeWord(w: VocabWord, sense: VocabSense, speaker: number, warn: (m: string) => void): Promise<{ wav: Buffer; accent: number }> {
+  const text = toKata(w.kana.join(""));
+  const q = (await (await fetch(`${ENGINE}/audio_query?text=${encodeURIComponent(text)}&speaker=${speaker}`, { method: "POST" })).json()) as Query;
+  if (q.accent_phrases.length !== 1) {
+    // One phrase, so the hand-set accent covers the whole word.
+    warn(`engine split it into ${q.accent_phrases.length} phrases (${q.kana}); merged`);
+    q.accent_phrases = [{ ...q.accent_phrases[0], moras: q.accent_phrases.flatMap((p) => p.moras) }];
+  }
+  const phrase = q.accent_phrases[0];
+  const said = phrase.moras.map((m) => m.text).join("");
+  if (said !== text) warn(`engine reads it as ${said}, expected ${text}`);
+  if (w.kana[0] === "は" && phrase.moras[0].consonant !== "h") warn(`は read as "${phrase.moras[0].consonant ?? ""}${phrase.moras[0].vowel}", not "ha"`);
+  if (sense.accent !== undefined) {
+    if (sense.accent < 1 || sense.accent > phrase.moras.length) throw new Error(`${w.id}: accent ${sense.accent} is outside 1..${phrase.moras.length}`);
+    phrase.accent = sense.accent;
+    // The engine voices the pitch stored on each mora: work it out again for the new accent.
+    const m = await fetch(`${ENGINE}/mora_data?speaker=${speaker}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(q.accent_phrases) });
+    if (!m.ok) throw new Error(`mora_data ${w.id}: ${m.status} ${await m.text()}`);
+    q.accent_phrases = (await m.json()) as Query["accent_phrases"];
+  }
+  Object.assign(q, { speedScale: SPEED, prePhonemeLength: PRE, postPhonemeLength: POST, outputSamplingRate: RATE, outputStereo: false });
+  const r = await fetch(`${ENGINE}/synthesis?speaker=${speaker}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(q) });
+  if (!r.ok) throw new Error(`synthesis ${w.id}: ${r.status} ${await r.text()}`);
+  return { wav: Buffer.from(await r.arrayBuffer()), accent: q.accent_phrases[0].accent };
+}
+
+async function wordsMain() {
+  const words = (JSON.parse(readFileSync(join(ROOT, "data", "vocab-words.json"), "utf8")) as { words: VocabWord[] }).words;
+  const rawDir = join(ROOT, "audio-src", "words");
+  mkdirSync(rawDir, { recursive: true });
+  mkdirSync(OUT_DIR, { recursive: true });
+  const raw = (clip: string) => join(rawDir, clip.replace(".mp3", ".wav"));
+  const accentFile = join(rawDir, "accents.json");
+  const accents: Record<string, number> = existsSync(accentFile) ? JSON.parse(readFileSync(accentFile, "utf8")) : {};
+  const warnings = new Map<string, string[]>();
+  let speaker = -1;
+  for (const w of words.filter((x) => !ONLY.size || ONLY.has(x.id))) {
+    for (const s of w.senses) {
+      const warn = (m: string) => warnings.set(s.clip, [...(warnings.get(s.clip) ?? []), m]);
+      if (FRESH || ONLY.size || !existsSync(raw(s.clip))) {
+        if (speaker < 0) {
+          console.log(`VOICEVOX engine ${await ensureEngine()}`);
+          speaker = await styleId();
+          console.log(`${VOICE_NAME} ${STYLE_NAME}: style ${speaker}. speed ${SPEED}, pre ${PRE}s, post ${POST}s`);
+        }
+        const { wav, accent } = await synthesizeWord(w, s, speaker, warn);
+        writeFileSync(raw(s.clip), wav);
+        accents[s.clip] = accent;
+        process.stdout.write(w.kana.join("") + " ");
+      }
+      const { pcm } = processClip(decode(raw(s.clip)), warn);
+      encodeMp3(pcm, join(OUT_DIR, s.clip));
+    }
+  }
+  process.stdout.write("\n");
+  writeFileSync(accentFile, JSON.stringify(accents, null, 1));
+
+  // What ships, measured from the MP3s; loudness against the kana clips' median.
+  const kanaRows = (JSON.parse(readFileSync(join(RAW_DIR, "report.json"), "utf8")) as { rows: Row[] }).rows;
+  const kanaMed = kanaRows.map((r) => r.loudnessDb).sort((a, b) => a - b)[kanaRows.length >> 1];
+  const manifest: Record<string, string | boolean> = {};
+  const rows: (Row & { id: string; meaning: string; pitch: string; handSet: boolean })[] = [];
+  for (const w of words)
+    for (const s of w.senses) {
+      const out = join(OUT_DIR, s.clip);
+      if (!existsSync(out)) continue;
+      manifest[s.clip.replace(".mp3", "")] = s.clip;
+      const st = clipStats(decode(out), RATE);
+      const ws = warnings.get(s.clip) ?? [];
+      if (st.peakDb > SPEC.maxPeakDb) ws.push(`peaks at ${st.peakDb.toFixed(1)} dBFS`);
+      if (Math.abs(st.loudnessDb - kanaMed) > SPEC.loudnessSpreadDb) ws.push(`${(st.loudnessDb - kanaMed).toFixed(1)} dB from the kana clips' median`);
+      const accent = accents[s.clip];
+      rows.push({ kana: w.kana.join(""), file: s.clip, id: w.id, meaning: s.meaning ?? w.meaning, pitch: accent === undefined ? "?" : pitchOf(w.kana.length, accent), handSet: s.accent !== undefined, ...st, warnings: ws });
+    }
+  manifest.voice = CREDIT;
+  manifest.interim = true;
+  writeFileSync(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest, null, 1) + "\n");
+  writeFileSync(join(rawDir, "report.json"), JSON.stringify({ voice: CREDIT, speed: SPEED, pre: PRE, post: POST, target: TARGET_DB, kanaMedian: kanaMed, rows }, null, 1));
+  // For the review page: the pitch each clip was made with.
+  writeFileSync(join(OUT_DIR, "pitch.json"), JSON.stringify(Object.fromEntries(rows.map((r) => [r.file, { pitch: r.pitch, handSet: r.handSet }])), null, 1) + "\n");
+
+  const ms = (x: number) => String(Math.round(x * 1000)).padStart(4);
+  console.log("\nword  file                   pitch  sound  dur  peak   loud   warnings");
+  for (const r of rows)
+    console.log(`${r.kana.padEnd(3, "　")}  ${r.file.padEnd(22)} ${(r.pitch + (r.handSet ? "*" : "")).padEnd(5)} ${ms(r.sound)} ${ms(r.duration)}  ${r.peakDb.toFixed(1).padStart(5)} ${r.loudnessDb.toFixed(1).padStart(6)}   ${r.warnings.join("; ")}`);
+  console.log(`\n${rows.length} clips in ${OUT_DIR} (* = pitch set by hand), kana median loudness ${kanaMed.toFixed(1)} dBFS.`);
 }
 
 // ---------- main ----------
@@ -387,7 +507,7 @@ async function main() {
   console.log(`\n${rows.length} clips in ${OUT_DIR}, median loudness ${med.toFixed(1)} dBFS, ${rows.filter((r) => r.warnings.length).length} with warnings.`);
 }
 
-main().catch((e) => {
+(WORDS ? wordsMain() : main()).catch((e) => {
   console.error(e);
   process.exit(1);
 });
