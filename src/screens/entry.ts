@@ -10,6 +10,7 @@ import { h, ICON, iconButton, kanaSvg, modal } from "../ui/dom";
 import { getSettings } from "../store";
 import { installLanguages, Listening, readiness, type ListenLang } from "../ui/listen";
 import { kanaChart } from "./chart";
+import { wordShelf } from "./shelf";
 
 export function entryScreen(nav: Nav): Screen {
   let tiles: string[] = [];
@@ -351,6 +352,7 @@ export function entryScreen(nav: Nav): Screen {
     if (e.key === "Enter") input.blur();
   });
 
+  const shelf = wordShelf(nav);
   const el = h(
     "div",
     { class: "screen entry" },
@@ -367,6 +369,8 @@ export function entryScreen(nav: Nav): Screen {
       row,
       tools,
       start,
+      shelf.el ? h("h3", { class: "shelf-title" }, "Practised words") : null,
+      shelf.el,
     ),
   );
 
@@ -376,6 +380,7 @@ export function entryScreen(nav: Nav): Screen {
   return {
     el,
     mounted() {
+      shelf.mounted();
       if (matchMedia("(pointer: fine)").matches) input.focus();
     },
     destroy() {

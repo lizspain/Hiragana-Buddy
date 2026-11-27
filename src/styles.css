@@ -902,6 +902,20 @@ input:focus-visible {
   color: var(--brand);
 }
 
+/* The practised-words shelf sits below Start on the entry page. */
+.shelf-title {
+  margin: 22px 0 -4px;
+  padding-top: 18px;
+  border-top: 3px dotted rgb(101 71 49 / 22%);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.entry-body .shelf {
+  margin-top: 0;
+}
+
 .for-grownups {
   margin: 0;
   color: var(--muted);

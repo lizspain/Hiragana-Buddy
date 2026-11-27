@@ -71,8 +71,10 @@ test("draw あ correctly with a mouse in all three phases → 3 stars", async ({
   await page.waitForTimeout(350);
   expect(await frame()).not.toBe(a);
 
-  // Saved to history: the big blue Home goes back, and the shelf shows it with a Play it button.
+  // Saved to history: the big blue Home goes back; the shelf on the word page shows it with a Play it button.
   await page.getByTestId("done-home").click();
+  await expect(page.getByTestId("shelf-card")).toHaveCount(0); // not on home any more
+  await page.getByTestId("go-word").click();
   await expect(page.getByTestId("shelf-card")).toHaveCount(1);
   await expect(page.getByTestId("shelf-card").getByRole("button", { name: "Play it" })).toBeVisible();
   await expect(page.getByTestId("shelf-card")).toContainText("a");
@@ -105,13 +107,16 @@ test("a practised word's card shows what was typed and plays it", async ({ page 
   }
   await expect(page.getByTestId("my-word")).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: "Home" }).first().click();
+  await page.getByTestId("go-word").click();
   const card = page.getByTestId("shelf-card");
   await expect(card).toContainText("neko");
   await page.screenshot({ path: `test-results/shelf-${test.info().project.name}.png` });
   const before = await page.evaluate(() => (window as unknown as { clipStarts: number }).clipStarts);
   await card.getByRole("button", { name: "Play it" }).click();
   await expect.poll(() => page.evaluate(() => (window as unknown as { clipStarts: number }).clipStarts)).toBeGreaterThan(before);
-  await expect(page.locator("body")).toHaveAttribute("data-screen", "home"); // playing doesn't start practice
+  await expect(page.locator("body")).toHaveAttribute("data-screen", "entry"); // playing doesn't start practice
+  await card.getByRole("button", { name: /Practise/ }).click(); // the card itself does
+  await expect(page.locator("body")).toHaveAttribute("data-screen", "write");
 });
 
 test("drawing stroke 2 first gives the order message, not a failure", async ({ page }) => {

@@ -1,64 +1,11 @@
 import type { Nav, Screen } from "../app";
-import { romajiOf } from "../data";
-import { sayWord, setSoundEnabled, unlockAudio } from "../ui/audio";
+import { setSoundEnabled, unlockAudio } from "../ui/audio";
 import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
-import { bestStars, getItems, getSettings, matchBestStars, saveSettings } from "../store";
+import { getSettings, matchBestStars, saveSettings } from "../store";
 import { currentStone, pathState } from "../match/progress";
 import { PATH_SETS } from "../match/sets";
 
 export function homeScreen(nav: Nav): Screen {
-  const items = getItems();
-  // Word cards built from letters picked one by one (nothing typed, or only the
-  // kana themselves) show their romaji instead, filled in once WanaKana loads.
-  const romajiLater: { el: HTMLElement; kana: string }[] = [];
-
-  const shelf = items.length
-    ? h(
-        "section",
-        { class: "shelf", "aria-label": "Words you practised" },
-        items.slice(0, 30).map((it) => {
-          // Words show what the grown-up typed (English or romaji); letters show their sound (shi).
-          const label =
-            it.kind === "word" ? (it.input && it.input !== it.kana.join("") ? it.input : "") : romajiOf(it.kana[0]) ?? "";
-          return h(
-            "div",
-            { class: "shelf-card", "data-testid": "shelf-card" },
-            h(
-              "button",
-              {
-                class: "shelf-main",
-                "aria-label": `Practise ${label || it.kana.join("")}`,
-                onclick: () => {
-                  unlockAudio();
-                  nav.write({ kind: it.kind, kana: it.kana, input: it.input, mode: it.mode });
-                },
-              },
-              h("div", { class: "shelf-kana" }, it.kana.map((k) => kanaSvg(k))),
-              (() => {
-                const el = h("span", { class: "shelf-label" }, label || " ");
-                if (!label && it.kind === "word") romajiLater.push({ el, kana: it.kana.join("") });
-                return el;
-              })(),
-              stars(bestStars(it), "stars small"),
-            ),
-            h(
-              "button",
-              {
-                class: "shelf-play",
-                "aria-label": "Play it",
-                "data-quiet": "",
-                onclick: () => {
-                  unlockAudio();
-                  sayWord(it.kana);
-                },
-              },
-              h("span", { class: "shelf-play-icon", html: ICON.speaker }),
-            ),
-          );
-        }),
-      )
-    : null;
-
   const el = h(
     "div",
     { class: "screen home" },
@@ -109,15 +56,12 @@ export function homeScreen(nav: Nav): Screen {
       ),
       getSettings().matchGame ? listenButton(nav) : null,
     ),
-    shelf,
   );
 
   return {
     el,
     mounted() {
       maybeShowInstallTip();
-      if (romajiLater.length)
-        void import("wanakana").then(({ toRomaji }) => romajiLater.forEach(({ el, kana }) => (el.textContent = toRomaji(kana))));
     },
   };
 }
