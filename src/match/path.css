@@ -75,13 +75,20 @@
   visibility: hidden;
 }
 
-.stone.opening {
-  animation: stone-flip 560ms ease-in-out;
+/* Not open yet: not on the path at all. */
+.stone-spot.unseen {
+  display: none;
 }
 
-@keyframes stone-flip {
-  50% {
-    transform: rotateY(90deg) scale(1.05);
+/* Just opened: the stone rises onto the path. */
+.stone.appearing {
+  animation: stone-appear 600ms var(--ease-bounce) backwards;
+}
+
+@keyframes stone-appear {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.5);
   }
 }
 
@@ -118,6 +125,10 @@
 .trail-wrap {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  /* Reach the screen edges, so the mascot beside a wandering stone never makes the path scroll sideways. */
+  margin-inline: calc(-1 * var(--screen-pad, 16px));
+  padding-inline: var(--screen-pad, 16px);
   min-height: 0;
   /* Room above the first stone for the mascot standing on it. */
   padding: clamp(44px, 9vw, 64px) 0 40px;
@@ -243,4 +254,15 @@ body[data-screen="match"] {
 .screen.match::before {
   /* Quieter behind the tiles: the letters are what matters here. */
   opacity: 0.55;
+}
+
+/* The screen's side padding (styles.css: 16px, 30px from 600px wide), for the trail to reach past it. */
+.screen.path {
+  --screen-pad: 16px;
+}
+
+@media (min-width: 600px) {
+  .screen.path {
+    --screen-pad: 30px;
+  }
 }

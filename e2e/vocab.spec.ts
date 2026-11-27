@@ -239,9 +239,12 @@ test("the path: 1A open from the start, each stone shows its first picture, the 
   await page.getByTestId("go-vocab").click();
   await expect(page.getByTestId("vocab-path")).toBeVisible();
   await expect(stone(page, "1A")).toHaveAttribute("data-open", "true");
-  for (const id of ["1B", "2A", "2B"]) await expect(stone(page, id)).toHaveAttribute("data-open", "false");
+  for (const id of ["1B", "2A", "2B"]) {
+    await expect(stone(page, id)).toHaveAttribute("data-open", "false");
+    await expect(stone(page, id)).toBeHidden(); // not on the path until the stage before has 3 stars
+  }
   await expect(stone(page, "1A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/te.svg");
-  await expect(stone(page, "2A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/ha.svg");
+  await expect(stone(page, "2A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/ha.svg"); // there, though hidden
   await expect(stone(page, "1A").locator(".star:not(.ghost)")).toHaveCount(0); // no stars yet, no outlines
 });
 
@@ -256,15 +259,16 @@ test("a game of 8 clean words opens 1B: Go on, its stars fly onto 1A, 1B flips o
   await expect(stone(page, "1A")).toHaveAttribute("data-best", "3");
   await expect(stone(page, "1A").locator(".stone-stars .star.on")).toHaveCount(3);
   await expect(stone(page, "1B")).toHaveAttribute("data-open", "true");
+  await expect(stone(page, "1B")).toBeVisible(); // appeared on the path
   await expect(stone(page, "1B")).toHaveClass(/current/);
-  await expect(stone(page, "2A")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "2A")).toBeHidden();
 });
 
 test("a best below 3 stars keeps the next stage closed, and shows only the stars earned", async ({ page }) => {
   await home(page, { vocabPracticeDone: true }, [result("1A", 2)]);
   await page.getByTestId("go-vocab").click();
   await expect(stone(page, "1A").locator(".stone-stars .star")).toHaveCount(2);
-  await expect(stone(page, "1B")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "1B")).toBeHidden();
 });
 
 test("grown-ups: Unlock whole path opens every stage; off again closes the unearned ones and keeps stars", async ({ page }) => {
@@ -275,7 +279,7 @@ test("grown-ups: Unlock whole path opens every stage; off again closes the unear
   await card.getByRole("checkbox", { name: /Unlock whole path/ }).check();
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await page.getByTestId("go-vocab").click();
-  for (const id of ["1A", "1B", "2A", "2B"]) await expect(stone(page, id)).toHaveAttribute("data-open", "true");
+  for (const id of ["1A", "1B", "2A", "2B"]) await expect(stone(page, id)).toBeVisible();
   await page.getByRole("button", { name: "Home" }).click();
 
   await page.getByRole("button", { name: /Settings/ }).focus();
@@ -284,8 +288,8 @@ test("grown-ups: Unlock whole path opens every stage; off again closes the unear
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await page.getByTestId("go-vocab").click();
   await expect(stone(page, "1B")).toHaveAttribute("data-open", "true"); // earned: 1A has 3 stars
-  await expect(stone(page, "2A")).toHaveAttribute("data-open", "false");
-  await expect(stone(page, "2B")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "2A")).toBeHidden();
+  await expect(stone(page, "2B")).toBeHidden();
   await expect(stone(page, "2A")).toHaveAttribute("data-best", "2"); // stars kept
 });
 

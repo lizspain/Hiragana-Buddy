@@ -7,10 +7,13 @@
 // a game, so a child never chooses from a grid. Each stone shows its face (a
 // kana, or a picture) and the best stars earned on it (never empty outlines).
 // A stone opens when the one before reaches 3 stars, or when a grown-up has
-// unlocked the whole path.
+// unlocked the whole path. A stone that isn't open isn't shown at all: the
+// path ends at the last open stone (Liz, Nov 2026), so there is never a row of
+// closed stones to feel behind on.
 //
 // Arriving from a game, its new best stars fly onto its stone; if that stone
-// just reached 3 stars, the next one flips open and the mascot hops onto it.
+// just reached 3 stars, the next one appears on the path and the mascot hops
+// onto it.
 
 import "../match/path.css";
 import type { Screen } from "../app";
@@ -102,7 +105,8 @@ export function stonePath(spec: PathSpec, arrival?: PathArrival): Screen {
       starSlots(s.best, real(s.id)),
     );
     stoneEls.set(s.id, b);
-    return h("li", { class: "stone-spot", style: `--i:${i}` }, b);
+    // Not open yet: not shown (it appears when the stone before reaches 3 stars).
+    return h("li", { class: s.open ? "stone-spot" : "stone-spot unseen", style: `--i:${i}` }, b);
   }
 
   const top = spec.top?.({ shown, best: real, starSlots, register: (id, b) => stoneEls.set(id, b) }) ?? null;
@@ -187,19 +191,20 @@ export function stonePath(spec: PathSpec, arrival?: PathArrival): Screen {
       for (let s = arrival.before; s < now && alive; s++) await flyStar(slots[s], 2 + s * 2);
       stone.dataset.best = String(now);
     }
-    // Stones that just opened flip open, then the mascot hops on.
+    // Stones that just opened appear on the path, then the mascot hops on.
     for (let i = 0; i < ids.length && alive; i++) {
       if (before[i].open || !after[i].open) continue;
-      await wait(250);
+      await wait(300);
       const b = stoneEls.get(ids[i])!;
-      b.classList.add("opening");
-      await wait(reducedMotion() ? 0 : 260);
       b.classList.remove("locked");
       b.disabled = false;
       b.dataset.open = "true";
       b.setAttribute("aria-label", `Play ${spec.name(ids[i], i)}`);
-      await wait(reducedMotion() ? 0 : 300);
-      b.classList.remove("opening");
+      b.parentElement!.classList.remove("unseen");
+      b.classList.add("appearing");
+      b.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
+      await wait(reducedMotion() ? 320 : 620);
+      b.classList.remove("appearing");
     }
     const target = currentStone(after);
     if (alive && target !== startAt) {

@@ -179,6 +179,8 @@ Each stone shows the picture of the stage's first word (the hand for 1A) and the
 
 - A stage opens when the stage before it reaches 3 stars. Stages behind the mascot stay open for replay.
 
+- A stage that isn't open isn't shown: the path ends at the last open stone, and the next stone appears when it opens. *(Changed Nov 2026.)*
+
 - The parent-gated settings get an Unlock whole path switch for this path. Turning it off closes the unearned stages again and keeps every star.
 
 - Progress is kept per profile, and a replay with fewer stars never lowers the best result.
@@ -191,7 +193,7 @@ Each stone shows the picture of the stage's first word (the hand for 1A) and the
 
 - **End of game:** the same results sequence as Listen & Match. The full tray is cheered first, the gold pebbles count up into stars, and two picture buttons offer play again or go on along the path.
 
-- **On the path:** new best stars fly onto the stone. When a stage first reaches 3 stars, the next stone flips open and the mascot hops onto it.
+- **On the path:** new best stars fly onto the stone. When a stage first reaches 3 stars, the next stone appears on the path and the mascot hops onto it.
 
 The game never uses streaks, daily rewards, countdowns, coins, shops or surprise prizes.
 

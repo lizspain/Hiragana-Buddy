@@ -73,3 +73,6 @@ the engine got backwards for standard Tokyo pitch: かみ (it said "god"), み�
   does it (it never moves a tile itself). Picture stones are larger than
   Listen & Match stones; the picture is about 90 px, a little short of the
   spec's 3 cm.
+- Path change (Nov 27): stones that aren't open aren't shown, on both paths;
+  the next one appears when the one before reaches 3 stars (or all appear with
+  Unlock whole path).

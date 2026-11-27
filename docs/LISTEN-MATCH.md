@@ -34,8 +34,10 @@ native-speaker clips pass review, then it's on by default.
 It opens the **set path**: stepping stones through the pebble garden, one stone per set, with
 the current set centred, the mascot standing on it and the stone bobbing. The current set is
 the first stone without 3 stars, and one tap on it starts the game. Each stone shows the set's
-first kana and three star outlines that fill with its best result. A stone opens when the one
-before it reaches 3 stars; stones behind the mascot stay open for replay.
+first kana and the best stars earned on it (only those earned; changed Nov 2026). A stone opens
+when the one before it reaches 3 stars; stones behind the mascot stay open for replay. A stone
+that isn't open isn't shown: the path ends at the last open stone, and the next one appears
+when it opens (changed Nov 2026).
 **My word** stones sit in a short row above the path and are always open.
 **v1:** the row shows the 3 most recently practised saved words.
 
@@ -94,7 +96,7 @@ ever taken away.
   1–3 stars fill in with the rising chime (**v1:** no gold-pebble count-up). Two picture
   buttons: play again, or go on along the path.
 - **Back on the path:** new best stars fly onto the stone; a worse replay leaves the best in
-  place. When a set first reaches 3 stars, the next stone flips open and the mascot hops onto it.
+  place. When a set first reaches 3 stars, the next stone appears on the path and the mascot hops onto it.
 - Never: streaks, daily rewards, countdowns, coins, shops or surprise prizes.
 
 ## Tile sets

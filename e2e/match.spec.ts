@@ -217,7 +217,7 @@ test("the path starts with only the first stone open, the mascot on it", async (
   await expect(stone(page, "class-1").locator("xpath=..").locator(".path-mascot")).toHaveCount(1);
   for (const id of ["class-2", "auto-3", "auto-4", "auto-5", "auto-6"]) {
     await expect(stone(page, id)).toHaveAttribute("data-open", "false");
-    await expect(stone(page, id)).toBeDisabled();
+    await expect(stone(page, id)).toBeHidden(); // not on the path until the stone before has 3 stars
   }
   await expect(page.getByTestId("word-stone")).toHaveCount(0); // no saved words yet
 });
@@ -245,10 +245,12 @@ test("3 stars fly onto the stone, the next stone opens and the mascot hops onto 
   await expect(stone(page, "class-1")).toHaveAttribute("data-best", "3");
   await expect(stone(page, "class-1").locator(".stone-stars .star.on")).toHaveCount(3);
   await expect(stone(page, "class-2")).toHaveAttribute("data-open", "true");
+  await expect(stone(page, "class-2")).toBeVisible(); // appeared on the path
   await expect(stone(page, "class-2")).toBeEnabled();
   await expect(stone(page, "class-2")).toHaveClass(/current/);
   await expect(stone(page, "class-2").locator("xpath=..").locator(".path-mascot")).toHaveCount(1);
   await expect(stone(page, "auto-3")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "auto-3")).toBeHidden();
   // Stars stay after leaving and coming back.
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByTestId("go-listen").click();
@@ -339,6 +341,7 @@ test("grown-ups: unlock the whole path, see mixed-up sounds, and reset", async (
   await page.getByTestId("go-listen").click();
   await expect(stone(page, "class-1")).toHaveAttribute("data-best", "0");
   await expect(stone(page, "class-2")).toHaveAttribute("data-open", "false");
+  await expect(stone(page, "class-2")).toBeHidden();
 });
 
 test("with reduced motion the whole game still plays through to the path", async ({ page }) => {
