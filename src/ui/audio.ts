@@ -131,7 +131,8 @@ export const kanaVoiceCredit = () => kanaVoice.voice;
 export const clipCount = () => Object.keys(manifest.ja).length + Object.keys(manifest.en).length + Object.keys(kanaVoice.files).length;
 
 function clipFor(line: Line): string | undefined {
-  return manifest[line.lang][line.text];
+  // Japanese lines recorded in the kana voice (the Listen & Match intro) sit in its manifest.
+  return manifest[line.lang][line.text] ?? (line.lang === "ja" ? kanaVoice.files[line.text] : undefined);
 }
 
 function buffer(file: string): Promise<AudioBuffer | null> {

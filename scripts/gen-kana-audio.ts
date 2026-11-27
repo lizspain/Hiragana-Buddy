@@ -17,6 +17,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { clipStats, SPEC } from "../src/dev/clip-stats.ts";
+import { LINES } from "../src/audio-lines.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const RAW_DIR = join(ROOT, "audio-src", "kana");
@@ -62,6 +63,13 @@ const fileOf = (k: string) => `${FILE_NAME[k] ?? table.kana[k].romaji}.mp3`;
   const dup = names.filter((n, i) => names.indexOf(n) !== i);
   if (KANA.length !== 71 || dup.length) throw new Error(`Expected 71 kana with unique names; got ${KANA.length}, duplicates ${dup}`);
 }
+
+/**
+ * Japanese lines spoken in the kana voice, so a recorded voice can replace
+ * them in the same session as the kana. File name → text (from the app's own
+ * line list).
+ */
+const LINE_CLIPS: Record<string, string> = { "intro-ja.mp3": LINES.matchIntroJa.text };
 
 const toKata = (s: string) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
 
@@ -147,11 +155,14 @@ const EXPECT: Record<string, string> = { は: "h a", へ: "h e", を: "o", ぢ: 
 
 // Asked for as katakana: alone, hiragana は and へ are read as the particles
 // "wa" and "e"; ハ and ヘ have no particle reading.
-async function synthesize(k: string, speaker: number, warn: (w: string) => void): Promise<Buffer> {
-  const q = (await (await fetch(`${ENGINE}/audio_query?text=${encodeURIComponent(toKata(k))}&speaker=${speaker}`, { method: "POST" })).json()) as Query;
-  const moras = q.accent_phrases.flatMap((p) => p.moras);
+async function synthesize(k: string, speaker: number, warn: (w: string) => void, sentence = false): Promise<Buffer> {
+  const q = (await (await fetch(`${ENGINE}/audio_query?text=${encodeURIComponent(sentence ? k : toKata(k))}&speaker=${speaker}`, { method: "POST" })).json()) as Query;
+  if (sentence) console.log(`  ${k} → ${q.kana}`);
+  const moras = sentence ? [] : q.accent_phrases.flatMap((p) => p.moras);
   const said = moras.map((m) => [m.consonant, m.vowel].filter(Boolean).join(" ")).join(" | ");
-  if (moras.length !== 1) warn(`engine read it as ${moras.length} morae: ${said} (kana ${q.kana})`);
+  if (sentence) {
+    /* a whole line: no single-mora checks */
+  } else if (moras.length !== 1) warn(`engine read it as ${moras.length} morae: ${said} (kana ${q.kana})`);
   else if (EXPECT[k] && said !== EXPECT[k]) warn(`engine says "${said}", expected "${EXPECT[k]}"`);
   else if (!EXPECT[k] && moras[0].text !== toKata(k)) warn(`engine mora ${moras[0].text} (${said}) for ${k}`);
   Object.assign(q, { speedScale: SPEED, prePhonemeLength: PRE, postPhonemeLength: POST, outputSamplingRate: RATE, outputStereo: false });
@@ -260,6 +271,20 @@ async function main() {
     process.stdout.write("\n");
   }
 
+  // Lines: rebuilt with --fresh or when missing (not touched by --only).
+  const lineTodo = ONLY.size ? [] : Object.entries(LINE_CLIPS);
+  for (const [file, text] of lineTodo) {
+    const raw = join(RAW_DIR, file.replace(".mp3", ".wav"));
+    if (FRESH || !existsSync(raw)) {
+      await ensureEngine();
+      writeFileSync(raw, await synthesize(text, await styleId(), (w) => console.warn(`${file}: ${w}`), true));
+    }
+    const { pcm } = processClip(decode(raw), (w) => console.warn(`${file}: ${w}`));
+    encodeMp3(pcm, join(OUT_DIR, file));
+    const st = clipStats(decode(join(OUT_DIR, file)), RATE);
+    console.log(`  ${file}: ${Math.round(st.duration * 1000)} ms, peak ${st.peakDb.toFixed(1)} dBFS, loudness ${st.loudnessDb.toFixed(1)} dBFS`);
+  }
+
   for (const k of todo) {
     const raw = join(RAW_DIR, fileOf(k).replace(".mp3", ".wav"));
     if (!existsSync(raw)) throw new Error(`missing ${raw}`);
@@ -281,6 +306,7 @@ async function main() {
 
   const manifest: Record<string, string | boolean> = {};
   for (const k of KANA) if (existsSync(join(OUT_DIR, fileOf(k)))) manifest[k] = fileOf(k);
+  for (const [file, text] of Object.entries(LINE_CLIPS)) if (existsSync(join(OUT_DIR, file))) manifest[text] = file;
   manifest.voice = CREDIT;
   manifest.interim = true;
   writeFileSync(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest, null, 1) + "\n");

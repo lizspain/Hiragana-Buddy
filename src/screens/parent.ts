@@ -4,7 +4,8 @@
 import type { Nav, Screen } from "../app";
 import { clipCount, hasJapaneseVoice, kanaVoiceCredit, setSoundEnabled, voiceCredit } from "../ui/audio";
 import { h, ICON, iconButton, kanaSvg } from "../ui/dom";
-import { deleteItem, exportBackup, getItems, getSettings, importBackup, saveSettings, type Item, type Settings } from "../store";
+import { currentProfile, deleteItem, exportBackup, getItems, getKanaProgress, getMatchResults, getSettings, importBackup, resetMatchProgress, saveSettings, type Item, type Settings } from "../store";
+import { topMixUps } from "../match/progress";
 import { drawingCanvas } from "./done";
 
 export function parentScreen(nav: Nav): Screen {
@@ -42,6 +43,7 @@ export function parentScreen(nav: Nav): Screen {
         toggle("expandLongVowel", "Spell ー as a vowel", "じぇーむず becomes じぇえむず for new words."),
         voiceStatus(),
       ),
+      ...(getSettings().matchGame ? [matchCard()] : []),
       h("section", { class: "card" }, h("h3", null, "Practice history"), items.length ? historyList(items) : h("p", null, "Nothing practised yet.")),
       ...weakest(items),
       h(
@@ -79,6 +81,54 @@ export function parentScreen(nav: Nav): Screen {
         voiceCredit() ? h("p", null, voiceCredit()!) : null,
         h("p", null, "Name spellings are a seed list; check them with a Japanese speaker."),
       ),
+    );
+  }
+
+  /** Listen & Match: open the whole path, the sounds most often mixed up, start over. */
+  function matchCard() {
+    const mix = topMixUps([...getKanaProgress()], currentProfile());
+    const games = getMatchResults().filter((r) => r.profileId === currentProfile()).length;
+    return h(
+      "section",
+      { class: "card", "data-testid": "match-card" },
+      h("h3", null, "Listen & Match"),
+      toggle("unlockPath", "Unlock whole path", "Open every stone now, for a child who is stuck or already knows these sounds. Turning it off closes stones not yet earned; stars are kept."),
+      h("h4", null, "Sounds mixed up most"),
+      mix.length
+        ? h(
+            "ul",
+            { class: "mixups", "data-testid": "mixups" },
+            mix.map((m) =>
+              h(
+                "li",
+                null,
+                h("span", { class: "mix-kana" }, kanaSvg(m.heard)),
+                h("span", { class: "mix-and", "aria-hidden": "true" }, "↔"),
+                h("span", { class: "mix-kana" }, kanaSvg(m.tapped)),
+                h("small", null, `${m.heard} and ${m.tapped}: mixed up ${m.count} times`),
+              ),
+            ),
+          )
+        : h("p", null, games ? "No sounds mixed up more than once yet." : "No games played yet."),
+      games
+        ? h(
+            "div",
+            { class: "row-btns" },
+            h(
+              "button",
+              {
+                class: "pill-btn soft",
+                onclick: async () => {
+                  if (!confirm("Start Listen & Match over? This clears every stone's stars and the mixed-up sounds on this device. It can't be undone (a backup file keeps a copy).")) return;
+                  await resetMatchProgress();
+                  render();
+                },
+              },
+              h("span", { html: ICON.replay }),
+              "Reset set progress",
+            ),
+          )
+        : null,
     );
   }
 

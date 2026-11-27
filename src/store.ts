@@ -25,6 +25,8 @@ export interface Settings {
   matchGame: boolean;
   /** Grown-ups switch: every Listen & Match stone open (turning it off closes unearned stones; stars are kept). */
   unlockPath: boolean;
+  /** Listen & Match's spoken intro has played (it plays on the very first game only). */
+  matchIntroDone: boolean;
 }
 
 export interface Profile {
@@ -74,6 +76,7 @@ export const DEFAULT_SETTINGS: Settings = {
   iosTipShown: false,
   matchGame: false,
   unlockPath: false,
+  matchIntroDone: false,
 };
 
 const store = createStore("hiragana-buddy", "data");
@@ -181,6 +184,14 @@ export const matchBestStars = (setId: string) => bestMatchStars(matchResults, cu
 export const matchPlayed = (setId: string) => hasPlayed(matchResults, currentProfile(), setId);
 export const getMatchResults = (): readonly MatchResult[] => matchResults;
 export const getKanaProgress = (): readonly KanaProgress[] => kanaProgress;
+
+/** Grown-ups: forget every Listen & Match game and mix-up for this profile (the path starts over). */
+export async function resetMatchProgress(): Promise<void> {
+  const p = currentProfile();
+  matchResults = matchResults.filter((r) => r.profileId !== p);
+  kanaProgress = kanaProgress.filter((r) => r.profileId !== p);
+  await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store)]).catch(() => undefined);
+}
 
 // ---------- backup ----------
 

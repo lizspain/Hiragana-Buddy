@@ -23,6 +23,10 @@ export const LINES = {
   together: en("Let's do it together!"),
   togetherDone: en("We did it together!"),
   movedOn: en("Oops. We'll try that one together another time."),
+  // Listen & Match, very first game only: Japanese first, then English. The
+  // Japanese line is rendered in the kana voice (scripts/gen-kana-audio.ts).
+  matchIntroJa: ja("よく きいてね。きこえた もじを タッチしてね！"),
+  matchIntroEn: en("Listen, then tap the one you hear!"),
 } satisfies Record<string, Line>;
 
 export type LineId = keyof typeof LINES;

@@ -11,8 +11,8 @@ import type { Nav, Screen } from "../app";
 import { HINT_AFTER_WRONG, IDLE_PULSE_MS, NEXT_ROUND_MS } from "../match/config";
 import { MatchGame } from "../match/game";
 import { PATH_SETS, pathSetById, wordSet, type KanaSet } from "../match/sets";
-import { matchBestStars, matchPlayed, recordMatch } from "../store";
-import { boop, onVoiceTrouble, pop, praise, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
+import { getSettings, matchBestStars, matchPlayed, recordMatch, saveSettings } from "../store";
+import { boop, line, onVoiceTrouble, pop, praise, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
 import { pageBurst } from "../ui/burst";
 import { dance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal, stars } from "../ui/dom";
@@ -309,6 +309,23 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     later(finish, 1600 + n * 550 + 700);
   }
 
+  // ---------- very first game: the spoken intro ----------
+  //
+  // "Listen, then tap the one you hear!" in Japanese, then English, once ever.
+  // The mascot talks; taps and the speaker wait.
+
+  async function intro() {
+    if (getSettings().matchIntroDone) return;
+    busy = true;
+    setState("intro");
+    speaker.classList.add("talking");
+    await line("matchIntroJa");
+    await line("matchIntroEn", false);
+    speaker.classList.remove("talking");
+    busy = false;
+    if (alive) void saveSettings({ matchIntroDone: true });
+  }
+
   // ---------- first game on a set: the tile preview ----------
   //
   // The eight tiles arrive one at a time, each saying its sound (about 8 s),
@@ -353,12 +370,12 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     el,
     mounted() {
       preloadKana(set.kana);
-      if (firstTime) {
-        void preview();
-        return;
-      }
-      // First prompt once the board has had a moment to appear.
-      later(prompt, 600);
+      void (async () => {
+        await intro();
+        if (!alive) return;
+        if (firstTime) void preview();
+        else later(prompt, 600); // once the board has had a moment to appear
+      })();
     },
     destroy() {
       alive = false;

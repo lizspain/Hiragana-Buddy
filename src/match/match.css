@@ -417,3 +417,91 @@
     transform: scale(0.6);
   }
 }
+
+/* ---------- grown-ups: sounds mixed up most ---------- */
+
+.mixups {
+  list-style: none;
+  margin: 6px 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.mixups li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mix-kana {
+  width: 40px;
+  height: 40px;
+  padding: 5px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 2px solid var(--card-edge);
+  display: grid;
+}
+
+.mix-kana svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mix-and {
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.mixups small {
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.big-btn.listen .listen-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.listen-stone {
+  width: 46px;
+  height: 40px;
+  padding: 5px 8px;
+  border: 2px solid var(--outline);
+  border-radius: 52% 48% 46% 54% / 55% 50% 50% 45%;
+  background: radial-gradient(circle at 35% 30%, #f6ead6, #cdb79d 78%);
+  color: #3b2a1f;
+  display: grid;
+}
+
+.listen-stone svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- reduced motion: hops and bobs become fades ----------
+   styles.css stops every animation under reduced motion; these few come back
+   as gentle fades so a child still sees what changed (a pebble arriving, a
+   stone opening, the mascot appearing on its new stone, a star landing). */
+
+@media (prefers-reduced-motion: reduce) {
+  .pebble,
+  .match-tile.arrive,
+  .stone.opening,
+  .stone-stars .star.landed,
+  .path-mascot,
+  .match-results .match-dance,
+  .match-results .match-stars,
+  .match-stars .star.on {
+    animation: calm-fade 320ms ease both !important;
+  }
+}
+
+@keyframes calm-fade {
+  from {
+    opacity: 0;
+  }
+}

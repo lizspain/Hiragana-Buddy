@@ -222,7 +222,7 @@ test("the path starts with only the first stone open, the mascot on it", async (
 
 test("a set's first game previews every tile's sound; the next game goes straight to round 1", async ({ page }) => {
   await startGame(page);
-  await expect(screen(page)).toHaveAttribute("data-state", "preview");
+  await expect(screen(page)).toHaveAttribute("data-state", "preview", { timeout: 15_000 }); // after the first-ever intro
   await expect(board(page).locator(".match-tile.waiting")).not.toHaveCount(0);
   // Taps during the preview do nothing.
   await board(page).locator(".match-tile").first().click({ force: true });
@@ -269,4 +269,81 @@ test("My word stones show the 3 most recent saved words and play their kana", as
   const kana = await positions(page);
   expect(kana).toHaveLength(8);
   expect(kana).toEqual(expect.arrayContaining(["さ", "か", "な"]));
+});
+
+const openGrownUps = async (page: Page) => {
+  await page.getByRole("button", { name: /Settings/ }).focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // the hold gate's keyboard route
+};
+
+test("the very first game opens with the spoken intro, Japanese then English; later games don't", async ({ page }) => {
+  const said: string[] = [];
+  page.on("request", (r) => {
+    if (r.url().endsWith("/audio/kana/intro-ja.mp3")) said.push("ja");
+  });
+  await startGame(page);
+  await expect(screen(page)).toHaveAttribute("data-state", "intro");
+  await expect.poll(() => said).toContain("ja");
+  await ready(page, 0); // then the preview, then round 1
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "Leave" }).click();
+  await page.getByTestId("go-listen").click();
+  await page.locator('[data-testid=stone][data-set="class-1"]').click({ force: true });
+  await expect(screen(page)).toBeVisible();
+  await expect(screen(page)).not.toHaveAttribute("data-state", "intro");
+  await expect(screen(page)).toHaveAttribute("data-state", "preview"); // first game not finished, so the preview again
+});
+
+test("home shows the current stone and its stars", async ({ page }) => {
+  await home(page);
+  const progress = page.getByTestId("listen-progress");
+  await expect(progress.locator(".star.on")).toHaveCount(0);
+  await expect(progress.locator(".star.off")).toHaveCount(3);
+});
+
+test("grown-ups: unlock the whole path, see mixed-up sounds, and reset", async ({ page }) => {
+  await home(page, { matchIntroDone: true });
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((res) => {
+      const r = indexedDB.open("hiragana-buddy");
+      r.onsuccess = () => res(r.result);
+    });
+    const tx = db.transaction("data", "readwrite");
+    tx.objectStore("data").put([{ profileId: "p1", setId: "class-1", playedAt: "2026-11-20T00:00:00Z", hits: 4, stars: 1 }], "matchResults");
+    tx.objectStore("data").put([{ profileId: "p1", kana: "し", mixedUpWith: { ち: 3 } }], "kanaProgress");
+    await new Promise((r) => (tx.oncomplete = r));
+    db.close();
+  });
+  await page.reload();
+  await openGrownUps(page);
+  const card = page.getByTestId("match-card");
+  await expect(card.getByTestId("mixups")).toContainText("し and ち: mixed up 3 times");
+
+  await card.getByText("Unlock whole path").click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByTestId("go-listen").click();
+  for (const id of ["class-2", "auto-3", "auto-6"]) await expect(stone(page, id)).toHaveAttribute("data-open", "true");
+  await expect(stone(page, "class-1")).toHaveClass(/current/); // still the first unfinished one
+  await expect(stone(page, "class-1")).toHaveAttribute("data-best", "1");
+
+  await page.getByRole("button", { name: "Home" }).click();
+  await openGrownUps(page);
+  await card.getByText("Unlock whole path").click(); // off again: unearned stones close, stars stay
+  page.once("dialog", (d) => d.accept());
+  await card.getByRole("button", { name: "Reset set progress" }).click();
+  await expect(card).toContainText("No games played yet.");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByTestId("go-listen").click();
+  await expect(stone(page, "class-1")).toHaveAttribute("data-best", "0");
+  await expect(stone(page, "class-2")).toHaveAttribute("data-open", "false");
+});
+
+test("with reduced motion the whole game still plays through to the path", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await startGame(page);
+  await playPerfect(page);
+  await page.getByRole("button", { name: "Go on" }).click();
+  await expect(page.getByTestId("path")).toHaveAttribute("data-ready", "true", { timeout: 15_000 });
+  await expect(stone(page, "class-2")).toHaveClass(/current/);
+  await expect(page.locator(".flying-star, .flyer")).toHaveCount(0);
 });

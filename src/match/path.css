@@ -2,6 +2,9 @@
 
 .screen.path {
   gap: 10px;
+  /* The page stays put; the trail scrolls inside it. */
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* ---------- stones (shared by the path and the My word row) ---------- */
@@ -116,7 +119,8 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 8px 0 40px;
+  /* Room above the first stone for the mascot standing on it. */
+  padding: clamp(44px, 9vw, 64px) 0 40px;
 }
 
 .trail {
@@ -198,4 +202,45 @@
   .stone-spot {
     transform: none;
   }
+}
+
+/* ---------- the pebble garden ----------
+   Raked-sand rings and a few loose pebbles over the app's sand, behind the
+   path and the game board. Drawn with gradients: no extra image to load. */
+
+body[data-screen="path"],
+body[data-screen="match"] {
+  overflow: hidden;
+}
+
+.screen.path,
+.screen.match {
+  position: relative;
+  isolation: isolate;
+}
+
+.screen.path::before,
+.screen.match::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* loose pebbles */
+    radial-gradient(ellipse 15px 11px at 8% 18%, #c3ab8f 85%, transparent 100%),
+    radial-gradient(ellipse 10px 8px at 11.5% 21%, #b59c80 85%, transparent 100%),
+    radial-gradient(ellipse 18px 13px at 91% 34%, #c9b398 85%, transparent 100%),
+    radial-gradient(ellipse 11px 8px at 94% 38%, #b8a084 85%, transparent 100%),
+    radial-gradient(ellipse 13px 10px at 6% 72%, #bea68a 85%, transparent 100%),
+    radial-gradient(ellipse 16px 12px at 88% 82%, #c6ae93 85%, transparent 100%),
+    radial-gradient(ellipse 9px 7px at 85% 86%, #b39a7e 85%, transparent 100%),
+    /* raked rings, centred below the screen like a zen garden */
+    repeating-radial-gradient(circle at 50% 115%, transparent 0 26px, rgb(150 118 84 / 9%) 26px 29px);
+  opacity: 0.9;
+}
+
+.screen.match::before {
+  /* Quieter behind the tiles: the letters are what matters here. */
+  opacity: 0.55;
 }

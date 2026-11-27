@@ -2,7 +2,9 @@ import type { Nav, Screen } from "../app";
 import { romajiOf } from "../data";
 import { sayWord, setSoundEnabled, unlockAudio } from "../ui/audio";
 import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
-import { bestStars, getItems, getSettings, saveSettings } from "../store";
+import { bestStars, getItems, getSettings, matchBestStars, saveSettings } from "../store";
+import { currentStone, pathState } from "../match/progress";
+import { PATH_SETS } from "../match/sets";
 
 export function homeScreen(nav: Nav): Screen {
   const items = getItems();
@@ -142,8 +144,16 @@ function listenButton(nav: Nav): HTMLButtonElement {
     },
     html(`<span class="big-icon">${ICON.ear}</span>`),
     h("span", { class: "big-label" }, "Listen & Match", h("small", { lang: "ja" }, "きいて えらぼう")),
+    listenStars(),
     muted ? html(`<span class="muted-badge" aria-label="Sound is off">${ICON.soundOff}</span>`) : null,
   );
+}
+
+/** The stone the child is on, with its best stars (same style as the word cards). */
+function listenStars(): HTMLElement {
+  const stones = pathState(PATH_SETS.map((s) => s.id), matchBestStars, getSettings().unlockPath);
+  const i = currentStone(stones);
+  return h("span", { class: "listen-progress", "data-testid": "listen-progress" }, h("span", { class: "listen-stone" }, kanaSvg(PATH_SETS[i].kana[0])), stars(stones[i].best, "stars small"));
 }
 
 /** One-time "Add to Home Screen" tip for iPhone/iPad Safari (keeps history safe). */
