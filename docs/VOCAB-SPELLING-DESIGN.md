@@ -171,7 +171,7 @@ A child tapping at random gets about 2.7 clean words in stage 1A, 1.7 in 2A, 1.3
 | This game  | The pebble tray fills left to right: a gold pebble for a clean word, a plain pebble for any other | Every word      |
 | The stages | The mascot moves along the path, and each stone shows its best stars                              | After each game |
 
-Each stone shows the picture of the stage's first word (the hand for 1A) and three star outlines that fill in with the best result.
+Each stone shows the picture of the stage's first word (the hand for 1A) and the best stars earned on it. *(Changed Nov 2026: no empty star outlines anywhere in the app, only the stars earned.)*
 
 ### Unlocking
 

@@ -299,8 +299,9 @@ test("the very first game opens with the spoken intro, Japanese then English; la
 test("home shows the current stone and its stars", async ({ page }) => {
   await home(page);
   const progress = page.getByTestId("listen-progress");
+  // No stars yet: none shown, and no empty outlines.
   await expect(progress.locator(".star.on")).toHaveCount(0);
-  await expect(progress.locator(".star.off")).toHaveCount(3);
+  await expect(progress.locator(".star:not(.ghost)")).toHaveCount(0);
 });
 
 test("grown-ups: unlock the whole path, see mixed-up sounds, and reset", async ({ page }) => {

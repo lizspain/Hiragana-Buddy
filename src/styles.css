@@ -425,12 +425,11 @@ input:focus-visible {
   stroke: var(--gold-edge);
 }
 
-.star.off {
-  color: var(--muted-star);
-}
-
-.star.off svg path {
-  stroke: var(--muted-star-edge);
+/* Never drawn: a placeholder that keeps a row's height (no stars yet), or a
+   star still to be revealed by an animation. Unearned stars are never shown. */
+.star.ghost,
+.star.pending {
+  visibility: hidden;
 }
 
 .stars.small .star {

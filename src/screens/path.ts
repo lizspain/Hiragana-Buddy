@@ -46,11 +46,16 @@ export function pathScreen(nav: Nav, arrival?: PathArrival): Screen {
     nav.match(id);
   };
 
-  const starSlots = (best: number) =>
+  // Only earned stars show (never empty outlines). Stars this visit has just
+  // earned are there but hidden until each flies in; with none, a hidden
+  // placeholder keeps the stone's shape.
+  const starSlots = (shownBest: number, best: number) =>
     h(
       "span",
       { class: "stone-stars", "aria-hidden": "true" },
-      [0, 1, 2].map((i) => h("span", { class: `star ${i < best ? "on" : "off"}`, html: ICON.star })),
+      best === 0
+        ? h("span", { class: "star ghost", html: ICON.star })
+        : Array.from({ length: best }, (_, i) => h("span", { class: `star ${i < shownBest ? "on" : "pending"}`, html: ICON.star })),
     );
 
   function pathStone(s: StoneState, i: number): HTMLElement {
@@ -68,7 +73,7 @@ export function pathScreen(nav: Nav, arrival?: PathArrival): Screen {
         onclick: go(s.id),
       },
       h("span", { class: "stone-face" }, kanaSvg(set.kana[0])),
-      starSlots(s.best),
+      starSlots(s.best, real(s.id)),
     );
     stoneEls.set(s.id, b);
     return h("li", { class: "stone-spot", style: `--i:${i}` }, b);
@@ -90,7 +95,7 @@ export function pathScreen(nav: Nav, arrival?: PathArrival): Screen {
             "button",
             { class: "stone word", "data-testid": "word-stone", "data-set": id, "data-open": "true", "data-best": String(best), "aria-label": `Play ${it.input || it.kana.join("")}`, onclick: go(id) },
             h("span", { class: "stone-face" }, it.kana.slice(0, 3).map((k) => kanaSvg(k))),
-            starSlots(best),
+            starSlots(best, real(id)),
           );
           stoneEls.set(id, b);
           return b;
@@ -141,7 +146,7 @@ export function pathScreen(nav: Nav, arrival?: PathArrival): Screen {
         .finished.catch(() => undefined);
       fly.remove();
     }
-    slot.classList.replace("off", "on");
+    slot.classList.replace("pending", "on");
     slot.classList.add("landed");
     stepChime(step);
   }

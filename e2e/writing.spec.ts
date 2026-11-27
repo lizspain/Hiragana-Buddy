@@ -548,7 +548,7 @@ test("a letter finished by \"Oops\" on the do-it-yourself step gets 0 stars, not
   const word = page.getByTestId("my-word");
   await expect(word).toBeVisible({ timeout: 15_000 });
   await expect(word).toHaveAttribute("data-stars", "0");
-  await expect(page.locator(".stars.big .star")).toHaveCount(3); // three grey stars
+  await expect(page.locator(".stars.big .star:not(.ghost)")).toHaveCount(0); // no stars, and no empty outlines
   await expect(page.locator(".stars.big .star.on")).toHaveCount(0);
 });
 

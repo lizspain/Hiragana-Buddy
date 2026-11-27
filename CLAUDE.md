@@ -16,6 +16,9 @@ The non-negotiables below apply to it too.
   no lives. Every finished word earns at least 1 star, unless "Oops" filled in
   every stroke of every letter: a letter the app traced itself gets 0 (agreed
   Nov 2026).
+- Show only the stars earned, everywhere (results, cards, chart, path
+  stones, home). Never draw empty or grey outlines for stars missed: 1 star
+  must not read as "1 out of 3" (playtest, Nov 2026).
 - Stroke order is enforced: only the next expected stroke can be accepted.
 - Ink appears under the finger on the next frame, in every phase.
 - 40 fps minimum, 60 target, on a mid-tier phone and a base iPad.

@@ -30,7 +30,10 @@ export interface ResultsOptions {
 export function showResults(o: ResultsOptions): void {
   const octo = dance("dance match-dance");
   o.cleanups.push(octo.stop);
-  const starRow = starsEl(0, "stars big match-stars");
+  // Only the stars earned: drawn hidden, then revealed one at a time (never empty outlines).
+  const starRow = starsEl(o.stars, "stars big match-stars");
+  for (const s of starRow.querySelectorAll(".star")) s.classList.replace("on", "pending");
+  starRow.setAttribute("aria-label", "0 stars");
   const actions = h(
     "div",
     { class: "match-actions" },
@@ -57,7 +60,7 @@ export function showResults(o: ResultsOptions): void {
   const fill = () => {
     if (shown >= n) return;
     const s = starRow.children[shown] as HTMLElement;
-    s.classList.replace("off", "on");
+    s.classList.replace("pending", "on");
     stepChime(2 + shown * 2);
     shown++;
     if (shown === n) o.cleanups.push(pageBurst(s));

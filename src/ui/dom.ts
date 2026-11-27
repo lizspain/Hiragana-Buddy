@@ -103,9 +103,15 @@ export function holdButton(icon: string, label: string, ms: number, onDone: () =
   return b;
 }
 
+/**
+ * Only the stars earned, never empty outlines for the ones missed (playtest,
+ * Nov 2026: a child seeing 1 of 3 stars was upset). With none, an invisible
+ * placeholder keeps the row's height so nothing around it moves.
+ */
 export function stars(n: number, cls = "stars"): HTMLElement {
   const wrap = h("div", { class: cls, role: "img", "aria-label": `${n} star${n === 1 ? "" : "s"}` });
-  for (let i = 0; i < 3; i++) wrap.appendChild(html(`<span class="star ${i < n ? "on" : "off"}" style="--i:${i}">${ICON.star}</span>`));
+  for (let i = 0; i < n; i++) wrap.appendChild(html(`<span class="star on" style="--i:${i}">${ICON.star}</span>`));
+  if (n === 0) wrap.appendChild(html(`<span class="star ghost" aria-hidden="true">${ICON.star}</span>`));
   return wrap;
 }
 
