@@ -27,6 +27,8 @@ export interface Settings {
   unlockPath: boolean;
   /** Listen & Match's spoken intro has played (it plays on the very first game only). */
   matchIntroDone: boolean;
+  /** Grown-ups switch: show Make a Word on the home screen (while it is being built and reviewed). */
+  vocabGame: boolean;
 }
 
 export interface Profile {
@@ -77,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
   matchGame: false,
   unlockPath: false,
   matchIntroDone: false,
+  vocabGame: false,
 };
 
 const store = createStore("hiragana-buddy", "data");

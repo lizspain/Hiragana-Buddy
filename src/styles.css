@@ -660,6 +660,13 @@ input:focus-visible {
   background: var(--peach);
 }
 
+/* Make a Word: the same card, in a soft purple. */
+.big-btn.vocab {
+  --edge: #6d4f9c;
+  background: #c9b2ec;
+  color: #2e1a52;
+}
+
 .big-btn.letter {
   --edge: var(--cyan-edge);
   background: var(--cyan);
@@ -1818,10 +1825,15 @@ body[data-screen="write"] {
 
 /* ---------- wider screens (tablets) ---------- */
 
-/* Three game cards a row once "Listen & Match" fits at tablet size (iPad portrait and up). */
+/* Three game cards a row once "Listen & Match" fits at tablet size (iPad portrait and up);
+   four cards stay 2 × 2. */
 @media (min-width: 700px) {
   .big-choices {
     --per-row: 3;
+  }
+
+  .big-choices:has(> .big-btn:nth-child(4)) {
+    --per-row: 2;
   }
 }
 

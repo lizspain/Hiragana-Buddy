@@ -4,6 +4,7 @@ import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/
 import { getSettings, matchBestStars, saveSettings } from "../store";
 import { currentStone, pathState } from "../match/progress";
 import { PATH_SETS } from "../match/sets";
+import { VOCAB_NAME } from "../vocab/config";
 
 export function homeScreen(nav: Nav): Screen {
   const el = h(
@@ -55,6 +56,7 @@ export function homeScreen(nav: Nav): Screen {
         h("span", { class: "big-label" }, "One letter"),
       ),
       getSettings().matchGame ? listenButton(nav) : null,
+      getSettings().vocabGame ? vocabButton(nav) : null,
     ),
   );
 
@@ -90,6 +92,23 @@ function listenButton(nav: Nav): HTMLButtonElement {
     h("span", { class: "big-label" }, "Listen & Match"),
     listenStars(),
     muted ? html(`<span class="muted-badge" aria-label="Sound is off">${ICON.soundOff}</span>`) : null,
+  );
+}
+
+/** Make a Word (its path comes in milestone 4; for now, straight into stage 1A). */
+function vocabButton(nav: Nav): HTMLButtonElement {
+  return h(
+    "button",
+    {
+      class: "big-btn vocab",
+      "data-testid": "go-vocab",
+      onclick: () => {
+        unlockAudio();
+        nav.vocab();
+      },
+    },
+    html(`<span class="big-icon">${ICON.picture}</span>`),
+    h("span", { class: "big-label" }, VOCAB_NAME.en),
   );
 }
 

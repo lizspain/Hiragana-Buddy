@@ -12,10 +12,10 @@ import { HINT_AFTER_WRONG, IDLE_PULSE_MS, NEXT_ROUND_MS } from "../match/config"
 import { MatchGame } from "../match/game";
 import { PATH_SETS, pathSetById, wordSet, type KanaSet } from "../match/sets";
 import { getSettings, matchBestStars, matchPlayed, recordMatch, saveSettings } from "../store";
-import { boop, line, onVoiceTrouble, pop, praise, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
-import { pageBurst } from "../ui/burst";
-import { dance, preloadDance } from "../ui/dance";
-import { h, ICON, iconButton, kanaSvg, mascot, modal, stars } from "../ui/dom";
+import { showResults } from "../match/results";
+import { boop, line, onVoiceTrouble, pop, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
+import { preloadDance } from "../ui/dance";
+import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
 import { isPalmContact } from "../ui/pen";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -261,52 +261,16 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     el.dataset.stars = String(game.stars);
     void recordMatch(set.id, game.hits, game.stars, game.taps);
     clearTimeout(idle);
-    const octo = dance("dance match-dance");
-    cleanups.push(octo.stop);
-    const starRow = stars(0, "stars big match-stars");
-    const actions = h(
-      "div",
-      { class: "match-actions" },
-      iconButton(ICON.replay, "Play again", () => nav.match(set.id), "big-round"),
-      iconButton(ICON.play, "Go on", () => nav.path({ setId: set.id, before: bestBefore }), "big-round go-on"),
-    );
-    // The full tray moves to the centre: re-parent it, then slide it from where it was.
-    const before = tray.getBoundingClientRect();
-    const panel = h("section", { class: "match-results", "data-testid": "results" }, octo.el, tray, starRow, actions);
-    el.classList.add("finished");
-    el.querySelector(".match-stage")!.replaceChildren(panel);
-    if (!reducedMotion()) {
-      const after = tray.getBoundingClientRect();
-      tray.animate(
-        [{ transform: `translate(${before.left - after.left}px, ${before.top - after.top}px) scale(${before.width / after.width})`, transformOrigin: "0 0" }, { transform: "none", transformOrigin: "0 0" }],
-        { duration: 700, easing: "cubic-bezier(.23,1,.32,1)" },
-      );
-    }
-    praise();
-
-    // Stars fill one at a time on the rising chime; a tap anywhere jumps to the end.
-    const n = game.stars;
-    let shown = 0;
-    const fill = () => {
-      if (shown >= n) return;
-      const s = starRow.children[shown] as HTMLElement;
-      s.classList.replace("off", "on");
-      stepChime(2 + shown * 2);
-      shown++;
-      if (shown === n) cleanups.push(pageBurst(s));
-    };
-    const finish = () => {
-      while (shown < n) fill();
-      starRow.setAttribute("aria-label", `${n} star${n === 1 ? "" : "s"}`);
-      actions.classList.add("show");
-      el.removeEventListener("pointerdown", skip);
-    };
-    const skip = (e: Event) => {
-      if (!(e.target as Element).closest(".match-actions")) finish();
-    };
-    el.addEventListener("pointerdown", skip);
-    for (let i = 0; i < n; i++) later(fill, 1600 + i * 550);
-    later(finish, 1600 + n * 550 + 700);
+    showResults({
+      screen: el,
+      stage: el.querySelector<HTMLElement>(".match-stage")!,
+      tray,
+      stars: game.stars,
+      playAgain: () => nav.match(set.id),
+      goOn: () => nav.path({ setId: set.id, before: bestBefore }),
+      later,
+      cleanups,
+    });
   }
 
   // ---------- very first game: the spoken intro ----------

@@ -1,0 +1,242 @@
+/* Make a Word (docs/VOCAB-SPELLING-DESIGN.md "Game screen"): a top row with
+   the mascot (say it again), the pebble tray and home; the word's picture in
+   the middle; one slot per kana under it; the tiles in a row below. Tiles and
+   slots are 2 cm square where the screen allows, with up to 1 cm between. */
+
+.screen.vocab {
+  /* 4 tiles is the most a word shows (3 kana + the extra). */
+  --gap: clamp(10px, min(1cm, (100vw - 32px - 4 * 2cm) / 3), 1cm);
+  --tile: clamp(64px, min((100vw - 32px - 3 * var(--gap)) / 4, (100dvh - 420px) / 2), 130px);
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vocab-top {
+  gap: 10px;
+}
+
+.vocab-top .match-speaker {
+  flex: none;
+}
+
+.vocab-top .match-mascot {
+  width: clamp(56px, 13vmin, 92px);
+}
+
+.vocab-top .speaker-badge {
+  width: 40px;
+  height: 40px;
+}
+
+/* The tray shares the top row with the mascot and home: its pebbles shrink to fit. */
+.vocab-top .match-tray {
+  min-width: 0;
+  gap: clamp(3px, 1vw, 10px);
+}
+
+.vocab-top .slot {
+  --slot: clamp(22px, (100vw - 160px) / 9.5, 52px);
+}
+
+/* Phones: the mascot alone is the say-it-again button (the picture is one too). */
+@media (max-width: 520px) {
+  .vocab-top .speaker-badge {
+    display: none;
+  }
+  .vocab-top .match-mascot {
+    width: 50px;
+  }
+}
+
+/* Pebbles here: gold for a word spelled with no wrong tile, plain otherwise. */
+.screen.vocab .pebble {
+  padding: 14%;
+}
+
+.screen.vocab .pebble img {
+  width: 100%;
+  height: 100%;
+  border-radius: 30%;
+}
+
+.pebble.gold {
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #f0c24f 72%);
+  border-color: #a77812;
+  box-shadow: 0 2px 0 #a77812;
+}
+
+.vocab-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 3dvh, 30px);
+}
+
+/* ---------- the picture ---------- */
+
+.vocab-pictures {
+  display: flex;
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.vocab-picture {
+  width: clamp(130px, min(42vw, 30dvh), 260px);
+  aspect-ratio: 1;
+  display: grid;
+  border-radius: 26px;
+  transition:
+    transform 300ms var(--ease-bounce),
+    filter 300ms ease,
+    opacity 300ms ease;
+}
+
+.vocab-pictures.two .vocab-picture {
+  width: clamp(120px, min(40vw, 26dvh), 220px);
+}
+
+.vocab-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* はし: the picture being said lights up; the other one rests. */
+.vocab-pictures.two.saying .vocab-picture {
+  opacity: 0.45;
+  transform: scale(0.94);
+}
+
+.vocab-pictures.two.saying .vocab-picture.lit {
+  opacity: 1;
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 12px rgb(247 215 122 / 90%));
+}
+
+.vocab-picture.arrive {
+  animation: picture-arrive 420ms var(--ease-bounce);
+}
+
+@keyframes picture-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+.vocab-pictures.bounce .vocab-picture {
+  animation: picture-bounce 700ms var(--ease-bounce);
+}
+
+@keyframes picture-bounce {
+  25% {
+    transform: translateY(-22px) scale(1.06);
+  }
+  50% {
+    transform: translateY(0) scale(0.97);
+  }
+  70% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ---------- slots and tiles ---------- */
+
+.vocab-slots,
+.vocab-tiles {
+  display: flex;
+  justify-content: center;
+  gap: var(--gap);
+  min-height: var(--tile);
+}
+
+.vocab-slot {
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: 22%;
+  border: 4px dashed rgb(101 71 49 / 45%);
+  background: rgb(255 250 240 / 55%);
+  display: grid;
+  place-items: center;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 200ms var(--ease-bounce);
+}
+
+/* A drag hovering over a slot. */
+.vocab-slot.over {
+  border-color: rgb(101 71 49 / 80%);
+  background: #fff8dc;
+  transform: scale(1.05);
+}
+
+.vocab-slot.filled {
+  border: 0;
+  background: none;
+}
+
+.vocab-slot .match-tile {
+  pointer-events: none;
+}
+
+/* The finish: each letter says its sound, left to right. */
+.vocab-slot.saying .match-tile {
+  animation: tile-say 380ms var(--ease-bounce);
+  box-shadow:
+    0 0 0 6px rgb(247 215 122 / 85%),
+    0 var(--lift) 0 var(--edge),
+    0 calc(var(--lift) + 4px) 0 var(--cast);
+}
+
+@keyframes tile-say {
+  40% {
+    transform: translateY(-10px) scale(1.08);
+  }
+}
+
+.screen.vocab .match-tile {
+  touch-action: none;
+  /* Listen & Match sizes this padding in % of its grid cell; in a flex row % would be of the whole row. */
+  padding: calc(var(--tile) * 0.14);
+}
+
+/* Lifted under the finger while dragged. */
+.match-tile.dragging {
+  position: relative;
+  z-index: 30;
+  transition: none;
+  --lift: 12px;
+  filter: drop-shadow(0 10px 10px rgb(67 43 28 / 25%));
+  cursor: grabbing;
+}
+
+.match-tile.sliding-back {
+  transition: transform 280ms var(--ease-bounce);
+}
+
+/* ---------- reduced motion: bounce and spray become a fade ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .vocab-pictures.bounce .vocab-picture {
+    animation: calm-fade 500ms ease;
+  }
+  .vocab-picture.arrive {
+    animation: calm-fade 300ms ease;
+  }
+  .vocab-slot.saying .match-tile {
+    animation: none;
+  }
+  .match-tile.sliding-back {
+    transition: none;
+  }
+}
