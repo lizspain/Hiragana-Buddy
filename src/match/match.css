@@ -362,34 +362,31 @@
 
 /* ---------- home button ---------- */
 
+/* Same card as "Write a word" and "One letter": icon, then label; the stars
+   for the current stone sit under the label, the stone itself in the corner. */
 .big-btn.listen {
   --edge: #5b7a1f;
-  grid-column: 1 / -1;
-  min-height: 0;
-  flex-direction: row;
-  justify-content: center;
-  gap: 16px;
-  padding: 14px 16px;
+  gap: 6px;
   background: #a7d36b;
   color: #213b08;
 }
 
+/* The ear drawing has room to spare below it; borrow it for the stars so this
+   card stays the same height as the other two. */
 .big-btn.listen .big-icon {
-  width: 64px;
-  height: 64px;
+  margin-bottom: -6px;
 }
 
-.big-btn.listen .big-label small {
-  display: block;
-  font-size: 0.8em;
-  font-family: "Klee One", serif;
-  font-weight: 600;
-  margin-top: 2px;
+.big-btn.listen .big-label {
+  margin-top: auto;
 }
 
 .big-btn.listen .muted-badge {
-  width: 34px;
-  height: 34px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
   display: grid;
   color: var(--peach-edge);
 }
@@ -460,16 +457,21 @@
 }
 
 .big-btn.listen .listen-progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
+  display: contents;
+}
+
+.big-btn.listen .stars.small .star {
+  width: 18px;
+  height: 18px;
 }
 
 .listen-stone {
-  width: 46px;
-  height: 40px;
-  padding: 5px 8px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 38px;
+  height: 33px;
+  padding: 4px 7px;
   border: 2px solid var(--outline);
   border-radius: 52% 48% 46% 54% / 55% 50% 50% 45%;
   background: radial-gradient(circle at 35% 30%, #f6ead6, #cdb79d 78%);

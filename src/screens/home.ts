@@ -87,13 +87,13 @@ function listenButton(nav: Nav): HTMLButtonElement {
       },
     },
     html(`<span class="big-icon">${ICON.ear}</span>`),
-    h("span", { class: "big-label" }, "Listen & Match", h("small", { lang: "ja" }, "きいて えらぼう")),
+    h("span", { class: "big-label" }, "Listen & Match"),
     listenStars(),
     muted ? html(`<span class="muted-badge" aria-label="Sound is off">${ICON.soundOff}</span>`) : null,
   );
 }
 
-/** The stone the child is on, with its best stars (same style as the word cards). */
+/** The stone the child is on (a pebble in the corner), with its best stars under the label. */
 function listenStars(): HTMLElement {
   const stones = pathState(PATH_SETS.map((s) => s.id), matchBestStars, getSettings().unlockPath);
   const i = currentStone(stones);

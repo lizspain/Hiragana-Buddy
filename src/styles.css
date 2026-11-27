@@ -605,12 +605,25 @@ input:focus-visible {
   white-space: nowrap;
 }
 
+/* Two cards a row on phones (a third one centred under them), three a row on
+   wide screens. The row gap allows for each card's raised edge (lift + cast
+   shadow, 12px), so the space you see between rows matches the space between
+   columns. */
 .big-choices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  --col-gap: 16px;
+  --per-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: var(--col-gap);
+  row-gap: calc(var(--col-gap) + 12px);
   width: 100%;
   max-width: 920px;
+}
+
+.big-choices > .big-btn {
+  flex: 0 0 calc((100% - (var(--per-row) - 1) * var(--col-gap)) / var(--per-row));
+  min-width: 0;
 }
 
 .big-btn {
@@ -1774,6 +1787,13 @@ body[data-screen="write"] {
 
 /* ---------- wider screens (tablets) ---------- */
 
+/* Three game cards a row once "Listen & Match" fits at tablet size (iPad portrait and up). */
+@media (min-width: 700px) {
+  .big-choices {
+    --per-row: 3;
+  }
+}
+
 @media (min-width: 600px) {
   .screen {
     padding-inline: 30px;
@@ -1804,7 +1824,7 @@ body[data-screen="write"] {
   }
 
   .big-choices {
-    gap: 20px;
+    --col-gap: 22px;
   }
 
   .big-btn {
@@ -1831,6 +1851,7 @@ body[data-screen="write"] {
 }
 
 @media (min-width: 860px) {
+
   .screen {
     padding-inline: 40px;
   }
