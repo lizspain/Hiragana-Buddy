@@ -64,18 +64,7 @@ export function parentScreen(nav: Nav): Screen {
         h("h3", null, "About"),
         h("p", null, "Hiragana Buddy. Free, no ads, no accounts. Nothing is sent anywhere."),
         h("p", null, "Stroke order data: KanjiVG, © Ulrich Apel, CC BY-SA 3.0."),
-        // Required by the voice's terms while these clips ship. Don't remove.
-        kanaVoiceCredit()
-          ? h(
-              "p",
-              { "data-testid": "kana-voice-credit" },
-              "Letter sounds: ",
-              h("a", { href: "https://voicevox.hiroshiba.jp/", target: "_blank", rel: "noopener" }, kanaVoiceCredit()!),
-              " (",
-              h("a", { href: "https://zunko.jp/con_ongen_kiyaku.html", target: "_blank", rel: "noopener" }, "voice terms"),
-              ").",
-            )
-          : null,
+        letterSoundsCredit(),
         h("p", null, "Romaji conversion: WanaKana (MIT)."),
         h("p", null, "Fonts: Nunito and Klee One, SIL Open Font License 1.1."),
         voiceCredit() ? h("p", null, voiceCredit()!) : null,
@@ -130,6 +119,26 @@ export function parentScreen(nav: Nav): Screen {
           )
         : null,
     );
+  }
+
+  /**
+   * Whose voice says the letters, from the kana clips' manifest. VOICEVOX's
+   * terms require "VOICEVOX:四国めたん" while those clips ship, so that credit
+   * links to VOICEVOX and the voice terms. A recorded voice is credited as given.
+   */
+  function letterSoundsCredit() {
+    const voice = kanaVoiceCredit();
+    if (!voice) return null;
+    const p = h("p", { "data-testid": "kana-voice-credit" }, "Letter sounds: ");
+    if (voice.startsWith("VOICEVOX")) {
+      p.append(
+        h("a", { href: "https://voicevox.hiroshiba.jp/", target: "_blank", rel: "noopener" }, voice),
+        " (",
+        h("a", { href: "https://zunko.jp/con_ongen_kiyaku.html", target: "_blank", rel: "noopener" }, "voice terms"),
+        ").",
+      );
+    } else p.append(voice, ".");
+    return p;
   }
 
   /** Only speaks up when letter sounds would be silent; otherwise there's nothing a grown-up needs to know. */

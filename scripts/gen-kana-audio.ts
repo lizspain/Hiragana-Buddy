@@ -10,7 +10,12 @@
 //   node scripts/gen-kana-audio.ts --only し,ち,つ
 //   options: --speed 0.75 --pre 0.15 --post 0.15 --target -20 --engine http://127.0.0.1:50021
 //
-// Never downloads audio: every clip is synthesized locally by the engine.
+//   node scripts/gen-kana-audio.ts --source recorded --voice "a parent at our school"
+//     imports a native speaker's takes from audio-src/recorded/ instead (docs/RECORDING.md):
+//     <file>-<take>.wav, picks in takes.json, same processing, same file names.
+//     --allow-missing keeps the current clip for any kana not recorded; --out <dir> writes elsewhere.
+//
+// Never downloads audio: every clip is synthesized locally or recorded by us.
 
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -21,7 +26,7 @@ import { LINES } from "../src/audio-lines.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const RAW_DIR = join(ROOT, "audio-src", "kana");
-const OUT_DIR = join(ROOT, "public", "audio", "kana");
+const REC_DIR = join(ROOT, "audio-src", "recorded");
 const VOICEGEN = join(ROOT, ".voicegen");
 
 const VOICE_NAME = "四国めたん";
@@ -47,6 +52,12 @@ const PRE = Number(opt("pre", "0.15"));
 const POST = Number(opt("post", "0.15"));
 /** RMS of the sounding part, dBFS. Clips that would peak over the ceiling at this level are held lower and flagged. */
 const TARGET_DB = Number(opt("target", "-20"));
+const SOURCE = opt("source", "voicevox");
+if (SOURCE !== "voicevox" && SOURCE !== "recorded") throw new Error(`--source must be voicevox or recorded, not ${SOURCE}`);
+/** The About screen's credit for a recorded voice. */
+const VOICE = opt("voice", "");
+const ALLOW_MISSING = process.argv.includes("--allow-missing");
+const OUT_DIR = resolve(ROOT, opt("out", join("public", "audio", "kana")));
 
 // ---------- the kana list, from the app's own table ----------
 
@@ -65,11 +76,13 @@ const fileOf = (k: string) => `${FILE_NAME[k] ?? table.kana[k].romaji}.mp3`;
 }
 
 /**
- * Japanese lines spoken in the kana voice, so a recorded voice can replace
- * them in the same session as the kana. File name → text (from the app's own
- * line list).
+ * Lines spoken in the kana voice, so a recorded voice can replace them in the
+ * same session as the kana. File name → line (from the app's own line list).
+ * VOICEVOX renders only the Japanese ones; a recording session does both.
  */
-const LINE_CLIPS: Record<string, string> = { "intro-ja.mp3": LINES.matchIntroJa.text };
+const LINE_CLIPS: Record<string, { text: string; lang: string }> = { "intro-ja.mp3": LINES.matchIntroJa, "intro-en.mp3": LINES.matchIntroEn };
+/** Kana that sound exactly like another: if not recorded, they use the twin's take. */
+const TWIN: Record<string, string> = { ぢ: "じ", づ: "ず", を: "お" };
 
 const toKata = (s: string) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
 
@@ -204,8 +217,8 @@ function processClip(d: Float32Array, warn: (w: string) => void): { pcm: Float32
   let first = rms.findIndex((v) => v > body);
   let last = rms.length - 1 - [...rms].reverse().findIndex((v) => v > body);
   if (first < 0) throw new Error("no sound in the engine's output");
-  if (first === 0) warn("sound starts at the very start of the engine's output (clipped?)");
-  if (last === rms.length - 1) warn("sound runs to the very end of the engine's output (clipped?)");
+  if (first === 0) warn("sound starts at the very start of the input (clipped?)");
+  if (last === rms.length - 1) warn("sound runs to the very end of the input (clipped?)");
   const maxLead = Math.round(MAX_LEAD_S / 0.005);
   const maxTail = Math.round(MAX_TAIL_S / 0.005);
   for (let n = 0; first > 0 && rms[first - 1] > edge && n < maxLead; n++) first--;
@@ -252,43 +265,95 @@ interface Row {
   warnings: string[];
 }
 
-async function main() {
-  mkdirSync(RAW_DIR, { recursive: true });
-  mkdirSync(OUT_DIR, { recursive: true });
-  const todo = KANA.filter((k) => !ONLY.size || ONLY.has(k));
-  const needSynth = todo.filter((k) => FRESH || ONLY.has(k) || !existsSync(join(RAW_DIR, fileOf(k).replace(".mp3", ".wav"))));
-  const warnings = new Map<string, string[]>(KANA.map((k) => [k, []]));
+/** Where each kana's and line's unprocessed audio comes from. */
+interface Sources {
+  kana: Map<string, string>;
+  lines: Map<string, string>;
+}
 
+async function fromVoicevox(warnings: Map<string, string[]>): Promise<Sources> {
+  mkdirSync(RAW_DIR, { recursive: true });
+  const todo = KANA.filter((k) => !ONLY.size || ONLY.has(k));
+  const raw = (k: string) => join(RAW_DIR, fileOf(k).replace(".mp3", ".wav"));
+  const needSynth = todo.filter((k) => FRESH || ONLY.has(k) || !existsSync(raw(k)));
   if (needSynth.length) {
     console.log(`VOICEVOX engine ${await ensureEngine()}`);
     const speaker = await styleId();
     console.log(`${VOICE_NAME} ${STYLE_NAME}: style ${speaker}. speed ${SPEED}, pre ${PRE}s, post ${POST}s`);
     for (const k of needSynth) {
-      const wav = await synthesize(k, speaker, (w) => warnings.get(k)!.push(w));
-      writeFileSync(join(RAW_DIR, fileOf(k).replace(".mp3", ".wav")), wav);
+      writeFileSync(raw(k), await synthesize(k, speaker, (w) => warnings.get(k)!.push(w)));
       process.stdout.write(k);
     }
     process.stdout.write("\n");
   }
-
-  // Lines: rebuilt with --fresh or when missing (not touched by --only).
-  const lineTodo = ONLY.size ? [] : Object.entries(LINE_CLIPS);
-  for (const [file, text] of lineTodo) {
-    const raw = join(RAW_DIR, file.replace(".mp3", ".wav"));
-    if (FRESH || !existsSync(raw)) {
+  const lines = new Map<string, string>();
+  // Japanese lines: rebuilt with --fresh or when missing (not touched by --only).
+  for (const [file, line] of ONLY.size ? [] : Object.entries(LINE_CLIPS)) {
+    if (line.lang !== "ja") continue;
+    const r = join(RAW_DIR, file.replace(".mp3", ".wav"));
+    if (FRESH || !existsSync(r)) {
       await ensureEngine();
-      writeFileSync(raw, await synthesize(text, await styleId(), (w) => console.warn(`${file}: ${w}`), true));
+      writeFileSync(r, await synthesize(line.text, await styleId(), (w) => console.warn(`${file}: ${w}`), true));
     }
-    const { pcm } = processClip(decode(raw), (w) => console.warn(`${file}: ${w}`));
+    lines.set(file, r);
+  }
+  return { kana: new Map(todo.map((k) => [k, raw(k)])), lines };
+}
+
+/** A take on disk: <name>-<take>.<ext>, or <name>.<ext> for a single take. */
+function findTake(name: string, take: number): string | null {
+  if (!existsSync(REC_DIR)) return null;
+  const files = readdirSync(REC_DIR);
+  const pick = (stem: string) => files.find((f) => f.slice(0, f.lastIndexOf(".")) === stem && /\.(wav|flac|m4a|mp3|ogg|aiff?)$/i.test(f));
+  const f = pick(`${name}-${take}`) ?? (take === 1 ? pick(name) : undefined);
+  return f ? join(REC_DIR, f) : null;
+}
+
+function fromRecordings(warnings: Map<string, string[]>): Sources {
+  if (!VOICE) throw new Error('Pass the credit for the About screen: --voice "a parent at our school"');
+  const takesFile = join(REC_DIR, "takes.json");
+  const takes = existsSync(takesFile) ? (JSON.parse(readFileSync(takesFile, "utf8")) as Record<string, number>) : {};
+  const base = (k: string) => fileOf(k).replace(".mp3", "");
+  const kana = new Map<string, string>();
+  const missing: string[] = [];
+  for (const k of KANA.filter((k) => !ONLY.size || ONLY.has(k))) {
+    let f = findTake(base(k), takes[base(k)] ?? 1);
+    if (!f && TWIN[k]) {
+      f = findTake(base(TWIN[k]), takes[base(TWIN[k])] ?? 1);
+      if (f) warnings.get(k)!.push(`no own take: uses ${TWIN[k]}'s`);
+    }
+    if (f) kana.set(k, f);
+    else missing.push(`${k} (${base(k)})`);
+  }
+  const lines = new Map<string, string>();
+  for (const file of ONLY.size ? [] : Object.keys(LINE_CLIPS)) {
+    const name = file.replace(".mp3", "");
+    const f = findTake(name, takes[name] ?? 1);
+    if (f) lines.set(file, f);
+    else missing.push(name);
+  }
+  if (missing.length) {
+    const msg = `No recording for: ${missing.join(", ")} (looked in audio-src/recorded/)`;
+    if (!ALLOW_MISSING) throw new Error(`${msg}. Nothing was changed. Add --allow-missing to keep their current clips.`);
+    console.warn(`${msg}. Keeping their current clips.`);
+  }
+  console.log(`Importing ${kana.size} kana and ${lines.size} lines recorded by ${VOICE}.`);
+  return { kana, lines };
+}
+
+async function main() {
+  mkdirSync(OUT_DIR, { recursive: true });
+  const warnings = new Map<string, string[]>(KANA.map((k) => [k, []]));
+  const src = SOURCE === "recorded" ? fromRecordings(warnings) : await fromVoicevox(warnings);
+
+  for (const [file, input] of src.lines) {
+    const { pcm } = processClip(decode(input), (w) => console.warn(`${file}: ${w}`));
     encodeMp3(pcm, join(OUT_DIR, file));
     const st = clipStats(decode(join(OUT_DIR, file)), RATE);
     console.log(`  ${file}: ${Math.round(st.duration * 1000)} ms, peak ${st.peakDb.toFixed(1)} dBFS, loudness ${st.loudnessDb.toFixed(1)} dBFS`);
   }
-
-  for (const k of todo) {
-    const raw = join(RAW_DIR, fileOf(k).replace(".mp3", ".wav"));
-    if (!existsSync(raw)) throw new Error(`missing ${raw}`);
-    const { pcm } = processClip(decode(raw), (w) => warnings.get(k)!.push(w));
+  for (const [k, input] of src.kana) {
+    const { pcm } = processClip(decode(input), (w) => warnings.get(k)!.push(w));
     encodeMp3(pcm, join(OUT_DIR, fileOf(k)));
   }
 
@@ -306,11 +371,12 @@ async function main() {
 
   const manifest: Record<string, string | boolean> = {};
   for (const k of KANA) if (existsSync(join(OUT_DIR, fileOf(k)))) manifest[k] = fileOf(k);
-  for (const [file, text] of Object.entries(LINE_CLIPS)) if (existsSync(join(OUT_DIR, file))) manifest[text] = file;
-  manifest.voice = CREDIT;
-  manifest.interim = true;
+  for (const [file, line] of Object.entries(LINE_CLIPS)) if (existsSync(join(OUT_DIR, file))) manifest[line.text] = file;
+  manifest.voice = SOURCE === "recorded" ? VOICE : CREDIT;
+  manifest.interim = SOURCE !== "recorded";
   writeFileSync(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest, null, 1) + "\n");
-  writeFileSync(join(RAW_DIR, "report.json"), JSON.stringify({ speed: SPEED, pre: PRE, post: POST, target: TARGET_DB, rows }, null, 1));
+  mkdirSync(RAW_DIR, { recursive: true });
+  writeFileSync(join(RAW_DIR, "report.json"), JSON.stringify({ source: SOURCE, voice: manifest.voice, speed: SPEED, pre: PRE, post: POST, target: TARGET_DB, rows }, null, 1));
 
   const ms = (x: number) => String(Math.round(x * 1000)).padStart(4);
   console.log("\nkana  file      sound  dur  lead tail  peak   loud   warnings");
@@ -318,7 +384,7 @@ async function main() {
     console.log(
       `${r.kana}    ${r.file.padEnd(9)} ${ms(r.sound)} ${ms(r.duration)} ${ms(r.lead)} ${ms(r.tail)}  ${r.peakDb.toFixed(1).padStart(5)} ${r.loudnessDb.toFixed(1).padStart(6)}   ${r.warnings.join("; ")}`,
     );
-  console.log(`\n${rows.length} clips in public/audio/kana/, median loudness ${med.toFixed(1)} dBFS, ${rows.filter((r) => r.warnings.length).length} with warnings.`);
+  console.log(`\n${rows.length} clips in ${OUT_DIR}, median loudness ${med.toFixed(1)} dBFS, ${rows.filter((r) => r.warnings.length).length} with warnings.`);
 }
 
 main().catch((e) => {

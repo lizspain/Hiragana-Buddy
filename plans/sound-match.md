@@ -2,7 +2,25 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Milestones 1–5 and the 3a audio add-on are done. Left: the native-speaker recording and playtests (the doc's milestones 6–7), plus open items below.
+Status: decisions settled 2026-11-25 (see below). Milestones 1–5 and the 3a audio add-on are done. Milestone 6 (final audio) is ready on the code side and waits on the recording session. Then playtests (milestone 7).
+
+### Milestone 6 notes: final audio, the code side (2026-11-27)
+
+- `docs/RECORDING.md`: the session guide. It covers permission and credit, the room and mic, what
+  the speaker says (71 kana in order, 3 takes each, the "watch for" list, the two intro lines
+  JA and EN), how to cut and name takes (`audio-src/recorded/<file>-<take>.wav`, picks in
+  `takes.json`), and the import and sign-off steps.
+- `node scripts/gen-kana-audio.ts --source recorded --voice "<credit>"` runs the takes through
+  the same trim, loudness and MP3 steps and writes the same file names, with `interim: false`.
+  ぢ, づ and を fall back to the じ, ず and お takes. A missing take stops the import before
+  anything changes (`--allow-missing` keeps the current clip). `--out` writes elsewhere.
+  Dry-run with stand-in takes: refusal, take picks, twin fallback, both lines and the manifest
+  all checked. Stand-ins deleted afterwards.
+- App: lines recorded in the kana voice (now including the English intro) win over older clips.
+  The About credit follows the manifest's `voice`: VOICEVOX gets its required credit with links;
+  a recorded voice shows as given, without links.
+- Waiting on Liz: who records and when, written permission, the credit wording, and a native
+  speaker's check of the Japanese intro.
 
 ### Milestone 5 notes (2026-11-26)
 

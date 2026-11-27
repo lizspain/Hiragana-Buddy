@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 /** Turn on the grown-ups switch (and optionally sound off), then open the home screen. */
 async function home(page: Page, settings: Record<string, unknown> = {}, items?: unknown[]) {
@@ -346,4 +348,26 @@ test("with reduced motion the whole game still plays through to the path", async
   await expect(page.getByTestId("path")).toHaveAttribute("data-ready", "true", { timeout: 15_000 });
   await expect(stone(page, "class-2")).toHaveClass(/current/);
   await expect(page.locator(".flying-star, .flyer")).toHaveCount(0);
+});
+
+test("once a recorded voice ships, the About credit follows it and the English intro plays its clip", async ({ page }) => {
+  const real = JSON.parse(readFileSync(new URL("../public/audio/kana/manifest.json", import.meta.url), "utf8"));
+  const recorded = { ...real, "Listen, then tap the one you hear!": "intro-en.mp3", voice: "a parent at our school", interim: false };
+  await page.route("**/audio/kana/manifest.json", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(recorded) }));
+  await page.route("**/audio/kana/intro-en.mp3", (r) => r.fulfill({ path: fileURLToPath(new URL("../public/audio/kana/a.mp3", import.meta.url)), contentType: "audio/mpeg" }));
+  const fetched: string[] = [];
+  page.on("request", (r) => r.url().includes("/audio/kana/intro-") && fetched.push(r.url().split("/").pop()!));
+
+  await home(page);
+  await page.getByRole("button", { name: /Settings/ }).focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Enter");
+  const credit = page.getByTestId("kana-voice-credit");
+  await expect(credit).toHaveText("Letter sounds: a parent at our school.");
+  await expect(credit.getByRole("link")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByTestId("go-listen").click();
+  await page.locator('[data-testid=stone][data-set="class-1"]').click({ force: true });
+  // The Japanese line (5 s) plays first, then the English one.
+  await expect.poll(() => fetched, { timeout: 15_000 }).toEqual(expect.arrayContaining(["intro-ja.mp3", "intro-en.mp3"]));
 });
