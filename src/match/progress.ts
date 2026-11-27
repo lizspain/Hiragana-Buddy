@@ -22,35 +22,65 @@ export interface KanaProgress {
   mixedUpWith: Record<string, number>;
 }
 
-/** Keep the store small: past this many rows the oldest go, but never a set's best. */
+// ---------- finished games, for any mini game ----------
+//
+// Listen & Match rows are per set, Make a Word rows per stage: the same
+// helpers serve both, given which field names the stone.
+
+/** One finished game. `K` is the field naming its stone (setId, stageId). */
+export type GameResult<K extends string> = { profileId: string; playedAt: string; stars: 1 | 2 | 3 } & Record<K, string>;
+
+/** Keep the store small: past this many rows the oldest go, but never a stone's best. */
 export const MAX_RESULTS = 2000;
 
-export function addResult(rows: MatchResult[], r: MatchResult): MatchResult[] {
+export function addGameResult<K extends string, R extends GameResult<K>>(rows: R[], r: R, key: K): R[] {
   const out = [...rows, r];
   if (out.length <= MAX_RESULTS) return out;
-  const keep = new Set(bestRows(out));
+  const keep = new Set(bestRows(out, key));
   const drop = out.filter((x) => !keep.has(x)).sort((a, b) => a.playedAt.localeCompare(b.playedAt));
   const gone = new Set(drop.slice(0, out.length - MAX_RESULTS));
   return out.filter((x) => !gone.has(x));
 }
 
-/** The best (then latest) row for each profile + set. */
-function bestRows(rows: MatchResult[]): MatchResult[] {
-  const best = new Map<string, MatchResult>();
+/** The best (then latest) row for each profile + stone. */
+function bestRows<K extends string, R extends GameResult<K>>(rows: R[], key: K): R[] {
+  const best = new Map<string, R>();
   for (const r of rows) {
-    const k = `${r.profileId}|${r.setId}`;
+    const k = `${r.profileId}|${r[key]}`;
     const b = best.get(k);
     if (!b || r.stars > b.stars || (r.stars === b.stars && r.playedAt > b.playedAt)) best.set(k, r);
   }
   return [...best.values()];
 }
 
-/** Best stars for a set, 0 if never finished. */
-export function bestStars(rows: MatchResult[], profileId: string, setId: string): 0 | 1 | 2 | 3 {
+/** Best stars on a stone, 0 if never finished. A replay with fewer stars never lowers it. */
+export function bestGameStars<K extends string>(rows: readonly GameResult<K>[], key: K, profileId: string, id: string): 0 | 1 | 2 | 3 {
   let best: 0 | 1 | 2 | 3 = 0;
-  for (const r of rows) if (r.profileId === profileId && r.setId === setId && r.stars > best) best = r.stars;
+  for (const r of rows) if (r.profileId === profileId && r[key] === id && r.stars > best) best = r.stars;
   return best;
 }
+
+/** Restoring must be safe to repeat: the same backup twice changes nothing. */
+export function mergeGameResults<K extends string, R extends GameResult<K>>(mine: R[], incoming: unknown, key: K): R[] {
+  if (!Array.isArray(incoming)) return mine;
+  const seen = new Set(mine.map((r) => `${r.profileId}|${r[key]}|${r.playedAt}`));
+  let out = mine;
+  for (const r of incoming as R[]) {
+    if (!r || typeof r[key] !== "string" || typeof r.playedAt !== "string" || ![1, 2, 3].includes(r.stars)) continue;
+    const k = `${r.profileId}|${r[key]}|${r.playedAt}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out = addGameResult(out, r, key);
+  }
+  return out.sort((a, b) => a.playedAt.localeCompare(b.playedAt));
+}
+
+// ---------- Listen & Match ----------
+
+export const addResult = (rows: MatchResult[], r: MatchResult): MatchResult[] => addGameResult(rows, r, "setId");
+
+/** Best stars for a set, 0 if never finished. */
+export const bestStars = (rows: MatchResult[], profileId: string, setId: string) => bestGameStars(rows, "setId", profileId, setId);
 
 export const hasPlayed = (rows: MatchResult[], profileId: string, setId: string) =>
   rows.some((r) => r.profileId === profileId && r.setId === setId);
@@ -94,19 +124,7 @@ export function topMixUps(progress: KanaProgress[], profileId: string, n = 6): M
 //
 // Restoring must be safe to repeat: the same backup twice changes nothing.
 
-export function mergeResults(mine: MatchResult[], incoming: unknown): MatchResult[] {
-  if (!Array.isArray(incoming)) return mine;
-  const seen = new Set(mine.map((r) => `${r.profileId}|${r.setId}|${r.playedAt}`));
-  let out = mine;
-  for (const r of incoming as MatchResult[]) {
-    if (!r || typeof r.setId !== "string" || typeof r.playedAt !== "string" || ![1, 2, 3].includes(r.stars)) continue;
-    const k = `${r.profileId}|${r.setId}|${r.playedAt}`;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out = addResult(out, r);
-  }
-  return out.sort((a, b) => a.playedAt.localeCompare(b.playedAt));
-}
+export const mergeResults = (mine: MatchResult[], incoming: unknown): MatchResult[] => mergeGameResults(mine, incoming, "setId");
 
 /** Per kana pair, keep the larger count (counts only grow, so this never loses taps). */
 export function mergeProgress(mine: KanaProgress[], incoming: unknown): KanaProgress[] {

@@ -155,3 +155,69 @@ test("a game of 8 clean words shows 3 stars", async ({ page }) => {
   await expect(page.locator(".pebble.gold")).toHaveCount(8);
   await expect(page.getByRole("button", { name: "Go on" })).toBeVisible({ timeout: 10_000 });
 });
+
+/** Open a stage directly (the path that leads to it comes in milestone 4). */
+async function startStage(page: Page, stageId: string) {
+  await startGame(page);
+  await page.evaluate((id) => (window as unknown as { hbNav: { vocab(id: string): void } }).hbNav.vocab(id), stageId);
+  await expect(game(page)).toHaveAttribute("data-stage", stageId);
+}
+
+const readStore = (page: Page, key: string) =>
+  page.evaluate(
+    (k) =>
+      new Promise<unknown>((res) => {
+        const r = indexedDB.open("hiragana-buddy");
+        r.onsuccess = () => {
+          const q = r.result.transaction("data").objectStore("data").get(k);
+          q.onsuccess = () => {
+            res(q.result);
+            r.result.close();
+          };
+        };
+      }),
+    key,
+  );
+
+test("stage 2B: はし shows both pictures and says bridge then chopsticks, at the prompt and the finish; the game is saved", async ({ page }) => {
+  test.setTimeout(150_000);
+  await startStage(page, "2B");
+  let sawHashi = false;
+  for (let i = 0; i < 8; i++) {
+    const word = await ready(page, i);
+    if (word !== "はし") {
+      for (const k of word) await tile(page, k).click();
+      continue;
+    }
+    sawHashi = true;
+    const pics = page.locator(".vocab-picture");
+    await expect(pics).toHaveCount(2);
+    await expect(pics.nth(0)).toHaveAttribute("data-sense", "bridge");
+    await expect(pics.nth(1)).toHaveAttribute("data-sense", "chopsticks");
+    // The prompt has just said both, bridge first.
+    expect((await said(page)).slice(-2)).toEqual(["hashi-bridge", "hashi-chopsticks"]);
+    // A free replay lights each picture while its word plays.
+    await page.getByTestId("picture").click();
+    await expect(page.locator('.vocab-picture.lit[data-sense="bridge"]')).toBeVisible();
+    await expect(page.locator('.vocab-picture.lit[data-sense="chopsticks"]')).toBeVisible({ timeout: 5_000 });
+    await expect(game(page)).toHaveAttribute("data-state", "await", { timeout: 10_000 });
+    const before = (await said(page)).length;
+    await tile(page, "は").click();
+    await tile(page, "し").click();
+    await expect.poll(async () => (await said(page)).slice(before), { timeout: 15_000 }).toEqual(["は", "し", "hashi-bridge", "hashi-chopsticks"]);
+  }
+  expect(sawHashi).toBe(true);
+  await expect(game(page)).toHaveAttribute("data-state", "results", { timeout: 20_000 });
+  await expect(game(page)).toHaveAttribute("data-stars", "3");
+  await expect.poll(() => readStore(page, "vocabResults")).toEqual([expect.objectContaining({ profileId: "p1", stageId: "2B", cleanWords: 8, stars: 3 })]);
+});
+
+test("a game left unfinished is not saved", async ({ page }) => {
+  await startGame(page);
+  await spellByTap(page, 0);
+  await ready(page, 1);
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "Leave" }).click();
+  await expect(page.getByTestId("go-vocab")).toBeVisible();
+  expect(await readStore(page, "vocabResults")).toBeUndefined();
+});

@@ -180,7 +180,7 @@ test("a finished game is saved on the device, with its mix-ups, and goes into th
   for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // the hold gate's keyboard route
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save a backup" }).click()]);
   const backup = JSON.parse(await (await download.createReadStream()).toArray().then((b) => Buffer.concat(b).toString("utf8")));
-  expect(backup.version).toBe(2);
+  expect(backup.version).toBe(3);
   expect(backup.matchResults).toEqual([expect.objectContaining({ setId: "class-1", stars: 3 })]);
   expect(backup.kanaProgress).toHaveLength(1);
 });

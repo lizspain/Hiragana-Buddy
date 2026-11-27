@@ -19,6 +19,7 @@ import { pageBurst } from "../ui/burst";
 import { preloadDance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
 import { isPalmContact } from "../ui/pen";
+import { recordVocab } from "../store";
 import { VocabGame, type PlaceResult } from "../vocab/game";
 import { stageById, VOCAB_STAGES, type VocabSense, type VocabWord } from "../vocab/stages";
 
@@ -385,6 +386,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     setState("results");
     el.dataset.stars = String(game.stars);
     el.dataset.clean = String(game.cleanWords);
+    void recordVocab(stage.id, game.cleanWords, game.stars);
     showResults({
       screen: el,
       stage: stageEl,

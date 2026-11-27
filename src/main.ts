@@ -22,6 +22,8 @@ async function boot() {
     return;
   }
   initRouter(root);
+  // Tests drive screens directly (e.g. a Make a Word stage before its path exists); never set for a child.
+  if (navigator.webdriver) (window as unknown as { hbNav: typeof nav }).hbNav = nav;
   document.getElementById("boot")?.remove();
   nav.home();
   primeAudio();

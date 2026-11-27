@@ -14,6 +14,7 @@ import {
   type KanaProgress,
   type MatchResult,
 } from "./match/progress";
+import { addVocabResult, bestVocabStars, mergeVocabResults, type VocabResult } from "./vocab/progress";
 
 export interface Settings {
   expandLongVowel: boolean;
@@ -88,20 +89,23 @@ let settings: Settings = { ...DEFAULT_SETTINGS };
 let items: Item[] = [];
 let matchResults: MatchResult[] = [];
 let kanaProgress: KanaProgress[] = [];
+let vocabResults: VocabResult[] = [];
 
 export async function loadStore(): Promise<void> {
   try {
-    const [s, i, mr, kp] = await Promise.all([
+    const [s, i, mr, kp, vr] = await Promise.all([
       get<Partial<Settings>>("settings", store),
       get<Item[]>("items", store),
       get<MatchResult[]>("matchResults", store),
       get<KanaProgress[]>("kanaProgress", store),
+      get<VocabResult[]>("vocabResults", store),
     ]);
     settings = { ...DEFAULT_SETTINGS, ...(s ?? {}) };
     settings.inkColor = inkOrDefault(settings.inkColor); // older saves used colours no longer offered
     items = i ?? [];
     matchResults = mr ?? [];
     kanaProgress = kp ?? [];
+    vocabResults = vr ?? [];
   } catch {
     // Private mode or storage blocked: run with defaults, in memory only.
   }
@@ -196,30 +200,47 @@ export async function resetMatchProgress(): Promise<void> {
   await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store)]).catch(() => undefined);
 }
 
+// ---------- Make a Word ----------
+
+/** Save a finished game (a game left unfinished is never saved). */
+export async function recordVocab(stageId: string, cleanWords: number, stars: VocabResult["stars"]): Promise<void> {
+  vocabResults = addVocabResult(vocabResults, { profileId: currentProfile(), stageId, playedAt: new Date().toISOString(), cleanWords, stars });
+  await set("vocabResults", vocabResults, store).catch(() => undefined);
+  if (!persistAsked) {
+    persistAsked = true;
+    void navigator.storage?.persist?.().catch(() => false);
+  }
+}
+
+export const vocabBestStars = (stageId: string) => bestVocabStars(vocabResults, currentProfile(), stageId);
+export const getVocabResults = (): readonly VocabResult[] => vocabResults;
+
 // ---------- backup ----------
 
 interface Backup {
   app: "hiragana-buddy";
-  /** 2 added Listen & Match (matchResults, kanaProgress). Version 1 files still restore. */
-  version: 1 | 2;
+  /** 2 added Listen & Match (matchResults, kanaProgress), 3 Make a Word (vocabResults). Older files still restore. */
+  version: 1 | 2 | 3;
   exportedAt: string;
   profiles: Profile[];
   items: Item[];
   settings: Settings;
   matchResults?: MatchResult[];
   kanaProgress?: KanaProgress[];
+  vocabResults?: VocabResult[];
 }
 
 export function exportBackup(): string {
   const data: Backup = {
     app: "hiragana-buddy",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     profiles: [{ id: DEFAULT_PROFILE, name: "", inkColor: settings.inkColor, createdAt: items[0]?.createdAt ?? new Date().toISOString() }],
     items,
     settings,
     matchResults,
     kanaProgress,
+    vocabResults,
   };
   return JSON.stringify(data);
 }
@@ -244,7 +265,8 @@ export async function importBackup(json: string): Promise<number> {
   if (data.settings) await saveSettings({ ...data.settings, iosTipShown: settings.iosTipShown });
   matchResults = mergeResults(matchResults, data.matchResults);
   kanaProgress = mergeProgress(kanaProgress, data.kanaProgress);
-  await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store)]).catch(() => undefined);
+  vocabResults = mergeVocabResults(vocabResults, data.vocabResults);
+  await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store), set("vocabResults", vocabResults, store)]).catch(() => undefined);
   await persistItems();
   return data.items.length;
 }
