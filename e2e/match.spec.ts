@@ -371,3 +371,53 @@ test("once a recorded voice ships, the About credit follows it and the English i
   // The Japanese line (5 s) plays first, then the English one.
   await expect.poll(() => fetched, { timeout: 15_000 }).toEqual(expect.arrayContaining(["intro-ja.mp3", "intro-en.mp3"]));
 });
+
+test("a whole Listen & Match visit makes no requests outside the app's own files", async ({ page }) => {
+  const outside: string[] = [];
+  page.on("request", (r) => {
+    const u = new URL(r.url());
+    if (u.origin !== "http://localhost:5174" && !u.protocol.startsWith("data") && !u.protocol.startsWith("blob")) outside.push(r.url());
+  });
+  await startGame(page); // home → path → game (with the intro and preview)
+  await playPerfect(page);
+  await page.getByRole("button", { name: "Go on" }).click();
+  await expect(page.getByTestId("path")).toHaveAttribute("data-ready", "true", { timeout: 15_000 });
+  expect(outside).toEqual([]);
+});
+
+/** Touch several points at once (one touchstart), then lift them all. CDP radius = half the contact size. */
+async function touchTogether(page: Page, points: { x: number; y: number; r: number }[]) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: points.map((p, i) => ({ x: p.x, y: p.y, radiusX: p.r, radiusY: p.r, id: i })) });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+}
+const centre = async (page: Page, k: string) => {
+  const b = (await tile(page, k).boundingBox())!;
+  return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width };
+};
+
+test("two fingers at once: the first touch wins, the second tile is left alone", async ({ page }) => {
+  await startGame(page);
+  const k = await ready(page, 0);
+  const other = await wrongTile(page, k);
+  const [a, b] = [await centre(page, k), await centre(page, other)];
+  await touchTogether(page, [
+    { ...a, r: 6 },
+    { ...b, r: 6 },
+  ]);
+  await expect(tile(page, k)).toHaveClass(/gone/);
+  await expect(tile(page, other)).not.toHaveClass(/wiggle|gone/);
+});
+
+test("a resting palm on one tile and a fingertip on another: only the fingertip counts", async ({ page }) => {
+  await startGame(page);
+  const k = await ready(page, 0);
+  const other = await wrongTile(page, k);
+  const [palm, finger] = [await centre(page, other), await centre(page, k)];
+  await touchTogether(page, [
+    { ...palm, r: 60 }, // 120 px across: a palm, even though it lands first
+    { ...finger, r: 6 },
+  ]);
+  await expect(tile(page, k)).toHaveClass(/gone/);
+  await expect(tile(page, other)).not.toHaveClass(/wiggle|gone/);
+});

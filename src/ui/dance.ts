@@ -8,12 +8,42 @@ import { h } from "./dom";
 
 const FPS = 10;
 
+const SHEET = "art/octopus-dance.webp";
+let sheetReady: Promise<CanvasImageSource> | null = null;
+
+/**
+ * Load and decode the sprite sheet ahead of time (it's large: decoding it on
+ * the frame the dance starts cost ~200 ms at 4× CPU throttling). Call while
+ * nothing else is happening, e.g. when a game starts; dance() reuses it.
+ */
+export function preloadDance(): Promise<CanvasImageSource> {
+  sheetReady ??= (async () => {
+    // From a Blob, Chrome decodes the bitmap off the main thread; from an
+    // <img> (or drawing an <img> the first time) it decodes on it, which
+    // stalled a frame for 100–200 ms at 4× CPU throttling.
+    if (typeof createImageBitmap === "function") {
+      try {
+        const r = await fetch(new URL(SHEET, document.baseURI));
+        if (r.ok) return await createImageBitmap(await r.blob());
+      } catch {
+        /* fall back to an <img> */
+      }
+    }
+    const img = new Image();
+    img.src = SHEET;
+    await img.decode();
+    return img;
+  })();
+  return sheetReady;
+}
+
 export function dance(cls = "dance", loops = Infinity): { el: HTMLCanvasElement; stop: () => void } {
   const { frameWidth: fw, frameHeight: fh, columns, frames } = art.dance;
   const el = h("canvas", { class: cls, width: fw, height: fh, "aria-hidden": "true" });
   const ctx = el.getContext("2d")!;
-  const sheet = new Image();
+  let sheet: CanvasImageSource | null = null;
   let raf = 0;
+  let stopped = false;
   let t0 = -1;
   let last = -1;
 
@@ -21,7 +51,7 @@ export function dance(cls = "dance", loops = Infinity): { el: HTMLCanvasElement;
     if (i === last) return;
     last = i;
     ctx.clearRect(0, 0, fw, fh);
-    ctx.drawImage(sheet, (i % columns) * fw, Math.floor(i / columns) * fh, fw, fh, 0, 0, fw, fh);
+    ctx.drawImage(sheet!, (i % columns) * fw, Math.floor(i / columns) * fh, fw, fh, 0, 0, fw, fh);
   };
 
   const tick = (now: number) => {
@@ -32,10 +62,21 @@ export function dance(cls = "dance", loops = Infinity): { el: HTMLCanvasElement;
     raf = requestAnimationFrame(tick);
   };
 
-  sheet.onload = () => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) draw(0);
-    else raf = requestAnimationFrame(tick);
+  void preloadDance()
+    .then((img) => {
+      if (stopped) return;
+      sheet = img;
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) draw(0);
+      else raf = requestAnimationFrame(tick);
+    })
+    .catch(() => {
+      sheetReady = null; // try again next time
+    });
+  return {
+    el,
+    stop: () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+    },
   };
-  sheet.src = "art/octopus-dance.webp";
-  return { el, stop: () => cancelAnimationFrame(raf) };
 }

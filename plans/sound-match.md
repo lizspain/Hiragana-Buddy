@@ -2,9 +2,34 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Milestones 1–5 and the 3a audio add-on are done. Milestone 6 (final audio) is ready on the code side and waits on the recording session. Then playtests (milestone 7).
+Status: decisions settled 2026-11-25 (see below). Milestones 1–5 and the 3a audio add-on are done. The final-audio tooling (the doc's milestone 6) is ready and waits on the recording session. This branch's milestone 6 (tests and checks) is done too. Next: device checks and playtests.
 
-### Milestone 6 notes: final audio, the code side (2026-11-27)
+### Milestone 6 notes: tests and checks (2026-11-27)
+
+Listen & Match against CLAUDE.md's acceptance checks:
+
+- **First-load budget**: `npm run check:budget` (in CI after the build) totals the gzipped JS and
+  CSS that `dist/index.html` loads up front: 43.2 KB of 150 KB.
+- **Airplane mode**: new Playwright project `built` (`e2e/built.spec.ts`) builds, serves with
+  `vite preview`, and checks the service worker. After one online visit all 72 kana-voice clips
+  are cached; offline, a full game plays to 3 stars with no failed request, and the result is
+  saved. It found a real gap, now fixed: the Japanese praise clips (the end-of-game cheer) were
+  only cached after playing once online. The app now fetches them while idle on first visit.
+- **No outside requests** over a whole visit (home → path → intro → preview → game → results →
+  path).
+- **Touch**: two fingers at once → the first wins and the other tile is untouched; a palm on a
+  wrong tile plus a fingertip on the right one → only the fingertip counts. (Wrong taps, the tap
+  lock and a lone palm were already covered.)
+- **40 fps at 4× CPU throttling** (`PERF=1 npx playwright test --project built`, opt-in since
+  it's timing): about 60 fps average, worst 1 s window 50 fps, game frames ≤ 33 ms. Two hitches
+  found and fixed: decoding the dance sprite sheet when results open (now decoded off-thread
+  from a Blob during the game, `preloadDance`), and creating the AudioContext on the first tap
+  of the session (~190 ms; now made while the app is idle after loading, `primeAudio`). The
+  remaining long frame (~150 ms) is that idle creation on the home screen right after load.
+- Still manual: real devices (iPad Safari, an iPhone, Android Chrome) for audio latency and
+  first-sound on iOS, and the playtests.
+
+### Final audio, the code side (the doc's milestone 6; done 2026-11-27, before this branch's milestone 6)
 
 - `docs/RECORDING.md`: the session guide. It covers permission and credit, the room and mic, what
   the speaker says (71 kana in order, 3 takes each, the "watch for" list, the two intro lines

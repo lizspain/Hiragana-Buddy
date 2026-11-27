@@ -2,7 +2,7 @@ import "./styles.css";
 import { initRouter, nav } from "./app";
 import { loadStrokes } from "./data";
 import { loadStore, getSettings } from "./store";
-import { loadVoice, setSoundEnabled } from "./ui/audio";
+import { loadVoice, primeAudio, setSoundEnabled } from "./ui/audio";
 import { installPressFeedback } from "./ui/press";
 
 // No pinch / double-tap zoom anywhere (iOS ignores user-scalable=no).
@@ -24,6 +24,7 @@ async function boot() {
   initRouter(root);
   document.getElementById("boot")?.remove();
   nav.home();
+  primeAudio();
 
   if (import.meta.env.PROD && "serviceWorker" in navigator) {
     const { registerSW } = await import("virtual:pwa-register");

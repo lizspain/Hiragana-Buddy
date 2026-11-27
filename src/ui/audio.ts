@@ -32,6 +32,28 @@ function audio(): AudioContext | null {
   return ctx;
 }
 
+/**
+ * Create the audio context (and fetch the praise clips) while the app is idle
+ * after loading, so the first tap doesn't pay for it (about 190 ms on one frame at 4× CPU throttling). It
+ * starts suspended, which browsers allow without a gesture; unlockAudio()
+ * resumes it on the first tap.
+ */
+export function primeAudio(): void {
+  const go = () => {
+    audio();
+    // The Japanese praise clips play at the end of every game but aren't
+    // precached; loading them now puts them in the service worker's cache on
+    // the first visit, so the cheer isn't silent offline.
+    for (const p of PRAISE) {
+      const f = clipFor(p);
+      if (f) void buffer(f);
+    }
+  };
+  const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  if (idle) idle(go, { timeout: 2000 });
+  else setTimeout(go, 500);
+}
+
 /** Call from a user gesture so iOS lets audio play. */
 export function unlockAudio(): void {
   const c = audio();

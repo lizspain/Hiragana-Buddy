@@ -14,7 +14,7 @@ import { PATH_SETS, pathSetById, wordSet, type KanaSet } from "../match/sets";
 import { getSettings, matchBestStars, matchPlayed, recordMatch, saveSettings } from "../store";
 import { boop, line, onVoiceTrouble, pop, praise, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
 import { pageBurst } from "../ui/burst";
-import { dance } from "../ui/dance";
+import { dance, preloadDance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal, stars } from "../ui/dom";
 import { isPalmContact } from "../ui/pen";
 
@@ -370,6 +370,8 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     el,
     mounted() {
       preloadKana(set.kana);
+      // Decode the results dance now, not on the frame it starts.
+      later(() => void preloadDance(), 1500);
       void (async () => {
         await intro();
         if (!alive) return;
