@@ -11,7 +11,7 @@ import type { Nav, Screen } from "../app";
 import { HINT_AFTER_WRONG, IDLE_PULSE_MS, NEXT_ROUND_MS } from "../match/config";
 import { MatchGame } from "../match/game";
 import { PATH_SETS, pathSetById, wordSet, type KanaSet } from "../match/sets";
-import { recordMatch } from "../store";
+import { matchBestStars, matchPlayed, recordMatch } from "../store";
 import { boop, onVoiceTrouble, pop, praise, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
 import { pageBurst } from "../ui/burst";
 import { dance } from "../ui/dance";
@@ -30,6 +30,10 @@ function resolveSet(id: string): KanaSet {
 
 export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
   const set = resolveSet(setId);
+  /** For the path: this set's best before this game, so new stars can fly onto its stone. */
+  const bestBefore = matchBestStars(set.id);
+  /** A set's first game opens with each tile saying its sound. */
+  const firstTime = !matchPlayed(set.id);
   const game = new MatchGame(set.kana);
   const timers = new Set<number>();
   const later = (fn: () => void, ms: number) => {
@@ -264,7 +268,7 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
       "div",
       { class: "match-actions" },
       iconButton(ICON.replay, "Play again", () => nav.match(set.id), "big-round"),
-      iconButton(ICON.play, "Go on", () => nav.home(), "big-round go-on"),
+      iconButton(ICON.play, "Go on", () => nav.path({ setId: set.id, before: bestBefore }), "big-round go-on"),
     );
     // The full tray moves to the centre: re-parent it, then slide it from where it was.
     const before = tray.getBoundingClientRect();
@@ -305,6 +309,30 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     later(finish, 1600 + n * 550 + 700);
   }
 
+  // ---------- first game on a set: the tile preview ----------
+  //
+  // The eight tiles arrive one at a time, each saying its sound (about 8 s),
+  // so a child who hasn't met these kana gets a fair first try. Taps and the
+  // speaker do nothing until it ends.
+
+  async function preview() {
+    busy = true;
+    setState("preview");
+    const tiles = [...tileEls.values()];
+    for (const t of tiles) t.classList.add("waiting");
+    await new Promise((r) => later(() => r(null), 500));
+    for (const t of tiles) {
+      if (!alive) return;
+      t.classList.remove("waiting");
+      t.classList.add("arrive");
+      await sayKana(t.dataset.kana!);
+      await new Promise((r) => later(() => r(null), 180));
+    }
+    if (!alive) return;
+    busy = false;
+    later(prompt, 500);
+  }
+
   // ---------- leaving ----------
 
   function askLeave() {
@@ -325,6 +353,10 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     el,
     mounted() {
       preloadKana(set.kana);
+      if (firstTime) {
+        void preview();
+        return;
+      }
       // First prompt once the board has had a moment to appear.
       later(prompt, 600);
     },

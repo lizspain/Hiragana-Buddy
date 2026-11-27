@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HARD_PAIRS, HOMOPHONES } from "./config";
 import type { TapLog } from "./game";
-import { addMixUps, addResult, bestStars, hasPlayed, MAX_RESULTS, mergeProgress, mergeResults, topMixUps, type MatchResult } from "./progress";
+import { addMixUps, addResult, bestStars, currentStone, hasPlayed, MAX_RESULTS, mergeProgress, mergeResults, pathState, topMixUps, type MatchResult } from "./progress";
 import { AUTO_SETS, BASIC_KANA, CLASS_SETS, PATH_SETS, problems, wordSet, wordSetId } from "./sets";
 
 function seeded(seed: number) {
@@ -123,5 +123,34 @@ describe("mix-ups", () => {
     expect(once.find((x) => x.kana === "し")!.mixedUpWith).toEqual({ ち: 2 });
     expect(once.find((x) => x.kana === "ぬ")!.mixedUpWith).toEqual({ め: 1 });
     expect(mergeProgress(once, backup)).toEqual(once);
+  });
+});
+
+describe("the set path", () => {
+  const ids = ["class-1", "class-2", "auto-3", "auto-4"];
+  const bests = (b: Record<string, 0 | 1 | 2 | 3>) => (id: string) => b[id] ?? 0;
+
+  it("opens only the first stone at the start, with the mascot on it", () => {
+    const s = pathState(ids, bests({}));
+    expect(s.map((x) => x.open)).toEqual([true, false, false, false]);
+    expect(currentStone(s)).toBe(0);
+  });
+
+  it("opens the next stone only at 3 stars", () => {
+    expect(pathState(ids, bests({ "class-1": 2 })).map((x) => x.open)).toEqual([true, false, false, false]);
+    const s = pathState(ids, bests({ "class-1": 3, "class-2": 1 }));
+    expect(s.map((x) => x.open)).toEqual([true, true, false, false]);
+    expect(currentStone(s)).toBe(1);
+  });
+
+  it("the grown-ups switch opens every stone; the mascot still waits at the first unfinished one", () => {
+    const s = pathState(ids, bests({ "class-1": 3 }), true);
+    expect(s.every((x) => x.open)).toBe(true);
+    expect(currentStone(s)).toBe(1);
+  });
+
+  it("with every stone at 3 stars the mascot rests on the last", () => {
+    const s = pathState(ids, () => 3);
+    expect(currentStone(s)).toBe(3);
   });
 });

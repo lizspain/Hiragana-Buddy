@@ -8,6 +8,7 @@ import { doneScreen } from "./screens/done";
 import { entryScreen } from "./screens/entry";
 import { homeScreen } from "./screens/home";
 import { matchScreen } from "./screens/match";
+import { pathScreen, type PathArrival } from "./screens/path";
 import { parentScreen } from "./screens/parent";
 import { writeScreen } from "./screens/write";
 
@@ -41,6 +42,8 @@ export interface Nav {
   parent(): void;
   /** Listen & Match, one game on a set. */
   match(setId?: string): void;
+  /** The Listen & Match set path; `arrival` animates a just-finished game's stars onto its stone. */
+  path(arrival?: PathArrival): void;
 }
 
 let current: Screen | null = null;
@@ -75,4 +78,5 @@ export const nav: Nav = {
   done: (result) => show(doneScreen(nav, result), "done"),
   parent: () => show(parentScreen(nav), "parent"),
   match: (setId) => show(matchScreen(nav, setId), "match"),
+  path: (arrival) => show(pathScreen(nav, arrival), "path"),
 };

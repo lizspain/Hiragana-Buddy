@@ -23,6 +23,8 @@ export interface Settings {
   iosTipShown: boolean;
   /** Grown-ups switch: show Listen & Match on the home screen (until the recorded voice passes review). */
   matchGame: boolean;
+  /** Grown-ups switch: every Listen & Match stone open (turning it off closes unearned stones; stars are kept). */
+  unlockPath: boolean;
 }
 
 export interface Profile {
@@ -71,6 +73,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inkColor: "#d97706",
   iosTipShown: false,
   matchGame: false,
+  unlockPath: false,
 };
 
 const store = createStore("hiragana-buddy", "data");

@@ -2,7 +2,26 @@
 
 Source of truth: `docs/Hiragana Buddy - Sound Matching Mini Game.docx` (Nov 25, 2026 draft).
 Branch: `sound-match`, cut from `main` at 2bc8ff7 (ui-polish merged, PR #8).
-Status: decisions settled 2026-11-25 (see below). Milestones 1–3 and the 3a audio add-on are done; next: Liz listens on the review page, then milestone 4.
+Status: decisions settled 2026-11-25 (see below). Milestones 1–4 and the 3a audio add-on are done; next: milestone 5.
+
+### Milestone 4 notes (2026-11-26)
+
+- `src/screens/path.ts` + `src/match/path.css`: the home button opens the set path. Six stones
+  (class 1–2, auto 3–6) wander left and right with little pebbles between them. Each shows
+  its set's first kana and three star slots. Closed stones are plain and disabled. The current
+  stone bobs, with the mascot standing on it, and one tap starts the game.
+- Rules in `progress.ts`: `pathState` (first stone always open; the next opens at 3 stars, or
+  all open with the `unlockPath` setting, whose toggle comes in milestone 5) and `currentStone`.
+  Unit-tested.
+- The My word row shows the 3 most recently practised saved words (kind `word`) as stones with
+  up to 3 of their kana, always open.
+- Results → "Go on" → path with `{ setId, before }`: the path draws the old best first, then new
+  stars fly down onto the stone, a stone that just opened flips open, and the mascot hops
+  across. Reduced motion skips the flights and hops. `data-ready` marks the end (for tests).
+- Tile preview: a set's first game (no saved result yet) brings the tiles in one at a time,
+  each saying its sound. Taps and the speaker are locked until the preview ends.
+- The home screen doesn't show Listen & Match stars yet (the doc mentions it). Left for
+  milestone 5.
 
 ### Milestone 3a: interim kana audio with VOICEVOX 四国めたん (2026-11-26)
 

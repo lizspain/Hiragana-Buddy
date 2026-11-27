@@ -137,7 +137,7 @@ function listenButton(nav: Nav): HTMLButtonElement {
           void saveSettings({ sound: true });
         }
         unlockAudio();
-        nav.match();
+        nav.path();
       },
     },
     html(`<span class="big-icon">${ICON.ear}</span>`),

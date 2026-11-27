@@ -120,3 +120,32 @@ export function mergeProgress(mine: KanaProgress[], incoming: unknown): KanaProg
   }
   return out;
 }
+
+// ---------- the set path ----------
+
+/** Best stars a set needs before the next stone opens (decided 2026-11-25). */
+export const UNLOCK_STARS = 3;
+
+export interface StoneState {
+  id: string;
+  best: 0 | 1 | 2 | 3;
+  open: boolean;
+}
+
+/**
+ * Each stone along the path: its best stars and whether it's open. The first
+ * is always open; each next one opens when the one before reaches
+ * UNLOCK_STARS, or when a grown-up has unlocked the whole path. Opening is
+ * one-way: stars are never taken away, so an open stone stays open.
+ */
+export function pathState(ids: readonly string[], best: (id: string) => 0 | 1 | 2 | 3, unlockAll = false): StoneState[] {
+  return ids.map((id, i) => ({ id, best: best(id), open: unlockAll || i === 0 || best(ids[i - 1]) >= UNLOCK_STARS }));
+}
+
+/** The stone the mascot stands on: the first open one without full stars (else the last open one). */
+export function currentStone(stones: readonly StoneState[]): number {
+  const i = stones.findIndex((s) => s.open && s.best < UNLOCK_STARS);
+  if (i >= 0) return i;
+  for (let j = stones.length - 1; j >= 0; j--) if (stones[j].open) return j;
+  return 0;
+}

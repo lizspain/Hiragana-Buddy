@@ -1,0 +1,201 @@
+/* Listen & Match set path: stepping stones through the pebble garden. */
+
+.screen.path {
+  gap: 10px;
+}
+
+/* ---------- stones (shared by the path and the My word row) ---------- */
+
+.stone {
+  --lift: 6px;
+  --edge: #8c6a4c;
+  position: relative;
+  width: clamp(104px, 28vw, 132px);
+  aspect-ratio: 1.15;
+  padding: 10px 10px 8px;
+  /* A smooth, slightly lopsided stone (same family as the tray pebbles). */
+  border: 3px solid var(--outline);
+  border-radius: 52% 48% 46% 54% / 55% 50% 50% 45%;
+  background: radial-gradient(circle at 35% 30%, #f6ead6, #cdb79d 78%);
+  box-shadow:
+    0 var(--lift) 0 var(--edge),
+    0 calc(var(--lift) + 4px) 0 var(--cast);
+  color: #3b2a1f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition:
+    transform 260ms var(--ease-bounce),
+    box-shadow 260ms var(--ease-bounce),
+    filter 160ms ease;
+}
+
+.stone-face {
+  display: flex;
+  justify-content: center;
+  height: 52%;
+  aspect-ratio: 1;
+}
+
+.stone-face svg {
+  height: 100%;
+  width: auto;
+  aspect-ratio: 1;
+}
+
+.stone-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.stone-stars .star {
+  width: 20px;
+  height: 20px;
+}
+
+.stone-stars .star.landed {
+  animation: star-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+/* Not open yet: a plain, quieter stone with no letter. */
+.stone.locked {
+  cursor: default;
+  filter: saturate(0.4) brightness(0.92);
+  opacity: 0.7;
+}
+
+.stone.locked .stone-face,
+.stone.locked .stone-stars {
+  visibility: hidden;
+}
+
+.stone.opening {
+  animation: stone-flip 560ms ease-in-out;
+}
+
+@keyframes stone-flip {
+  50% {
+    transform: rotateY(90deg) scale(1.05);
+  }
+}
+
+/* The stone under the mascot bobs gently: the one thing to tap. */
+.stone.current {
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+/* ---------- My word row ---------- */
+
+.word-stones {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 2px 0 10px;
+  border-bottom: 3px dotted rgb(101 71 49 / 25%);
+}
+
+.stone.word {
+  width: clamp(96px, 26vw, 128px);
+  aspect-ratio: 1.5;
+  background: radial-gradient(circle at 35% 30%, #fff4dc, #e8c99a 78%);
+}
+
+.stone.word .stone-face {
+  aspect-ratio: auto;
+  height: 46%;
+  gap: 1px;
+}
+
+/* ---------- the trail ---------- */
+
+.trail-wrap {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 8px 0 40px;
+}
+
+.trail {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 3vh, 28px);
+}
+
+/* Stones wander left and right like stepping stones. */
+.stone-spot {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  --wander: 0;
+  transform: translateX(calc(var(--wander) * min(26vw, 150px)));
+}
+
+.stone-spot:nth-child(4n + 2) {
+  --wander: 0.75;
+}
+
+.stone-spot:nth-child(4n + 4) {
+  --wander: -0.75;
+}
+
+/* Little pebbles between stones, like a path. */
+.stone-spot + .stone-spot::before {
+  content: "";
+  position: absolute;
+  top: calc(-0.5 * clamp(14px, 3vh, 28px) - 5px);
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: rgb(160 128 96 / 45%);
+  box-shadow:
+    -22px 2px 0 rgb(160 128 96 / 35%),
+    22px -2px 0 rgb(160 128 96 / 35%);
+}
+
+.path-mascot {
+  position: absolute;
+  z-index: 2;
+  width: clamp(64px, 18vw, 92px);
+  height: auto;
+  left: calc(50% + clamp(40px, 11vw, 56px));
+  top: -36%;
+  pointer-events: none;
+}
+
+.flying-star {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  color: var(--gold);
+  pointer-events: none;
+}
+
+.flying-star svg {
+  width: 100%;
+  height: 100%;
+}
+
+.flying-star svg path {
+  stroke: var(--gold-edge);
+  stroke-width: 2.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stone.current {
+    animation: none;
+  }
+
+  .stone-spot {
+    transform: none;
+  }
+}

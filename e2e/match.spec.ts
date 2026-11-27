@@ -2,9 +2,9 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
 /** Turn on the grown-ups switch (and optionally sound off), then open the home screen. */
-async function home(page: Page, settings: Record<string, unknown> = {}) {
+async function home(page: Page, settings: Record<string, unknown> = {}, items?: unknown[]) {
   await page.goto("/");
-  await page.evaluate(async (patch) => {
+  await page.evaluate(async ({ patch, items }) => {
     const db = await new Promise<IDBDatabase>((res, rej) => {
       const r = indexedDB.open("hiragana-buddy");
       r.onupgradeneeded = () => r.result.createObjectStore("data");
@@ -18,9 +18,10 @@ async function home(page: Page, settings: Record<string, unknown> = {}) {
       q.onsuccess = () => r(q.result);
     });
     st.put({ ...(cur as object), matchGame: true, ...patch }, "settings");
+    if (items) st.put(items, "items");
     await new Promise((r) => (tx.oncomplete = r));
     db.close();
-  }, settings);
+  }, { patch: settings, items });
   await page.reload();
 }
 
@@ -31,13 +32,14 @@ const tile = (page: Page, k: string) => board(page).locator(`.match-tile[data-ka
 async function startGame(page: Page) {
   await home(page);
   await page.getByTestId("go-listen").click();
+  await page.locator('[data-testid=stone][data-set="class-1"]').click({ force: true }); // it bobs, so never "stable"
   await expect(screen(page)).toBeVisible();
 }
 
 /** Wait until taps are open, return the asked-for kana. */
 async function ready(page: Page, round: number): Promise<string> {
   await expect(screen(page)).toHaveAttribute("data-round", String(round));
-  await expect(screen(page)).toHaveAttribute("data-state", "await", { timeout: 15_000 });
+  await expect(screen(page)).toHaveAttribute("data-state", "await", { timeout: 25_000 });
   return (await board(page).getAttribute("data-target"))!;
 }
 
@@ -69,7 +71,7 @@ test("eight first-tap finds fill the tray and earn 3 stars; tiles never move", a
   await expect(page.locator(".match-stars .star.on")).toHaveCount(3, { timeout: 10_000 });
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   await page.getByRole("button", { name: "Go on" }).click();
-  await expect(page.getByTestId("go-listen")).toBeVisible();
+  await expect(page.getByTestId("path")).toBeVisible();
 });
 
 test("a wrong tap only wiggles; the third makes the right tile glow; every game still ends with a star", async ({ page }) => {
@@ -132,7 +134,7 @@ test("with sound off, the button shows it and turns sound back on", async ({ pag
   const go = page.getByTestId("go-listen");
   await expect(go.getByLabel("Sound is off")).toBeVisible();
   await go.click();
-  await expect(screen(page)).toBeVisible();
+  await expect(page.getByTestId("path")).toBeVisible();
   await page.goto("/");
   await expect(page.getByTestId("go-listen").getByLabel("Sound is off")).toHaveCount(0);
 });
@@ -190,4 +192,81 @@ test("leaving mid-game asks with two pictures", async ({ page }) => {
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "Leave" }).click();
   await expect(page.getByTestId("go-listen")).toBeVisible();
+});
+
+const stone = (page: Page, id: string) => page.locator(`[data-testid=stone][data-set="${id}"]`);
+
+/** Play the current game with every tile found on the first tap. */
+async function playPerfect(page: Page) {
+  for (let r = 0; r < 8; r++) {
+    const k = await ready(page, r);
+    await tile(page, k).click();
+    await expect(tile(page, k)).toHaveClass(/gone/);
+  }
+  await expect(page.getByRole("button", { name: "Go on" })).toBeVisible({ timeout: 10_000 });
+}
+
+test("the path starts with only the first stone open, the mascot on it", async ({ page }) => {
+  await home(page);
+  await page.getByTestId("go-listen").click();
+  await expect(page.locator("[data-testid=stone]")).toHaveCount(6);
+  await expect(stone(page, "class-1")).toHaveAttribute("data-open", "true");
+  await expect(stone(page, "class-1")).toHaveClass(/current/);
+  await expect(stone(page, "class-1").locator("xpath=..").locator(".path-mascot")).toHaveCount(1);
+  for (const id of ["class-2", "auto-3", "auto-4", "auto-5", "auto-6"]) {
+    await expect(stone(page, id)).toHaveAttribute("data-open", "false");
+    await expect(stone(page, id)).toBeDisabled();
+  }
+  await expect(page.getByTestId("word-stone")).toHaveCount(0); // no saved words yet
+});
+
+test("a set's first game previews every tile's sound; the next game goes straight to round 1", async ({ page }) => {
+  await startGame(page);
+  await expect(screen(page)).toHaveAttribute("data-state", "preview");
+  await expect(board(page).locator(".match-tile.waiting")).not.toHaveCount(0);
+  // Taps during the preview do nothing.
+  await board(page).locator(".match-tile").first().click({ force: true });
+  await expect(board(page).locator(".match-tile.gone")).toHaveCount(0);
+  await ready(page, 0);
+  await expect(board(page).locator(".match-tile.waiting")).toHaveCount(0);
+  await playPerfect(page);
+  await page.getByRole("button", { name: "Play again" }).click();
+  await expect(screen(page)).toHaveAttribute("data-state", "prompt");
+  await expect(board(page).locator(".match-tile.waiting")).toHaveCount(0);
+});
+
+test("3 stars fly onto the stone, the next stone opens and the mascot hops onto it", async ({ page }) => {
+  await startGame(page);
+  await playPerfect(page);
+  await page.getByRole("button", { name: "Go on" }).click();
+  await expect(page.getByTestId("path")).toHaveAttribute("data-ready", "true", { timeout: 15_000 });
+  await expect(stone(page, "class-1")).toHaveAttribute("data-best", "3");
+  await expect(stone(page, "class-1").locator(".stone-stars .star.on")).toHaveCount(3);
+  await expect(stone(page, "class-2")).toHaveAttribute("data-open", "true");
+  await expect(stone(page, "class-2")).toBeEnabled();
+  await expect(stone(page, "class-2")).toHaveClass(/current/);
+  await expect(stone(page, "class-2").locator("xpath=..").locator(".path-mascot")).toHaveCount(1);
+  await expect(stone(page, "auto-3")).toHaveAttribute("data-open", "false");
+  // Stars stay after leaving and coming back.
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByTestId("go-listen").click();
+  await expect(stone(page, "class-1").locator(".stone-stars .star.on")).toHaveCount(3);
+  await expect(stone(page, "class-2")).toHaveClass(/current/);
+});
+
+test("My word stones show the 3 most recent saved words and play their kana", async ({ page }) => {
+  const at = (d: number) => new Date(Date.UTC(2026, 10, d)).toISOString();
+  const word = (kana: string, input: string, d: number) => ({
+    id: `word:${kana}`, profileId: "p1", kind: "word", input, mode: "romaji", kana: [...kana], createdAt: at(d), lastPracticedAt: at(d), sessions: [],
+  });
+  await home(page, {}, [word("ねこ", "neko", 1), word("えま", "emma", 2), word("いぬ", "inu", 3), word("さかな", "sakana", 4), { ...word("あ", "a", 5), id: "kana:あ", kind: "kana" }]);
+  await page.getByTestId("go-listen").click();
+  const words = page.getByTestId("word-stone");
+  await expect(words).toHaveCount(3);
+  expect(await words.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.set))).toEqual(["word:さかな", "word:いぬ", "word:えま"]);
+  await words.first().click();
+  await expect(screen(page)).toBeVisible();
+  const kana = await positions(page);
+  expect(kana).toHaveLength(8);
+  expect(kana).toEqual(expect.arrayContaining(["さ", "か", "な"]));
 });

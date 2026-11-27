@@ -400,3 +400,20 @@
     transform: none;
   }
 }
+
+/* First game on a set: tiles arrive one at a time, each saying its sound. */
+.match-tile.waiting {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.match-tile.arrive {
+  animation: tile-arrive 360ms var(--ease-bounce);
+}
+
+@keyframes tile-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
