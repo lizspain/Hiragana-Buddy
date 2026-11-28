@@ -128,7 +128,7 @@ interface KanaManifest {
 let kanaVoice: { files: Record<string, string>; voice?: string; interim: boolean } = { files: {}, interim: false };
 
 /**
- * Look and Write's word clips (public/audio/words/manifest.json): one per picture,
+ * Look & Write's word clips (public/audio/words/manifest.json): one per picture,
  * by clip name ("tsuki", "hashi-bridge"), same voice as the kana clips.
  */
 let wordClips: Record<string, string> = {};
@@ -499,17 +499,17 @@ function moraFiles(kana: string[]): { files: (string | null)[]; kanaVoice: boole
   return own.every((f) => f !== "") ? { files: own, kanaVoice: true } : { files: sounded((t) => manifest.ja[t]), kanaVoice: false };
 }
 
-/** The file for one Look and Write clip ("tsuki.mp3" → "words/tsuki.mp3"), if it shipped. */
+/** The file for one Look & Write clip ("tsuki.mp3" → "words/tsuki.mp3"), if it shipped. */
 export const vocabClipFile = (clip: string): string | undefined => wordClips[clip.replace(/.mp3$/, "")];
 
-/** A Look and Write word, said for one of its pictures: its own clip, else sounded out like any word. */
+/** A Look & Write word, said for one of its pictures: its own clip, else sounded out like any word. */
 export function sayVocab(clip: string, kana: string[], interrupt = true): Promise<void> {
   const f = vocabClipFile(clip);
   if (!f) return kana.length === 1 ? sayLine({ text: kana[0], lang: "ja" }, interrupt) : sayWord(kana, interrupt);
   return enqueue(clipJob([f], speechJob(kana.join(""), "ja")), interrupt);
 }
 
-/** Fetch and decode Look and Write clips ahead of time. */
+/** Fetch and decode Look & Write clips ahead of time. */
 export function preloadVocab(clips: Iterable<string>): void {
   for (const c of clips) {
     const f = vocabClipFile(c);
@@ -517,7 +517,7 @@ export function preloadVocab(clips: Iterable<string>): void {
   }
 }
 
-/** The decoded clip for one Look and Write picture (for the dev audio review page). */
+/** The decoded clip for one Look & Write picture (for the dev audio review page). */
 export function vocabClipBuffer(clip: string): Promise<AudioBuffer | null> {
   const f = vocabClipFile(clip);
   return f && audio() ? buffer(f) : Promise.resolve(null);
@@ -788,7 +788,7 @@ export function pop(): void {
   tone(660, 0, 0.12, 0.12, "sine", 990);
 }
 
-/** Look and Write's star spray: a quick, quiet twinkle running up high. */
+/** Look & Write's star spray: a quick, quiet twinkle running up high. */
 export function twinkle(): void {
   if (!enabled) return;
   [5, 7, 6, 7].forEach((n, i) => tone(SCALE[n % SCALE.length] * 1.5, i * 0.055, 0.22, 0.05 + (i === 3 ? 0.02 : 0), "sine"));

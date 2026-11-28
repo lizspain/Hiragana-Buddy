@@ -1,4 +1,4 @@
-// What Look and Write remembers: one row per finished game (docs/VOCAB-SPELLING-DESIGN.md
+// What Look & Write remembers: one row per finished game (docs/VOCAB-SPELLING-DESIGN.md
 // "Data model"). Best stars and unlocks are worked out from these rows with
 // the helpers Listen & Match uses; store.ts persists them.
 

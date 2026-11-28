@@ -1,4 +1,4 @@
-# Look and Write (Vocabulary Spelling): build plan
+# Look & Write (Vocabulary Spelling): build plan
 
 Design: `docs/VOCAB-SPELLING-DESIGN.md`. Branch: `vocab-spelling`, from
 `sound-match` (it reuses Listen & Match code that isn't on main yet).
@@ -11,7 +11,7 @@ Design: `docs/VOCAB-SPELLING-DESIGN.md`. Branch: `vocab-spelling`, from
 | Where Liz first plays 1A | Pushed to the branch's own preview (vocab-spelling.hiraganabuddy.pages.dev) |
 | Pictures | Liz is sending sprite sheets for 1A, 1B, 2A, 2B plus a chopsticks sprite; until then, plain placeholders named by word id |
 | Preview of a new stage's words | No preview |
-| Name, icon | "Look and Write", icon: the eye picture (め) from stage 1A (Nov 27). In `vocab/config.ts` |
+| Name, icon | "Look & Write" (with &, like Listen & Match), icon: the eye picture (め) from stage 1A (Nov 27). In `vocab/config.ts` |
 | Collected-words shelf | Open (later version) |
 
 ## What is reused, what changes in shared code
@@ -66,8 +66,8 @@ the engine got backwards for standard Tokyo pitch: かみ (it said "god"), み�
   path lands, tests open a stage through `window.hbNav` (only when
   `navigator.webdriver`).
 - 4 (Nov 27): the stone path is shared (`screens/stone-path.ts`); Listen &
-  Match passes its kana faces and My word row, Look and Write its pictures. Home
-  opens the Look and Write path. Grown-ups card: Unlock whole path. First-visit
+  Match passes its kana faces and My word row, Look & Write its pictures. Home
+  opens the Look & Write path. Grown-ups card: Unlock whole path. First-visit
   practice word: つき, unscored, no pebble; a hand taps the tile for the
   first letter, then loops a drag of the next tile to its slot until the child
   does it (it never moves a tile itself). Picture stones are larger than

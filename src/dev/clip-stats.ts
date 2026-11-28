@@ -77,7 +77,7 @@ const s = (x: number) => `${Math.round(x * 1000)} ms`;
 export function flagsFor(st: ClipStats, medianLoudness: number, opts: { length?: boolean } = {}): Flag[] {
   if (st.sound === 0) return [{ id: "silent", text: "no sound found" }];
   const f: Flag[] = [];
-  // Word clips (Look and Write) are whole words: the one-sound length window doesn't apply.
+  // Word clips (Look & Write) are whole words: the one-sound length window doesn't apply.
   if (opts.length !== false && st.sound < SPEC.sound[0]) f.push({ id: "short", text: `sound only ${s(st.sound)}` });
   if (opts.length !== false && st.sound > SPEC.sound[1]) f.push({ id: "long", text: `sound runs ${s(st.sound)}` });
   if (st.lead > SPEC.maxQuiet) f.push({ id: "lead", text: `${s(st.lead)} quiet before` });

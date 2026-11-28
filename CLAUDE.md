@@ -10,7 +10,7 @@ Second mini game, Listen & Match (hear a kana, tap its tile): design in
 `docs/LISTEN-MATCH.md`, build plan and decisions in `plans/sound-match.md`.
 The non-negotiables below apply to it too.
 
-Third mini game, Look and Write (see a picture, hear its word, spell it with
+Third mini game, Look & Write (see a picture, hear its word, spell it with
 kana tiles): design in `docs/VOCAB-SPELLING-DESIGN.md`, build plan and
 decisions in `plans/vocab-spelling.md`. Same non-negotiables.
 

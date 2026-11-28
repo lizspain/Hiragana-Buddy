@@ -24,7 +24,7 @@ export interface KanaProgress {
 
 // ---------- finished games, for any mini game ----------
 //
-// Listen & Match rows are per set, Look and Write rows per stage: the same
+// Listen & Match rows are per set, Look & Write rows per stage: the same
 // helpers serve both, given which field names the stone.
 
 /** One finished game. `K` is the field naming its stone (setId, stageId). */

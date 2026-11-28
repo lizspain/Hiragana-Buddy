@@ -1,4 +1,4 @@
-// Look and Write: one game's rules, no DOM (docs/VOCAB-SPELLING-DESIGN.md "How a
+// Look & Write: one game's rules, no DOM (docs/VOCAB-SPELLING-DESIGN.md "How a
 // game plays", "Tile rules", "Game logic").
 //
 // A game is a stage's 8 words in a shuffled order. Each word shows one tile

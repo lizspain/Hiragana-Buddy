@@ -1,4 +1,4 @@
-// Look and Write: the stage path (docs/VOCAB-SPELLING-DESIGN.md "Getting in",
+// Look & Write: the stage path (docs/VOCAB-SPELLING-DESIGN.md "Getting in",
 // "Unlocking"). 1A → 1B → 2A → 2B, each stone showing its first word's
 // picture and the best stars earned. 1A is open from the start; a stage opens
 // when the one before has a best of 3 stars, or when a grown-up unlocks the
