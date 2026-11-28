@@ -2,40 +2,40 @@
   "meta": {
     "source": "Class vocabulary lists, sets 1 and 2, in worksheet order (docs/VOCAB-SPELLING-DESIGN.md).",
     "accent": "VOICEVOX accent position (1 to the number of kana) for a hand-set pitch: 1 = high then low; equal to the number of kana = low then high. Only set where the pitch decides the meaning.",
-    "files": "picture in public/vocab/, clip in public/audio/words/, both named by word id (hashi has one per sense)."
+    "files": "picture (WebP, cut from art-source/vocab/ by scripts/cut-vocab-art.py) in public/vocab/, clip in public/audio/words/, both named by word id (hashi has one per sense)."
   },
   "words": [
-    { "id": "te", "kana": ["て"], "meaning": "hand", "set": 1, "stage": "1A", "order": 1, "senses": [{ "picture": "te.svg", "clip": "te.mp3" }] },
-    { "id": "ki", "kana": ["き"], "meaning": "tree", "set": 1, "stage": "1A", "order": 2, "senses": [{ "picture": "ki.svg", "clip": "ki.mp3" }] },
-    { "id": "me", "kana": ["め"], "meaning": "eye", "set": 1, "stage": "1A", "order": 3, "senses": [{ "picture": "me.svg", "clip": "me.mp3" }] },
-    { "id": "ka", "kana": ["か"], "meaning": "mosquito", "set": 1, "stage": "1A", "order": 4, "senses": [{ "picture": "ka.svg", "clip": "ka.mp3" }] },
-    { "id": "kutsu", "kana": ["く", "つ"], "meaning": "shoes", "set": 1, "stage": "1A", "order": 5, "senses": [{ "picture": "kutsu.svg", "clip": "kutsu.mp3" }] },
-    { "id": "tsuki", "kana": ["つ", "き"], "meaning": "moon", "set": 1, "stage": "1A", "order": 6, "senses": [{ "picture": "tsuki.svg", "clip": "tsuki.mp3" }] },
-    { "id": "kata", "kana": ["か", "た"], "meaning": "shoulder", "set": 1, "stage": "1A", "order": 7, "senses": [{ "picture": "kata.svg", "clip": "kata.mp3", "accent": 1, "pitch": "high-low (the engine said low-high)" }] },
-    { "id": "tatsu", "kana": ["た", "つ"], "meaning": "dragon", "set": 1, "stage": "1A", "order": 8, "senses": [{ "picture": "tatsu.svg", "clip": "tatsu.mp3" }] },
+    { "id": "te", "kana": ["て"], "meaning": "hand", "set": 1, "stage": "1A", "order": 1, "senses": [{ "picture": "te.webp", "clip": "te.mp3" }] },
+    { "id": "ki", "kana": ["き"], "meaning": "tree", "set": 1, "stage": "1A", "order": 2, "senses": [{ "picture": "ki.webp", "clip": "ki.mp3" }] },
+    { "id": "me", "kana": ["め"], "meaning": "eye", "set": 1, "stage": "1A", "order": 3, "senses": [{ "picture": "me.webp", "clip": "me.mp3" }] },
+    { "id": "ka", "kana": ["か"], "meaning": "mosquito", "set": 1, "stage": "1A", "order": 4, "senses": [{ "picture": "ka.webp", "clip": "ka.mp3" }] },
+    { "id": "kutsu", "kana": ["く", "つ"], "meaning": "shoes", "set": 1, "stage": "1A", "order": 5, "senses": [{ "picture": "kutsu.webp", "clip": "kutsu.mp3" }] },
+    { "id": "tsuki", "kana": ["つ", "き"], "meaning": "moon", "set": 1, "stage": "1A", "order": 6, "senses": [{ "picture": "tsuki.webp", "clip": "tsuki.mp3" }] },
+    { "id": "kata", "kana": ["か", "た"], "meaning": "shoulder", "set": 1, "stage": "1A", "order": 7, "senses": [{ "picture": "kata.webp", "clip": "kata.mp3", "accent": 1, "pitch": "high-low (the engine said low-high)" }] },
+    { "id": "tatsu", "kana": ["た", "つ"], "meaning": "dragon", "set": 1, "stage": "1A", "order": 8, "senses": [{ "picture": "tatsu.webp", "clip": "tatsu.mp3" }] },
 
-    { "id": "mimi", "kana": ["み", "み"], "meaning": "ear", "set": 1, "stage": "1B", "order": 1, "senses": [{ "picture": "mimi.svg", "clip": "mimi.mp3", "accent": 2, "pitch": "low-high (the engine said high-low)" }] },
-    { "id": "tsumiki", "kana": ["つ", "み", "き"], "meaning": "building blocks", "set": 1, "stage": "1B", "order": 2, "senses": [{ "picture": "tsumiki.svg", "clip": "tsumiki.mp3" }] },
-    { "id": "kami", "kana": ["か", "み"], "meaning": "paper", "set": 1, "stage": "1B", "order": 3, "senses": [{ "picture": "kami.svg", "clip": "kami.mp3", "accent": 2, "pitch": "low-high (paper; high-low is god)" }] },
-    { "id": "kaki", "kana": ["か", "き"], "meaning": "persimmon", "set": 1, "stage": "1B", "order": 4, "senses": [{ "picture": "kaki.svg", "clip": "kaki.mp3", "accent": 2, "pitch": "low-high (persimmon; high-low is oyster)" }] },
-    { "id": "kame", "kana": ["か", "め"], "meaning": "turtle", "set": 1, "stage": "1B", "order": 5, "senses": [{ "picture": "kame.svg", "clip": "kame.mp3" }] },
-    { "id": "mite", "kana": ["み", "て"], "meaning": "look!", "set": 1, "stage": "1B", "order": 6, "senses": [{ "picture": "mite.svg", "clip": "mite.mp3", "accent": 1, "pitch": "high-low (the engine said low-high)" }] },
-    { "id": "tsukimi", "kana": ["つ", "き", "み"], "meaning": "moon-viewing", "set": 1, "stage": "1B", "order": 7, "senses": [{ "picture": "tsukimi.svg", "clip": "tsukimi.mp3" }] },
-    { "id": "tsume", "kana": ["つ", "め"], "meaning": "fingernail", "set": 1, "stage": "1B", "order": 8, "senses": [{ "picture": "tsume.svg", "clip": "tsume.mp3" }] },
+    { "id": "mimi", "kana": ["み", "み"], "meaning": "ear", "set": 1, "stage": "1B", "order": 1, "senses": [{ "picture": "mimi.webp", "clip": "mimi.mp3", "accent": 2, "pitch": "low-high (the engine said high-low)" }] },
+    { "id": "tsumiki", "kana": ["つ", "み", "き"], "meaning": "building blocks", "set": 1, "stage": "1B", "order": 2, "senses": [{ "picture": "tsumiki.webp", "clip": "tsumiki.mp3" }] },
+    { "id": "kami", "kana": ["か", "み"], "meaning": "paper", "set": 1, "stage": "1B", "order": 3, "senses": [{ "picture": "kami.webp", "clip": "kami.mp3", "accent": 2, "pitch": "low-high (paper; high-low is god)" }] },
+    { "id": "kaki", "kana": ["か", "き"], "meaning": "persimmon", "set": 1, "stage": "1B", "order": 4, "senses": [{ "picture": "kaki.webp", "clip": "kaki.mp3", "accent": 2, "pitch": "low-high (persimmon; high-low is oyster)" }] },
+    { "id": "kame", "kana": ["か", "め"], "meaning": "turtle", "set": 1, "stage": "1B", "order": 5, "senses": [{ "picture": "kame.webp", "clip": "kame.mp3" }] },
+    { "id": "mite", "kana": ["み", "て"], "meaning": "look!", "set": 1, "stage": "1B", "order": 6, "senses": [{ "picture": "mite.webp", "clip": "mite.mp3", "accent": 1, "pitch": "high-low (the engine said low-high)" }] },
+    { "id": "tsukimi", "kana": ["つ", "き", "み"], "meaning": "moon-viewing", "set": 1, "stage": "1B", "order": 7, "senses": [{ "picture": "tsukimi.webp", "clip": "tsukimi.mp3" }] },
+    { "id": "tsume", "kana": ["つ", "め"], "meaning": "fingernail", "set": 1, "stage": "1B", "order": 8, "senses": [{ "picture": "tsume.webp", "clip": "tsume.mp3" }] },
 
-    { "id": "ha", "kana": ["は"], "meaning": "tooth", "set": 2, "stage": "2A", "order": 1, "senses": [{ "picture": "ha.svg", "clip": "ha.mp3" }] },
-    { "id": "ashi", "kana": ["あ", "し"], "meaning": "foot", "set": 2, "stage": "2A", "order": 2, "senses": [{ "picture": "ashi.svg", "clip": "ashi.mp3", "accent": 2, "pitch": "low-high (the engine said high-low)" }] },
-    { "id": "same", "kana": ["さ", "め"], "meaning": "shark", "set": 2, "stage": "2A", "order": 3, "senses": [{ "picture": "same.svg", "clip": "same.mp3" }] },
-    { "id": "ushi", "kana": ["う", "し"], "meaning": "cow", "set": 2, "stage": "2A", "order": 4, "senses": [{ "picture": "ushi.svg", "clip": "ushi.mp3" }] },
-    { "id": "uma", "kana": ["う", "ま"], "meaning": "horse", "set": 2, "stage": "2A", "order": 5, "senses": [{ "picture": "uma.svg", "clip": "uma.mp3" }] },
-    { "id": "kuma", "kana": ["く", "ま"], "meaning": "bear", "set": 2, "stage": "2A", "order": 6, "senses": [{ "picture": "kuma.svg", "clip": "kuma.mp3" }] },
-    { "id": "uta", "kana": ["う", "た"], "meaning": "song", "set": 2, "stage": "2A", "order": 7, "senses": [{ "picture": "uta.svg", "clip": "uta.mp3", "accent": 2, "pitch": "low-high (the engine said high-low)" }] },
-    { "id": "ame", "kana": ["あ", "め"], "meaning": "rain", "set": 2, "stage": "2A", "order": 8, "senses": [{ "picture": "ame.svg", "clip": "ame.mp3", "accent": 1, "pitch": "high-low (rain; low-high is candy)" }] },
+    { "id": "ha", "kana": ["は"], "meaning": "tooth", "set": 2, "stage": "2A", "order": 1, "senses": [{ "picture": "ha.webp", "clip": "ha.mp3" }] },
+    { "id": "ashi", "kana": ["あ", "し"], "meaning": "foot", "set": 2, "stage": "2A", "order": 2, "senses": [{ "picture": "ashi.webp", "clip": "ashi.mp3", "accent": 2, "pitch": "low-high (the engine said high-low)" }] },
+    { "id": "same", "kana": ["さ", "め"], "meaning": "shark", "set": 2, "stage": "2A", "order": 3, "senses": [{ "picture": "same.webp", "clip": "same.mp3" }] },
+    { "id": "ushi", "kana": ["う", "し"], "meaning": "cow", "set": 2, "stage": "2A", "order": 4, "senses": [{ "picture": "ushi.webp", "clip": "ushi.mp3" }] },
+    { "id": "uma", "kana": ["う", "ま"], "meaning": "horse", "set": 2, "stage": "2A", "order": 5, "senses": [{ "picture": "uma.webp", "clip": "uma.mp3" }] },
+    { "id": "kuma", "kana": ["く", "ま"], "meaning": "bear", "set": 2, "stage": "2A", "order": 6, "senses": [{ "picture": "kuma.webp", "clip": "kuma.mp3" }] },
+    { "id": "uta", "kana": ["う", "た"], "meaning": "song", "set": 2, "stage": "2A", "order": 7, "senses": [{ "picture": "uta.webp", "clip": "uta.mp3", "accent": 2, "pitch": "low-high (the engine said high-low)" }] },
+    { "id": "ame", "kana": ["あ", "め"], "meaning": "rain", "set": 2, "stage": "2A", "order": 8, "senses": [{ "picture": "ame.webp", "clip": "ame.mp3", "accent": 1, "pitch": "high-low (rain; low-high is candy)" }] },
 
-    { "id": "umi", "kana": ["う", "み"], "meaning": "sea", "set": 2, "stage": "2B", "order": 1, "senses": [{ "picture": "umi.svg", "clip": "umi.mp3" }] },
-    { "id": "shika", "kana": ["し", "か"], "meaning": "deer", "set": 2, "stage": "2B", "order": 2, "senses": [{ "picture": "shika.svg", "clip": "shika.mp3" }] },
-    { "id": "tomato", "kana": ["と", "ま", "と"], "meaning": "tomato", "set": 2, "stage": "2B", "order": 3, "senses": [{ "picture": "tomato.svg", "clip": "tomato.mp3" }] },
-    { "id": "koma", "kana": ["こ", "ま"], "meaning": "spinning top", "set": 2, "stage": "2B", "order": 4, "senses": [{ "picture": "koma.svg", "clip": "koma.mp3" }] },
+    { "id": "umi", "kana": ["う", "み"], "meaning": "sea", "set": 2, "stage": "2B", "order": 1, "senses": [{ "picture": "umi.webp", "clip": "umi.mp3" }] },
+    { "id": "shika", "kana": ["し", "か"], "meaning": "deer", "set": 2, "stage": "2B", "order": 2, "senses": [{ "picture": "shika.webp", "clip": "shika.mp3" }] },
+    { "id": "tomato", "kana": ["と", "ま", "と"], "meaning": "tomato", "set": 2, "stage": "2B", "order": 3, "senses": [{ "picture": "tomato.webp", "clip": "tomato.mp3" }] },
+    { "id": "koma", "kana": ["こ", "ま"], "meaning": "spinning top", "set": 2, "stage": "2B", "order": 4, "senses": [{ "picture": "koma.webp", "clip": "koma.mp3" }] },
     {
       "id": "hashi",
       "kana": ["は", "し"],
@@ -44,12 +44,12 @@
       "stage": "2B",
       "order": 5,
       "senses": [
-        { "meaning": "bridge", "picture": "hashi-bridge.svg", "clip": "hashi-bridge.mp3", "accent": 2, "pitch": "low-high" },
-        { "meaning": "chopsticks", "picture": "hashi-chopsticks.svg", "clip": "hashi-chopsticks.mp3", "accent": 1, "pitch": "high-low" }
+        { "meaning": "bridge", "picture": "hashi-bridge.webp", "clip": "hashi-bridge.mp3", "accent": 2, "pitch": "low-high" },
+        { "meaning": "chopsticks", "picture": "hashi-chopsticks.webp", "clip": "hashi-chopsticks.mp3", "accent": 1, "pitch": "high-low" }
       ]
     },
-    { "id": "hasami", "kana": ["は", "さ", "み"], "meaning": "scissors", "set": 2, "stage": "2B", "order": 6, "senses": [{ "picture": "hasami.svg", "clip": "hasami.mp3" }] },
-    { "id": "kasa", "kana": ["か", "さ"], "meaning": "umbrella", "set": 2, "stage": "2B", "order": 7, "senses": [{ "picture": "kasa.svg", "clip": "kasa.mp3" }] },
-    { "id": "shita", "kana": ["し", "た"], "meaning": "down", "set": 2, "stage": "2B", "order": 8, "senses": [{ "picture": "shita.svg", "clip": "shita.mp3", "accent": 2, "pitch": "low-high (down; tongue drops after)" }] }
+    { "id": "hasami", "kana": ["は", "さ", "み"], "meaning": "scissors", "set": 2, "stage": "2B", "order": 6, "senses": [{ "picture": "hasami.webp", "clip": "hasami.mp3" }] },
+    { "id": "kasa", "kana": ["か", "さ"], "meaning": "umbrella", "set": 2, "stage": "2B", "order": 7, "senses": [{ "picture": "kasa.webp", "clip": "kasa.mp3" }] },
+    { "id": "shita", "kana": ["し", "た"], "meaning": "down", "set": 2, "stage": "2B", "order": 8, "senses": [{ "picture": "shita.webp", "clip": "shita.mp3", "accent": 2, "pitch": "low-high (down; tongue drops after)" }] }
   ]
 }

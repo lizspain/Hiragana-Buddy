@@ -89,7 +89,7 @@
 }
 
 .vocab-picture {
-  width: clamp(130px, min(42vw, 30dvh), 260px);
+  width: clamp(130px, min(46vw, 32dvh), 340px);
   aspect-ratio: 1;
   display: grid;
   border-radius: 26px;
@@ -100,7 +100,7 @@
 }
 
 .vocab-pictures.two .vocab-picture {
-  width: clamp(120px, min(40vw, 26dvh), 220px);
+  width: clamp(120px, min(42vw, 28dvh), 300px);
 }
 
 .vocab-picture img {
@@ -227,11 +227,12 @@
 /* ---------- reduced motion: bounce and spray become a fade ---------- */
 
 @media (prefers-reduced-motion: reduce) {
+  /* !important: styles.css cuts every animation to 0.01 ms under reduced motion; these fades come back. */
   .vocab-pictures.bounce .vocab-picture {
-    animation: calm-fade 500ms ease;
+    animation: calm-fade 500ms ease !important;
   }
   .vocab-picture.arrive {
-    animation: calm-fade 300ms ease;
+    animation: calm-fade 300ms ease !important;
   }
   .vocab-slot.saying .match-tile {
     animation: none;
@@ -302,5 +303,18 @@
 @media (prefers-reduced-motion: reduce) {
   .vocab-hand.tap {
     animation: none;
+  }
+}
+
+/* Reduced motion: the star spray becomes this glow, fading in and out. */
+@media (prefers-reduced-motion: reduce) {
+  .vocab-pictures.glow-fade .vocab-picture {
+    animation: glow-fade 900ms ease !important;
+  }
+}
+
+@keyframes glow-fade {
+  40% {
+    filter: drop-shadow(0 0 18px rgb(247 200 70 / 95%));
   }
 }

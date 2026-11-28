@@ -14,7 +14,7 @@ import "../match/match.css";
 import "../vocab/vocab.css";
 import type { Nav, Screen } from "../app";
 import { showResults } from "../match/results";
-import { boop, onVoiceTrouble, pop, preloadKana, preloadVocab, sayKana, sayVocab, stepChime, unlockAudio } from "../ui/audio";
+import { boop, clink, onVoiceTrouble, pop, preloadKana, preloadVocab, sayKana, sayVocab, stepChime, thunk, twinkle, unlockAudio } from "../ui/audio";
 import { pageBurst } from "../ui/burst";
 import { preloadDance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
@@ -206,6 +206,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
       held.dragging = true;
       held.tile.classList.remove("wiggle", "sliding-back");
       held.tile.classList.add("dragging");
+      thunk(); // picked up
     }
     held.tile.style.transform = `translate(${dx}px, ${dy}px) scale(1.06)`;
     const over = slotAt(e.clientX, e.clientY);
@@ -356,7 +357,10 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     await sayWord(my);
     if (!alive || my !== seq) return;
     restart(pictures, "bounce");
-    cleanups.push(pageBurst(pictures, 1100));
+    // Reduced motion: no flying stars, a soft golden glow that fades in and out instead.
+    if (reducedMotion()) restart(pictures, "glow-fade");
+    else cleanups.push(pageBurst(pictures, 1100));
+    twinkle();
     if (practicing) {
       await wait(900);
       if (!alive || my !== seq) return;
@@ -384,6 +388,7 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
       slot.replaceChildren(h("span", { class: clean ? "pebble gold" : "pebble" }, h("img", { src: pictureUrl(word.senses[0]), alt: "" })));
       slot.classList.add("filled");
       slot.dataset.clean = String(clean);
+      clink(clean);
     };
     const from = pictureEls[0]?.getBoundingClientRect();
     if (reducedMotion() || !from?.width) return put();

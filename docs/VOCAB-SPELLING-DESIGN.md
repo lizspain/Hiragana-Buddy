@@ -229,7 +229,7 @@ The game needs 33 pictures: one per word, and two for はし. We draw them ourse
 
 - **Style:** the pebble-garden look of the rest of the app, with thick dark outlines, flat colours from the app palette, and no text.
 
-- **Format:** SVG, one file per picture, named by word (tsuki.svg, hashi-bridge.svg, hashi-chopsticks.svg).
+- **Format:** SVG, one file per picture, named by word (tsuki.svg, hashi-bridge.svg, hashi-chopsticks.svg). *(Nov 2026: the art came as picture sheets; scripts/cut-vocab-art.py cuts them into transparent WebP files with these names, tsuki.webp and so on.)*
 
 - **Readable small:** each picture must be recognizable at about 3 cm across, because it also appears on a stepping stone.
 

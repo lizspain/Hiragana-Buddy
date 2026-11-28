@@ -2,6 +2,8 @@
 // finish sequence, and a whole clean game.
 
 import type { Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "./fixtures";
 
 /** Turn on the grown-ups switch (practice word already played unless asked), then open stage 1A from the path. */
@@ -243,8 +245,8 @@ test("the path: 1A open from the start, each stone shows its first picture, the 
     await expect(stone(page, id)).toHaveAttribute("data-open", "false");
     await expect(stone(page, id)).toBeHidden(); // not on the path until the stage before has 3 stars
   }
-  await expect(stone(page, "1A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/te.svg");
-  await expect(stone(page, "2A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/ha.svg"); // there, though hidden
+  await expect(stone(page, "1A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/te.webp");
+  await expect(stone(page, "2A").locator("img.stone-picture")).toHaveAttribute("src", "vocab/ha.webp"); // there, though hidden
   await expect(stone(page, "1A").locator(".star:not(.ghost)")).toHaveCount(0); // no stars yet, no outlines
 });
 
@@ -314,4 +316,42 @@ test("first visit: the practice word つき, with a hand showing tap then drag; 
   await page.getByTestId("go-vocab").click();
   await stone(page, "1A").click({ force: true });
   await expect(game(page)).toHaveAttribute("data-practice", "false");
+});
+
+test("reduced motion: a finished word glows and fades instead of bouncing and spraying stars", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await startGame(page);
+  await page.evaluate(() => {
+    const w = window as unknown as { bursts: number };
+    w.bursts = 0;
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => (n as Element).classList?.contains("page-burst") && w.bursts++))).observe(document.body, { childList: true });
+  });
+  await spellByTap(page, 0);
+  await expect(page.getByTestId("picture")).toHaveClass(/glow-fade/, { timeout: 10_000 });
+  await expect(page.locator(".match-tray .slot").first()).toHaveAttribute("data-clean", "true", { timeout: 10_000 });
+  expect(await page.evaluate(() => (window as unknown as { bursts: number }).bursts)).toBe(0);
+});
+
+test("every word has its picture: all 33 files load at 512 px", async ({ page }) => {
+  await startGame(page);
+  const files = JSON.parse(readFileSync(fileURLToPath(new URL("../data/vocab-words.json", import.meta.url)), "utf8")).words.flatMap(
+    (w: { senses: { picture: string }[] }) => w.senses.map((s) => s.picture),
+  ) as string[];
+  expect(files).toHaveLength(33);
+  const sizes = await page.evaluate(
+    (fs) =>
+      Promise.all(
+        fs.map(
+          (f) =>
+            new Promise<number>((res) => {
+              const img = new Image();
+              img.onload = () => res(img.naturalWidth);
+              img.onerror = () => res(0);
+              img.src = "vocab/" + f;
+            }),
+        ),
+      ),
+    files,
+  );
+  expect(sizes).toEqual(files.map(() => 512));
 });

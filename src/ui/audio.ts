@@ -787,3 +787,19 @@ export function pop(): void {
   if (!enabled) return;
   tone(660, 0, 0.12, 0.12, "sine", 990);
 }
+
+/** Make a Word's star spray: a quick, quiet twinkle running up high. */
+export function twinkle(): void {
+  if (!enabled) return;
+  [5, 7, 6, 7].forEach((n, i) => tone(SCALE[n % SCALE.length] * 1.5, i * 0.055, 0.22, 0.05 + (i === 3 ? 0.02 : 0), "sine"));
+}
+
+/** A pebble landing in the tray: a stone's soft clack, with a bright ring for a gold one. */
+export function clink(gold: boolean): void {
+  if (!enabled) return;
+  tone(420, 0, 0.07, 0.12, "triangle", 300);
+  if (gold) {
+    tone(SCALE[5], 0.03, 0.4, 0.09, "sine");
+    tone(SCALE[7], 0.1, 0.45, 0.07, "sine");
+  } else tone(SCALE[2], 0.03, 0.3, 0.06, "sine");
+}

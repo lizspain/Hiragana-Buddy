@@ -76,3 +76,9 @@ the engine got backwards for standard Tokyo pitch: かみ (it said "god"), み�
 - Path change (Nov 27): stones that aren't open aren't shown, on both paths;
   the next one appears when the one before reaches 3 stars (or all appear with
   Unlock whole path).
+- 5 (Nov 27): the real pictures. Liz's sheets in art-source/vocab/ (4 x 2 grids in
+  worksheet order, plus the chopsticks) are cut by scripts/cut-vocab-art.py into
+  33 transparent 512 px WebP files in public/vocab/ (723 KB, precached). Polish: a
+  thunk when a tile is picked up to drag, a twinkle with the star spray, a pebble
+  clink (brighter for gold). Reduced motion: the bounce fades, the spray becomes a
+  golden glow, pebbles fade in. Larger pictures on tablets (up to 340 px).

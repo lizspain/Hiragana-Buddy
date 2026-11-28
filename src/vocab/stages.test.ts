@@ -28,7 +28,7 @@ describe("the word list", () => {
 
   it("gives はし two pictures and every other word one: 33 clips in all", () => {
     const hashi = VOCAB_WORDS.find((w) => w.id === "hashi")!;
-    expect(hashi.senses.map((s) => s.picture)).toEqual(["hashi-bridge.svg", "hashi-chopsticks.svg"]);
+    expect(hashi.senses.map((s) => s.picture)).toEqual(["hashi-bridge.webp", "hashi-chopsticks.webp"]);
     expect(VOCAB_WORDS.filter((w) => w.id !== "hashi").every((w) => w.senses.length === 1)).toBe(true);
     expect(VOCAB_WORDS.flatMap((w) => w.senses).length).toBe(33);
   });
