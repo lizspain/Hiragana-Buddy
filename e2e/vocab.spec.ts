@@ -112,6 +112,28 @@ test("spell つき by drag, き first into the second slot", async ({ page }) =>
   throw new Error("つき never came up");
 });
 
+test("a wobbly tap is a tap: a short slide (even off the tile) places the tile; a long one dropped nowhere doesn't", async ({ page }) => {
+  await startGame(page);
+  const word = await ready(page, 0);
+  const wobble = async (k: string, dx: number, dy: number) => {
+    await tile(page, k).click({ trial: true }); // waits until it is still
+    const a = (await tile(page, k).boundingBox())!;
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height - 6);
+    await page.mouse.down();
+    await page.mouse.move(a.x + a.width / 2 + dx, a.y + a.height - 6 + dy, { steps: 5 });
+    await page.mouse.up();
+  };
+  // 25 px down and sideways: past the pick-up distance and off the tile, still a tap.
+  await wobble(word[0], 10, 23);
+  await expect(slot(page, 0)).toHaveClass(/filled/);
+  if (word.length > 1) {
+    // A real slide well away from every slot: nothing placed, nothing counted.
+    await wobble(word[1], 120, 60);
+    await expect(slot(page, 1)).not.toHaveClass(/filled/);
+    await expect(game(page)).toHaveAttribute("data-state", "await");
+  }
+});
+
 test("a wrong tile wiggles back and the word is said again; a drag dropped nowhere costs nothing", async ({ page }) => {
   await startGame(page);
   const word = await ready(page, 0);

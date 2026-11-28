@@ -413,6 +413,19 @@ const centre = async (page: Page, k: string) => {
   return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width };
 };
 
+test("a wobbly tap that slides off the edge of its tile still counts as a tap", async ({ page }) => {
+  await startGame(page);
+  const k = await ready(page, 0);
+  await tile(page, k).click({ trial: true }); // waits until it has finished arriving
+  const b = (await tile(page, k).boundingBox())!;
+  // Pressed near the bottom edge, wobbled 24 px down, off the tile.
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height - 6);
+  await page.mouse.down();
+  await page.mouse.move(b.x + b.width / 2 + 6, b.y + b.height + 18, { steps: 4 });
+  await page.mouse.up();
+  await expect(tile(page, k)).toHaveClass(/gone/);
+});
+
 test("two fingers at once: the first touch wins, the second tile is left alone", async ({ page }) => {
   await startGame(page);
   const k = await ready(page, 0);

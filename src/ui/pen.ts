@@ -51,6 +51,16 @@ const palmContactPx = IS_IOS ? PALM_CONTACT_PX_IOS : PALM_CONTACT_PX;
 /** A touch this wide is a palm or resting hand, not a fingertip (shared with Listen & Match's tiles). */
 export const isPalmContact = (e: PointerEvent): boolean =>
   e.pointerType === "touch" && Math.max(e.width || 0, e.height || 0) > palmContactPx;
+
+/**
+ * A tile press that lifts within this distance (CSS px) of where it landed is a
+ * tap, wherever the finger ends up: small fingers wobble (playtest, Nov 2026).
+ * Shared by Listen & Match's and Look & Write's tiles.
+ */
+export const TAP_SLOP_PX = 30;
+
+/** True when a press from (x0, y0) lifted at (x, y) is close enough to count as a tap. */
+export const isTapDistance = (x0: number, y0: number, x: number, y: number): boolean => Math.hypot(x - x0, y - y0) <= TAP_SLOP_PX;
 const TAP_LEN = 0.02;
 /** A contact that has not strayed this far (cell units) from where it landed is resting, not drawing. */
 const RESTING_LEN = 0.04;

@@ -18,15 +18,16 @@ import { boop, clink, onVoiceTrouble, pop, preloadKana, preloadVocab, sayKana, s
 import { pageBurst } from "../ui/burst";
 import { preloadDance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
-import { isPalmContact } from "../ui/pen";
+import { isPalmContact, isTapDistance } from "../ui/pen";
 import { getSettings, recordVocab, saveSettings, vocabBestStars } from "../store";
 import { VocabGame, type PlaceResult } from "../vocab/game";
 import { setKana, stageById, VOCAB_STAGES, VOCAB_WORDS, type VocabSense, type VocabStage, type VocabWord } from "../vocab/stages";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const UNDER_TEST = typeof navigator !== "undefined" && navigator.webdriver;
-/** A press that moves this far (px) is a drag, not a tap. */
-const DRAG_PX = 10;
+/** A press that moves this far (px) picks the tile up to follow the finger. A
+ *  short one released off every slot is still a tap (isTapDistance). */
+const DRAG_PX = 16;
 /** A drop this close to a slot (fraction of its size) still counts as on it: generous for small fingers. */
 const SLOT_REACH = 0.35;
 /** Between a finished word's finish and the next picture. */
@@ -177,9 +178,11 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
   //
   // One finger at a time: while one is down every other contact is ignored,
   // and a palm-sized contact never counts. Released without moving: a tap,
-  // if still over the tile it started on. Moved past DRAG_PX: a drag that
-  // follows the finger; released over a slot (generously), it's offered to
-  // that slot; anywhere else it slides home and counts as nothing.
+  // Lifted within TAP_SLOP_PX of where it landed, and not over a slot: a tap,
+  // wherever the finger wandered (a wobbly tap is still a tap). Moved past
+  // DRAG_PX the tile follows the finger; released over a slot (generously),
+  // it's offered to that slot; anywhere else, far away, it slides home and
+  // counts as nothing.
   // pointercancel slides it home too, never counted.
 
   let held: { id: number; tile: HTMLButtonElement; x0: number; y0: number; dragging: boolean; over: HTMLElement | null } | null = null;
@@ -223,12 +226,11 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
     held = null;
     h0.over?.classList.remove("over");
     const id = Number(h0.tile.dataset.tile);
-    if (!h0.dragging) {
-      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest(".match-tile");
-      if (over === h0.tile) onPlace(h0.tile, game.tap(id));
-      return;
+    const slot = h0.dragging ? slotAt(e.clientX, e.clientY) : null;
+    if (!slot && isTapDistance(h0.x0, h0.y0, e.clientX, e.clientY)) {
+      h0.tile.classList.remove("dragging");
+      return onPlace(h0.tile, game.tap(id));
     }
-    const slot = slotAt(e.clientX, e.clientY);
     if (!slot) return slideBack(h0.tile);
     const r = game.drop(id, Number(slot.dataset.slot));
     if (r.kind === "ignored") return slideBack(h0.tile);

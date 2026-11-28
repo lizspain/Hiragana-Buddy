@@ -16,7 +16,7 @@ import { showResults } from "../match/results";
 import { boop, line, onVoiceTrouble, pop, preloadKana, sayKana, stepChime, unlockAudio } from "../ui/audio";
 import { preloadDance } from "../ui/dance";
 import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
-import { isPalmContact } from "../ui/pen";
+import { isPalmContact, isTapDistance } from "../ui/pen";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 /** Tests read the asked-for kana from the board; a child never sees it. */
@@ -134,20 +134,26 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
   //
   // First touch wins: while one finger is down every other contact is
   // ignored, and a palm-sized contact never counts. A tap lands on release,
-  // over the tile it started on. Keyboard "clicks" (detail 0) count too.
+  // over the tile it started on or within TAP_SLOP_PX of where it landed (a
+  // wobbly tap is still a tap). Keyboard "clicks" (detail 0) count too.
 
-  let down: { id: number; tile: HTMLButtonElement } | null = null;
+  let down: { id: number; tile: HTMLButtonElement; x0: number; y0: number } | null = null;
   board.addEventListener("pointerdown", (e) => {
     const tile = (e.target as Element).closest<HTMLButtonElement>(".match-tile");
     if (!tile || down || isPalmContact(e) || (e.pointerType === "mouse" && e.button !== 0)) return;
-    down = { id: e.pointerId, tile };
+    down = { id: e.pointerId, tile, x0: e.clientX, y0: e.clientY };
+    try {
+      tile.setPointerCapture(e.pointerId); // the release reaches us even off the board
+    } catch {
+      /* synthetic events in tests */
+    }
   });
   board.addEventListener("pointerup", (e) => {
     if (!down || e.pointerId !== down.id) return;
-    const { tile } = down;
+    const { tile, x0, y0 } = down;
     down = null;
     const over = document.elementFromPoint(e.clientX, e.clientY)?.closest(".match-tile");
-    if (over === tile) onTap(tile);
+    if (over === tile || isTapDistance(x0, y0, e.clientX, e.clientY)) onTap(tile);
   });
   board.addEventListener("pointercancel", (e) => {
     if (down?.id === e.pointerId) down = null;
