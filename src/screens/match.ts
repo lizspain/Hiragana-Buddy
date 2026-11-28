@@ -79,7 +79,7 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
   const el = h(
     "div",
     { class: "screen match", "data-testid": "match", "data-state": "prompt", "data-round": "0" },
-    h("header", { class: "topbar match-top" }, iconButton(ICON.home, "Home", askLeave, "home small"), tray),
+    h("header", { class: "topbar match-top" }, iconButton(ICON.home, "Home", askLeave, "home"), tray),
     h("main", { class: "match-stage" }, speaker, board),
   );
 
@@ -281,7 +281,8 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
 
   // ---------- very first game: the spoken intro ----------
   //
-  // "Listen, then tap the one you hear!" in Japanese, then English, once ever.
+  // "Listen, then tap the one you hear!" in English, once ever. (A Japanese
+  // version played first; playtesters found it confusing, cut Nov 2026.)
   // The mascot talks; taps and the speaker wait.
 
   async function intro() {
@@ -289,8 +290,7 @@ export function matchScreen(nav: Nav, setId = PATH_SETS[0].id): Screen {
     busy = true;
     setState("intro");
     speaker.classList.add("talking");
-    await line("matchIntroJa");
-    await line("matchIntroEn", false);
+    await line("matchIntroEn");
     speaker.classList.remove("talking");
     busy = false;
     if (alive) void saveSettings({ matchIntroDone: true });

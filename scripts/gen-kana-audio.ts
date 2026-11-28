@@ -86,7 +86,7 @@ const fileOf = (k: string) => `${FILE_NAME[k] ?? table.kana[k].romaji}.mp3`;
  * same session as the kana. File name → line (from the app's own line list).
  * VOICEVOX renders only the Japanese ones; a recording session does both.
  */
-const LINE_CLIPS: Record<string, { text: string; lang: string }> = { "intro-ja.mp3": LINES.matchIntroJa, "intro-en.mp3": LINES.matchIntroEn };
+const LINE_CLIPS: Record<string, { text: string; lang: string }> = { "intro-en.mp3": LINES.matchIntroEn };
 /** Kana that sound exactly like another: if not recorded, they use the twin's take. */
 const TWIN: Record<string, string> = { ぢ: "じ", づ: "ず", を: "お" };
 

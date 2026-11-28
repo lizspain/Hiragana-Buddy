@@ -52,7 +52,7 @@ test("offline after the first visit: Listen & Match plays, its sounds come from 
     for (const n of names) for (const r of await (await caches.open(n)).keys()) urls.push(new URL(r.url).pathname);
     return urls.filter((u) => /\/audio\/kana\/.+\.mp3$/.test(u)).length;
   });
-  expect(cached).toBe(72); // 71 kana + the Japanese intro
+  expect(cached).toBe(71); // the 71 kana (the Japanese intro clip was cut, Nov 2026)
   // The Japanese praise clips (the end-of-game cheer) are fetched once the app is idle, into the runtime cache.
   await expect
     .poll(() => page.evaluate(async () => (await (await caches.open("voice-clips")).keys()).length), { timeout: 10_000 })

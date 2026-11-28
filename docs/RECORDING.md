@@ -58,11 +58,10 @@ so takes can be named afterwards.
 | ば ba | び bi | ぶ bu | べ be | ぼ bo |
 | ぱ pa | ぴ pi | ぷ pu | ぺ pe | ぽ po |
 
-### Two lines
+### One line
 
 | File | Say |
 | --- | --- |
-| intro-ja | よく きいてね。きこえた もじを タッチしてね！ (please check this wording and say it however sounds natural to a child) |
 | intro-en | Listen, then tap the one you hear! |
 
 ## 2. After the session: name the takes
@@ -74,14 +73,14 @@ Name them `<file>-<take>.wav` and put them in `audio-src/recorded/` (git-ignored
 ```
 audio-src/recorded/ka-1.wav   ka-2.wav   ka-3.wav
 audio-src/recorded/shi-1.wav  …
-audio-src/recorded/intro-ja-1.wav   intro-en-1.wav
+audio-src/recorded/intro-en-1.wav
 ```
 
 Pick the best take for each by ear. List the picks in `audio-src/recorded/takes.json`; any
 kana not listed uses take 1:
 
 ```json
-{ "ka": 2, "shi": 3, "intro-ja": 1 }
+{ "ka": 2, "shi": 3, "intro-en": 1 }
 ```
 
 ぢ, づ and を don't need their own takes: the app plays じ, ず and お for them. If they're

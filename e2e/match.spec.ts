@@ -280,15 +280,13 @@ const openGrownUps = async (page: Page) => {
   for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // the hold gate's keyboard route
 };
 
-test("the very first game opens with the spoken intro, Japanese then English; later games don't", async ({ page }) => {
-  const said: string[] = [];
-  page.on("request", (r) => {
-    if (r.url().endsWith("/audio/kana/intro-ja.mp3")) said.push("ja");
-  });
+test("the very first game opens with the short English intro only (no Japanese instructions); later games don't", async ({ page }) => {
+  const fetched: string[] = [];
+  page.on("request", (r) => r.url().includes("/audio/kana/intro-") && fetched.push(r.url().split("/").pop()!));
   await startGame(page);
   await expect(screen(page)).toHaveAttribute("data-state", "intro");
-  await expect.poll(() => said).toContain("ja");
   await ready(page, 0); // then the preview, then round 1
+  expect(fetched).not.toContain("intro-ja.mp3");
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "Leave" }).click();
   await page.getByTestId("go-listen").click();
@@ -385,8 +383,8 @@ test("once a recorded voice ships, the About credit follows it and the English i
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await page.getByTestId("go-listen").click();
   await page.locator('[data-testid=stone][data-set="class-1"]').click({ force: true });
-  // The Japanese line (5 s) plays first, then the English one.
-  await expect.poll(() => fetched, { timeout: 15_000 }).toEqual(expect.arrayContaining(["intro-ja.mp3", "intro-en.mp3"]));
+  // Only the English line: the Japanese one was cut (Nov 2026).
+  await expect.poll(() => fetched, { timeout: 15_000 }).toEqual(["intro-en.mp3"]);
 });
 
 test("a whole Listen & Match visit makes no requests outside the app's own files", async ({ page }) => {

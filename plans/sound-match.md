@@ -53,11 +53,10 @@ Listen & Match against CLAUDE.md's acceptance checks:
   (`unlockPath`), **Sounds mixed up most** (`topMixUps`, pairs counted at least twice) and
   **Reset set progress** (with a confirm prompt; clears this profile's results and mix-ups).
 - Home: the Listen & Match button shows just its ear and name, like the other game cards (its corner stone and stars came off, Nov 2026).
-- Spoken intro on the very first game, before the preview: "よく きいてね。きこえた もじを
-  タッチしてね！" in the kana voice (`public/audio/kana/intro-ja.mp3`, 5.2 s, made by the same
-  script), then "Listen, then tap the one you hear!" in the device's English voice.
-  `matchIntroDone` is set once it has played. **The Japanese wording is mine: a native
-  speaker should check it.**
+- Spoken intro on the very first game, before the preview: "Listen, then tap the one you hear!"
+  in the device's English voice. `matchIntroDone` is set once it has played. (A Japanese line,
+  "よく きいてね。きこえた もじを タッチしてね！", played first until Nov 2026; playtesters found it
+  confusing, so it and its clip were cut.)
 - Pebble garden: raked-sand rings and loose pebbles (CSS gradients, no images) behind the path,
   and more faintly behind the game.
 - Reduced motion: the flights and hops are already skipped; pebbles, opening stones, landing

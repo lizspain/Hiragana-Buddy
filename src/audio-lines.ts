@@ -25,7 +25,6 @@ export const LINES = {
   movedOn: en("Oops. We'll try that one together another time."),
   // Listen & Match, very first game only: Japanese first, then English. The
   // Japanese line is rendered in the kana voice (scripts/gen-kana-audio.ts).
-  matchIntroJa: ja("よく きいてね。きこえた もじを タッチしてね！"),
   matchIntroEn: en("Listen, then tap the one you hear!"),
 } satisfies Record<string, Line>;
 

@@ -126,7 +126,7 @@ export function stonePath(spec: PathSpec, arrival?: PathArrival): Screen {
   const el = h(
     "div",
     { class: "screen path", "data-testid": spec.testId, "data-ready": "false" },
-    h("header", { class: "topbar" }, iconButton(ICON.home, "Home", spec.home, "home small")),
+    h("header", { class: "topbar" }, iconButton(ICON.home, "Home", spec.home, "home")),
     top,
     h("main", { class: "trail-wrap" }, trail),
   );
