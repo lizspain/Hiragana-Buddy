@@ -51,7 +51,7 @@ const kanaEntry = (k: string): Entry => ({
   buffer: () => kanaClipBuffer(k),
 });
 
-/** Make a Word: what to listen for beyond the clip itself. */
+/** Look and Write: what to listen for beyond the clip itself. */
 const WORD_NOTES: Record<string, string> = {
   "ha.mp3": "“ha”, not the particle “wa”.",
   "te.mp3": "Said as the word “hand”, not just the letter.",
@@ -310,9 +310,9 @@ export function audioReviewScreen(): HTMLElement {
     h("div", { class: "grid", "data-testid": "review-kana-first" }, firstKana.map(card)),
     h("h2", null, "Kana: everything else"),
     h("div", { class: "grid" }, restKana.map(card)),
-    h("h2", null, "Make a Word: listen to these first (pitch and one-kana words)"),
+    h("h2", null, "Look and Write: listen to these first (pitch and one-kana words)"),
     h("div", { class: "grid", "data-testid": "review-words-first" }, FIRST_WORDS.map(card)),
-    h("h2", null, "Make a Word: the other words"),
+    h("h2", null, "Look and Write: the other words"),
     h("div", { class: "grid", "data-testid": "review-words" }, restWords.map(card)),
   );
 

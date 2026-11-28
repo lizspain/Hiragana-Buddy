@@ -4,7 +4,7 @@ import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/
 import { getSettings, matchBestStars, saveSettings } from "../store";
 import { currentStone, pathState } from "../match/progress";
 import { PATH_SETS } from "../match/sets";
-import { VOCAB_NAME } from "../vocab/config";
+import { VOCAB_ICON, VOCAB_NAME } from "../vocab/config";
 
 export function homeScreen(nav: Nav): Screen {
   const el = h(
@@ -95,7 +95,7 @@ function listenButton(nav: Nav): HTMLButtonElement {
   );
 }
 
-/** Make a Word: opens its stage path. */
+/** Look and Write: opens its stage path. */
 function vocabButton(nav: Nav): HTMLButtonElement {
   return h(
     "button",
@@ -107,7 +107,7 @@ function vocabButton(nav: Nav): HTMLButtonElement {
         nav.vocabPath();
       },
     },
-    html(`<span class="big-icon">${ICON.picture}</span>`),
+    h("span", { class: "big-icon picture" }, h("img", { src: VOCAB_ICON, alt: "", draggable: "false" })),
     h("span", { class: "big-label" }, VOCAB_NAME.en),
   );
 }

@@ -659,11 +659,18 @@ input:focus-visible {
   background: var(--peach);
 }
 
-/* Make a Word: the same card, in a soft purple. */
+/* Look and Write: the same card, in a soft purple, with the eye from its pictures. */
 .big-btn.vocab {
   --edge: #6d4f9c;
   background: #c9b2ec;
   color: #2e1a52;
+}
+
+.big-icon.picture img {
+  width: 112%;
+  height: 112%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .big-btn.letter {

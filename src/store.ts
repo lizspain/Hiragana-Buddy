@@ -28,11 +28,11 @@ export interface Settings {
   unlockPath: boolean;
   /** Listen & Match's spoken intro has played (it plays on the very first game only). */
   matchIntroDone: boolean;
-  /** Grown-ups switch: show Make a Word on the home screen (while it is being built and reviewed). */
+  /** Grown-ups switch: show Look and Write on the home screen (while it is being built and reviewed). */
   vocabGame: boolean;
-  /** Grown-ups switch: every Make a Word stage open (turning it off closes unearned stages; stars are kept). */
+  /** Grown-ups switch: every Look and Write stage open (turning it off closes unearned stages; stars are kept). */
   vocabUnlockPath: boolean;
-  /** Make a Word's practice word has been played (it plays on the very first game only). */
+  /** Look and Write's practice word has been played (it plays on the very first game only). */
   vocabPracticeDone: boolean;
 }
 
@@ -206,7 +206,7 @@ export async function resetMatchProgress(): Promise<void> {
   await Promise.all([set("matchResults", matchResults, store), set("kanaProgress", kanaProgress, store)]).catch(() => undefined);
 }
 
-// ---------- Make a Word ----------
+// ---------- Look and Write ----------
 
 /** Save a finished game (a game left unfinished is never saved). */
 export async function recordVocab(stageId: string, cleanWords: number, stars: VocabResult["stars"]): Promise<void> {
@@ -225,7 +225,7 @@ export const getVocabResults = (): readonly VocabResult[] => vocabResults;
 
 interface Backup {
   app: "hiragana-buddy";
-  /** 2 added Listen & Match (matchResults, kanaProgress), 3 Make a Word (vocabResults). Older files still restore. */
+  /** 2 added Listen & Match (matchResults, kanaProgress), 3 Look and Write (vocabResults). Older files still restore. */
   version: 1 | 2 | 3;
   exportedAt: string;
   profiles: Profile[];

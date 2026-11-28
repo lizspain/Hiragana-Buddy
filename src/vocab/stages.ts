@@ -1,4 +1,4 @@
-// Make a Word: the word list and its stages (docs/VOCAB-SPELLING-DESIGN.md
+// Look and Write: the word list and its stages (docs/VOCAB-SPELLING-DESIGN.md
 // "Words and stages"). Each class set's 16 words become two stages of 8, in
 // worksheet order. The list is checked when the module loads in development
 // and by the unit tests.

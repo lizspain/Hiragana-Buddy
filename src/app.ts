@@ -46,9 +46,9 @@ export interface Nav {
   match(setId?: string): void;
   /** The Listen & Match set path; `arrival` animates a just-finished game's stars onto its stone. */
   path(arrival?: PathArrival): void;
-  /** Make a Word, one game on a stage. */
+  /** Look and Write, one game on a stage. */
   vocab(stageId?: string): void;
-  /** The Make a Word stage path; `arrival` animates a just-finished game's stars onto its stone. */
+  /** The Look and Write stage path; `arrival` animates a just-finished game's stars onto its stone. */
   vocabPath(arrival?: PathArrival): void;
 }
 

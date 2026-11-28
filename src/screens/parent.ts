@@ -41,7 +41,7 @@ export function parentScreen(nav: Nav): Screen {
         toggle("sound", "Sound and voice", "Chimes and spoken prompts. Turn off for classrooms."),
         toggle("skipPhase1WhenMastered", "Skip “watch” for known letters", "After a 3-star letter, start it at the tracing step."),
         toggle("matchGame", "Try Listen & Match", "Preview the sound game on the home screen: hear a letter, tap its tile."),
-        toggle("vocabGame", "Try Make a Word", "Preview the spelling game on the home screen: see a picture, hear its word, spell it with tiles."),
+        toggle("vocabGame", `Try ${VOCAB_NAME.en}`, "Preview the spelling game on the home screen: see a picture, hear its word, spell it with tiles."),
         toggle("expandLongVowel", "Spell ー as a vowel", "じぇーむず becomes じぇえむず for new words."),
         voiceStatus(),
       ),

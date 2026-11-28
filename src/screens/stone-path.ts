@@ -1,4 +1,4 @@
-// The stepping-stone path, shared by Listen & Match (sets) and Make a Word
+// The stepping-stone path, shared by Listen & Match (sets) and Look and Write
 // (stages): docs/LISTEN-MATCH.md "Getting in", docs/VOCAB-SPELLING-DESIGN.md
 // "Getting in".
 //

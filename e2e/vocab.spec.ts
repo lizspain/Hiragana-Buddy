@@ -1,4 +1,4 @@
-// Make a Word (docs/VOCAB-SPELLING-DESIGN.md): spell by tap and by drag, the
+// Look and Write (docs/VOCAB-SPELLING-DESIGN.md): spell by tap and by drag, the
 // finish sequence, and a whole clean game.
 
 import type { Page } from "@playwright/test";

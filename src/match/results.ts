@@ -1,4 +1,4 @@
-// The end-of-game results, shared by Listen & Match and Make a Word
+// The end-of-game results, shared by Listen & Match and Look and Write
 // (docs/LISTEN-MATCH.md "Results", docs/VOCAB-SPELLING-DESIGN.md "Rewards"):
 // the full pebble tray slides to the centre, the mascot dances and everyone is
 // cheered, then the stars fill one at a time on a rising chime, then two

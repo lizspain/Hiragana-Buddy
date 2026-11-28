@@ -315,7 +315,7 @@ VocabResult { profileId, stageId, playedAt, cleanWords: 0..8, stars: 1..3 }
 
 **Open questions**
 
-- [ ] What is the game called in the app, and what is its home button icon? Working name: Make a Word / ことばを つくろう.
+- [x] What is the game called in the app, and what is its home button icon? **Decided Nov 2026: "Look and Write", with the eye picture from stage 1A as its icon.** (Working name was Make a Word / ことばを つくろう.)
 
 - [ ] Should the first game on a new stage start with a preview that shows each picture and says its word? Recommended: yes, because Listen & Match previews a new set the same way.
 

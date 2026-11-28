@@ -1,4 +1,4 @@
-// Make a Word: see a picture, hear its word, spell it with kana tiles
+// Look and Write: see a picture, hear its word, spell it with kana tiles
 // (docs/VOCAB-SPELLING-DESIGN.md). The rules live in vocab/game.ts; this
 // screen draws them and handles taps and drags.
 //

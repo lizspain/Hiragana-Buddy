@@ -151,9 +151,8 @@ export const ICON = {
   speaker: svg(`<path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor" stroke-width="3"/><path d="M32 17a10 10 0 0 1 0 14"/>`),
   // Filled gear from the Figma Make mockup.
   gear: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="m20 5-1.2 5.3-4.2 1.8-4.6-2.9-4.8 4.8 2.9 4.6L6.3 23 1 24l1 6 5.4.9 1.8 4.3-2.9 4.6 4.8 4.8 4.6-2.9 4.3 1.8 1 5.3h6l1-5.3 4.3-1.8 4.6 2.9 4.8-4.8-2.9-4.6 1.8-4.3L47 30l1-6-5.3-1-1.8-4.3 2.9-4.6L39 9.3l-4.6 2.9-4.3-1.8L29 5Z" fill="currentColor" stroke="#1c1917" stroke-width="1.5" stroke-linejoin="round"/><circle cx="24" cy="27" r="7" fill="#dfbe91" stroke="#1c1917" stroke-width="3"/></svg>`,
-  /** A pointing hand (Make a Word's practice word shows tap and drag with it). */
+  /** A pointing hand (Look and Write's practice word shows tap and drag with it). */
   hand: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M17 27V8.5a3.5 3.5 0 0 1 7 0V22l1.6-.8a3.4 3.4 0 0 1 4.4 1.3l.4.7 1.3-.5a3.4 3.4 0 0 1 4.3 1.7l.3.6 1.1-.3a3.4 3.4 0 0 1 4.1 3.2V33c0 7.2-5.3 12.5-12.5 12.5h-2.6c-4 0-7.2-1.9-9.4-5.2l-6.2-9.2a3.3 3.3 0 0 1 5.2-4.1Z" fill="#fffaf0" stroke="#3b2f1e" stroke-width="2.6" stroke-linejoin="round"/></svg>`,
-  picture: svg(`<rect x="7" y="9" width="34" height="30" rx="5"/><path d="M9 35l10-11 8 8 5-5 8 8"/><circle cx="31" cy="18" r="4" fill="currentColor"/>`),
   ear: svg(`<path d="M14 20a11 11 0 1 1 22 0c0 7-7 8-8 14-.6 4-4 7-8 6"/><path d="M21 21a4 4 0 1 1 8 0c0 3-4 4-4 7"/>`),
   mic: svg(`<rect x="17" y="5" width="14" height="24" rx="7" fill="currentColor"/><path d="M10 22a14 14 0 0 0 28 0M24 36v7M17 43h14"/>`),
   play: svg(`<path d="M16 10v28l22-14z" fill="currentColor"/>`),
