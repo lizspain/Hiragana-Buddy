@@ -14,40 +14,83 @@
 }
 
 .vocab-top {
-  gap: 10px;
+  gap: 12px;
 }
 
-.vocab-top .match-speaker {
-  flex: none;
-}
-
-.vocab-top .match-mascot {
-  width: clamp(56px, 13vmin, 92px);
-}
-
-.vocab-top .speaker-badge {
-  width: 40px;
-  height: 40px;
-}
-
-/* The tray shares the top row with the mascot and home: its pebbles shrink to fit. */
+/* The tray shares the top row with home: its pebbles shrink to fit. */
 .vocab-top .match-tray {
   min-width: 0;
   gap: clamp(3px, 1vw, 10px);
 }
 
 .vocab-top .slot {
-  --slot: clamp(22px, (100vw - 160px) / 9.5, 52px);
+  --slot: clamp(22px, (100vw - 140px) / 9.5, 52px);
 }
 
-/* Phones: the mascot alone is the say-it-again button (the picture is one too). */
+/* ---------- say it again: the play button at the picture's lower right ---------- */
+
+.vocab-look {
+  /* Picture size, and the width of the row of pictures (はし shows two). */
+  --pic: clamp(130px, min(46vw, 32dvh), 340px);
+  --row: var(--pic);
+  --say-out: 72px;
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+.vocab-look:has(.two) {
+  --pic: clamp(120px, min(42vw, 28dvh), 300px);
+  --row: calc(2 * var(--pic) + 16px);
+}
+
+.vocab-say {
+  position: absolute;
+  /* Mostly past the picture's edge, so it never covers the drawing, but
+     never past the screen's padding (two pictures on a phone fill the row). */
+  right: max(calc(-1 * var(--say-out)), calc((var(--row) - 100vw + 32px) / 2));
+  bottom: 0;
+  margin: 0;
+}
+
+.vocab-say.is-pressed {
+  --lift: 2px;
+  transform: translateY(3px);
+}
+
+.vocab-say.talking {
+  animation: badge-talk 0.5s ease-in-out infinite;
+}
+
+.vocab-say .sound-hint {
+  left: auto;
+  right: -22%;
+  top: -70%;
+  width: 52px;
+  padding: 7px;
+}
+
 @media (max-width: 520px) {
-  .vocab-top .speaker-badge {
-    display: none;
+  .vocab-look {
+    --say-out: 60px;
   }
-  .vocab-top .match-mascot {
-    width: 50px;
+
+  .vocab-say.hear-play {
+    width: 70px;
+    height: 50px;
   }
+
+  /* はし's two pictures fill a phone's width: the button sits just under the
+     second one's lower right instead (はし has 2 slots, which stay clear of it). */
+  .vocab-look:has(.two) .vocab-say {
+    right: 0;
+    bottom: -40px;
+  }
+}
+
+/* No long-press "save image" bubble on iPad: it takes the sound away. */
+.screen.vocab {
+  -webkit-touch-callout: none;
 }
 
 /* Pebbles here: gold for a word spelled with no wrong tile, plain otherwise. */
@@ -89,7 +132,7 @@
 }
 
 .vocab-picture {
-  width: clamp(130px, min(46vw, 32dvh), 340px);
+  width: var(--pic);
   aspect-ratio: 1;
   display: grid;
   border-radius: 26px;
@@ -99,9 +142,6 @@
     opacity 300ms ease;
 }
 
-.vocab-pictures.two .vocab-picture {
-  width: clamp(120px, min(42vw, 28dvh), 300px);
-}
 
 .vocab-picture img {
   width: 100%;

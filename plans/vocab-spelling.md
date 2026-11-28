@@ -82,3 +82,11 @@ the engine got backwards for standard Tokyo pitch: かみ (it said "god"), み�
   thunk when a tile is picked up to drag, a twinkle with the star spray, a pebble
   clink (brighter for gold). Reduced motion: the bounce fades, the spray becomes a
   golden glow, pebbles fade in. Larger pictures on tablets (up to 340 px).
+- Playtest fixes (Nov 28): a wobbly tap (lifted within 30 px of where it
+  landed) is a tap, in both games. The say-it-again button is a play button at
+  the picture's lower right (on a phone, under はし's second picture); the
+  mascot left the game's top row. Home is the full-size button at the top left
+  on both games and both paths, and the trays shrink to fit beside it. Holding
+  the old button on an iPad left the game silent: iOS had "interrupted" the
+  audio and the app only woke it from "suspended". Now any tap wakes it from
+  either, and the game screens turn off the iOS long-press bubble.

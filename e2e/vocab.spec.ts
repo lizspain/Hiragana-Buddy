@@ -112,6 +112,23 @@ test("spell つき by drag, き first into the second slot", async ({ page }) =>
   throw new Error("つき never came up");
 });
 
+test("layout: home is the full-size button at the top left; the play button sits at the picture's lower right and says the word", async ({ page }) => {
+  await startGame(page);
+  await ready(page, 0);
+  const homeBtn = (await page.getByRole("button", { name: "Home" }).boundingBox())!;
+  const tray = (await page.getByTestId("tray").boundingBox())!;
+  expect(homeBtn.width).toBe(64);
+  expect(homeBtn.x + homeBtn.width).toBeLessThan(tray.x); // left of the tray
+  const pic = (await page.getByTestId("picture").boundingBox())!;
+  const say = (await page.getByTestId("speaker").boundingBox())!;
+  expect(say.x + say.width / 2).toBeGreaterThan(pic.x + pic.width); // its middle is past the picture's right edge
+  expect(say.y + say.height).toBeGreaterThan(pic.y + pic.height * 0.75); // at the bottom
+  expect(say.x + say.width).toBeLessThanOrEqual(page.viewportSize()!.width); // and on screen
+  const before = (await said(page)).length;
+  await page.getByTestId("speaker").click();
+  await expect.poll(async () => (await said(page)).length).toBeGreaterThan(before);
+});
+
 test("a wobbly tap is a tap: a short slide (even off the tile) places the tile; a long one dropped nowhere doesn't", async ({ page }) => {
   await startGame(page);
   const word = await ready(page, 0);

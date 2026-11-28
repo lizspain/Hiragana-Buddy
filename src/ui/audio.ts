@@ -39,6 +39,7 @@ function audio(): AudioContext | null {
  * resumes it on the first tap.
  */
 export function primeAudio(): void {
+  installWake();
   const go = () => {
     audio();
     // The Japanese praise clips play at the end of every game but aren't
@@ -54,10 +55,32 @@ export function primeAudio(): void {
   else setTimeout(go, 500);
 }
 
-/** Call from a user gesture so iOS lets audio play. */
+/**
+ * Call from a user gesture so iOS lets audio play. The context is "suspended"
+ * before the first tap, and on iOS "interrupted" once the system has taken the
+ * audio away (a long press on a button, a call, Control Center, another app).
+ * It stays that way until something resumes it inside a gesture; only waking
+ * "suspended" left the game silent for good after holding the say-it-again
+ * button on an iPad (playtest, Nov 2026).
+ */
 export function unlockAudio(): void {
   const c = audio();
-  if (c && c.state === "suspended") void c.resume();
+  if (c && c.state !== "running" && c.state !== "closed") void c.resume().catch(() => undefined);
+}
+
+/** Every tap anywhere wakes the audio if it has stopped, so no screen can be left silent. */
+let wakeInstalled = false;
+function installWake(): void {
+  if (wakeInstalled || typeof document === "undefined") return;
+  wakeInstalled = true;
+  const wake = () => {
+    if (ctx && ctx.state !== "running") unlockAudio();
+  };
+  for (const ev of ["pointerup", "touchend", "keydown"]) document.addEventListener(ev, wake, { capture: true, passive: true });
+  // Back from another app or the lock screen: try at once (it may still need the next tap).
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") wake();
+  });
 }
 
 // ---------- trouble signal ----------

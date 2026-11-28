@@ -17,7 +17,7 @@ import { showResults } from "../match/results";
 import { boop, clink, onVoiceTrouble, pop, preloadKana, preloadVocab, sayKana, sayVocab, stepChime, thunk, twinkle, unlockAudio } from "../ui/audio";
 import { pageBurst } from "../ui/burst";
 import { preloadDance } from "../ui/dance";
-import { h, ICON, iconButton, kanaSvg, mascot, modal } from "../ui/dom";
+import { h, ICON, iconButton, kanaSvg, modal } from "../ui/dom";
 import { isPalmContact, isTapDistance } from "../ui/pen";
 import { getSettings, recordVocab, saveSettings, vocabBestStars } from "../store";
 import { VocabGame, type PlaceResult } from "../vocab/game";
@@ -77,23 +77,24 @@ export function vocabScreen(nav: Nav, stageId = VOCAB_STAGES[0].id): Screen {
   const tray = h("div", { class: "match-tray", "data-testid": "tray", role: "img", "aria-label": "Pebble tray" }, traySlots);
 
   const soundHint = h("span", { class: "sound-hint", html: ICON.soundOff, "aria-hidden": "true" });
+  // The say-it-again button sits at the picture's lower right (Liz, Nov 2026).
   const speaker = h(
     "button",
-    { class: "match-speaker", "data-quiet": "", "data-testid": "speaker", "aria-label": "Hear it again" },
-    mascot("match-mascot"),
-    h("span", { class: "shelf-play hear-play speaker-badge" }, h("span", { class: "shelf-play-icon", html: ICON.speaker })),
+    { class: "shelf-play hear-play vocab-say", "data-quiet": "", "data-testid": "speaker", "aria-label": "Hear it again" },
+    h("span", { class: "shelf-play-icon", html: ICON.speaker }),
     soundHint,
   );
 
   const pictures = h("button", { class: "vocab-pictures", "data-quiet": "", "data-testid": "picture", "aria-label": "Hear it again" });
   const slotRow = h("div", { class: "vocab-slots", "data-testid": "slots" });
   const tileRow = h("div", { class: "vocab-tiles", "data-testid": "tiles" });
-  const stageEl = h("main", { class: "vocab-stage" }, pictures, slotRow, tileRow);
+  const look = h("div", { class: "vocab-look" }, pictures, speaker);
+  const stageEl = h("main", { class: "vocab-stage" }, look, slotRow, tileRow);
 
   const el = h(
     "div",
     { class: "screen vocab", "data-testid": "vocab", "data-state": "prompt", "data-stage": stage.id, "data-index": "0", "data-practice": String(practicing) },
-    h("header", { class: "topbar vocab-top" }, speaker, tray, iconButton(ICON.home, "Home", askLeave, "home small")),
+    h("header", { class: "topbar vocab-top" }, iconButton(ICON.home, "Home", askLeave, "home"), tray),
     stageEl,
   );
 
