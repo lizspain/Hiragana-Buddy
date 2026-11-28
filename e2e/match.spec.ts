@@ -298,12 +298,25 @@ test("the very first game opens with the spoken intro, Japanese then English; la
   await expect(screen(page)).toHaveAttribute("data-state", "preview"); // first game not finished, so the preview again
 });
 
-test("home shows the current stone and its stars", async ({ page }) => {
-  await home(page);
-  const progress = page.getByTestId("listen-progress");
-  // No stars yet: none shown, and no empty outlines.
-  await expect(progress.locator(".star.on")).toHaveCount(0);
-  await expect(progress.locator(".star:not(.ghost)")).toHaveCount(0);
+test("home: the game cards are just an icon and a label, lined up", async ({ page }) => {
+  await home(page, { vocabGame: true });
+  // The corner stone and its stars came off the Listen & Match card (Nov 2026).
+  await expect(page.locator(".big-btn .stars, .big-btn .listen-stone")).toHaveCount(0);
+  const cards = page.locator(".big-choices > .big-btn");
+  await expect(cards).toHaveCount(4);
+  const spots = await cards.evaluateAll((els) =>
+    els.map((b) => {
+      const r = b.getBoundingClientRect();
+      const i = b.querySelector(".big-icon")!.getBoundingClientRect();
+      const l = b.querySelector(".big-label")!.getBoundingClientRect();
+      return { icon: i.top + i.height / 2 - r.top, label: l.top - r.top, height: r.height };
+    }),
+  );
+  for (const s of spots) {
+    expect(Math.abs(s.icon - spots[0].icon)).toBeLessThan(1.5);
+    expect(Math.abs(s.label - spots[0].label)).toBeLessThan(1);
+    expect(Math.abs(s.height - spots[0].height)).toBeLessThan(1);
+  }
 });
 
 test("grown-ups: unlock the whole path, see mixed-up sounds, and reset", async ({ page }) => {

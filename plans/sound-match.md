@@ -52,7 +52,7 @@ Listen & Match against CLAUDE.md's acceptance checks:
 - Grown-ups (Settings, shown while "Try Listen & Match" is on): **Unlock whole path**
   (`unlockPath`), **Sounds mixed up most** (`topMixUps`, pairs counted at least twice) and
   **Reset set progress** (with a confirm prompt; clears this profile's results and mix-ups).
-- Home: the Listen & Match button shows the current stone's kana and its best stars.
+- Home: the Listen & Match button shows just its ear and name, like the other game cards (its corner stone and stars came off, Nov 2026).
 - Spoken intro on the very first game, before the preview: "よく きいてね。きこえた もじを
   タッチしてね！" in the kana voice (`public/audio/kana/intro-ja.mp3`, 5.2 s, made by the same
   script), then "Listen, then tap the one you hear!" in the device's English voice.

@@ -1,9 +1,7 @@
 import type { Nav, Screen } from "../app";
 import { setSoundEnabled, unlockAudio } from "../ui/audio";
-import { h, holdButton, html, ICON, kanaSvg, mascot, modal, stars } from "../ui/dom";
-import { getSettings, matchBestStars, saveSettings } from "../store";
-import { currentStone, pathState } from "../match/progress";
-import { PATH_SETS } from "../match/sets";
+import { h, holdButton, html, ICON, kanaSvg, mascot, modal } from "../ui/dom";
+import { getSettings, saveSettings } from "../store";
 import { VOCAB_ICON, VOCAB_NAME } from "../vocab/config";
 
 export function homeScreen(nav: Nav): Screen {
@@ -90,12 +88,11 @@ function listenButton(nav: Nav): HTMLButtonElement {
     },
     html(`<span class="big-icon">${ICON.ear}</span>`),
     h("span", { class: "big-label" }, "Listen & Match"),
-    listenStars(),
     muted ? html(`<span class="muted-badge" aria-label="Sound is off">${ICON.soundOff}</span>`) : null,
   );
 }
 
-/** Look and Write: opens its stage path. */
+/** Look & Write: opens its stage path. */
 function vocabButton(nav: Nav): HTMLButtonElement {
   return h(
     "button",
@@ -110,13 +107,6 @@ function vocabButton(nav: Nav): HTMLButtonElement {
     h("span", { class: "big-icon picture" }, h("img", { src: VOCAB_ICON, alt: "", draggable: "false" })),
     h("span", { class: "big-label" }, VOCAB_NAME.en),
   );
-}
-
-/** The stone the child is on (a pebble in the corner), with its best stars under the label. */
-function listenStars(): HTMLElement {
-  const stones = pathState(PATH_SETS.map((s) => s.id), matchBestStars, getSettings().unlockPath);
-  const i = currentStone(stones);
-  return h("span", { class: "listen-progress", "data-testid": "listen-progress" }, h("span", { class: "listen-stone" }, kanaSvg(PATH_SETS[i].kana[0])), stars(stones[i].best, "stars small"));
 }
 
 /** One-time "Add to Home Screen" tip for iPhone/iPad Safari (keeps history safe). */

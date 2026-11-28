@@ -659,7 +659,7 @@ input:focus-visible {
   background: var(--peach);
 }
 
-/* Look and Write: the same card, in a soft purple, with the eye from its pictures. */
+/* Look & Write: the same card, in a soft purple, with the eye from its pictures. */
 .big-btn.vocab {
   --edge: #6d4f9c;
   background: #c9b2ec;
@@ -667,8 +667,8 @@ input:focus-visible {
 }
 
 .big-icon.picture img {
-  width: 112%;
-  height: 112%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   pointer-events: none;
 }
@@ -692,6 +692,17 @@ input:focus-visible {
   height: 100%;
 }
 
+/* The four drawings have different shapes inside the same square, so each is
+   nudged until its ink is about the same size and centred at the same height
+   on every card. The eye picture needs nothing beyond fitting its box. */
+.big-btn.word .big-icon svg {
+  transform: translateY(-2%) scale(1.06);
+}
+
+.big-btn.listen .big-icon svg {
+  transform: translateY(-1.5%) scale(1.12);
+}
+
 .big-btn.word .big-icon svg {
   color: #4b2017;
 }
@@ -707,7 +718,7 @@ input:focus-visible {
 .big-icon.tile {
   width: 80px;
   height: 80px;
-  margin-top: 4px;
+  margin-top: 6px; /* centres it where the other icons sit (box 92 vs 80) */
   background: var(--surface);
   border: 6px solid var(--ink);
   border-radius: 22px;
@@ -1891,6 +1902,7 @@ body[data-screen="write"] {
   .big-icon.tile {
     width: 92px;
     height: 92px;
+    margin-top: 8px;
     border-width: 7px;
   }
 
