@@ -72,7 +72,7 @@ export function doneScreen(nav: Nav, r: WordResult): Screen {
       starRow,
       myWord,
       h("div", { class: "done-actions" }, quiet(iconButton(ICON.speaker, "Hear my word", () => (unlockAudio(), sayWord(word)), "big-round"))),
-      // A clear way back to start another word (blue like "One letter" on the home page).
+      // A clear way back to start another word (blue like "One kana" on the home page).
       h(
         "button",
         { class: "home-big", "aria-label": "Home", "data-testid": "done-home", onclick: () => nav.home() },

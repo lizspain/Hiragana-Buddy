@@ -43,7 +43,7 @@ export function kanaChart(onPick: (k: string) => void, opts: { withLongMark?: bo
     if (page === "small" && opts.withLongMark !== false) rows.push(["ー", null, null, null, null]);
     grid.replaceChildren(
       ...rows.flat().map((k) => {
-        // One letter: a letter practised before wears its best stars.
+        // One kana: a letter practised before wears its best stars.
         const item = k && opts.showStars ? findItem("kana", [k]) : undefined;
         const done = item && bestStars(item) > 0 ? item : undefined; // only earned stars show
         return k

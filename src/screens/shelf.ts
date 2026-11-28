@@ -1,7 +1,7 @@
 // The practised-words shelf: one card per saved word, newest first, with its
 // best stars. Tapping a card practises it again; its play button only says it.
 // Shown on the word entry page (moved from home, Nov 2026). Single letters have
-// no card: their stars show on the One letter chart instead.
+// no card: their stars show on the One kana chart instead.
 
 import type { Nav } from "../app";
 import { sayWord, unlockAudio } from "../ui/audio";

@@ -914,7 +914,7 @@ input:focus-visible {
   stroke-width: 7;
 }
 
-/* A letter practised before (One letter): two rows, the kana on top and its
+/* A letter practised before (One kana): two rows, the kana on top and its
    best stars in their own row below, so they never overlap (a button's own
    centring differs between Safari and Chrome, so nothing here relies on it). */
 .chart-cell.done {
@@ -1585,7 +1585,7 @@ body[data-screen="write"] {
   gap: 20px;
 }
 
-/* Big blue Home, styled like the home page's "One letter" card. */
+/* Big blue Home, styled like the home page's "One kana" card. */
 .home-big {
   --lift: 7px;
   --edge: var(--cyan-edge);

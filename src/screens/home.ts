@@ -51,7 +51,7 @@ export function homeScreen(nav: Nav): Screen {
           },
         },
         h("span", { class: "big-icon tile" }, kanaSvg("あ")),
-        h("span", { class: "big-label" }, "One letter"),
+        h("span", { class: "big-label" }, "One kana"),
       ),
       getSettings().matchGame ? listenButton(nav) : null,
       getSettings().vocabGame ? vocabButton(nav) : null,

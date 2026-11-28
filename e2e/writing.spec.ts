@@ -71,7 +71,7 @@ test("draw あ correctly with a mouse in all three phases → 3 stars", async ({
   await page.waitForTimeout(350);
   expect(await frame()).not.toBe(a);
 
-  // Saved to history: the big blue Home goes back; the One letter chart shows あ's stars on its card.
+  // Saved to history: the big blue Home goes back; the One kana chart shows あ's stars on its card.
   await page.getByTestId("done-home").click();
   await page.getByTestId("go-letter").click();
   const cell = page.locator('.chart-cell[data-kana="あ"]');
